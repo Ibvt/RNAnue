@@ -1,0 +1,4 @@
+// the configured options and settings for Tutorial
+#define RNAnue_VERSION_MAJOR @RNAnue_VERSION_MAJOR@
+#define RNAnue_VERSION_MINOR @RNAnue_VERSION_MINOR@
+#define RNAnue_VERSION_PATCH @RNAnue_VERSION_PATCH@
