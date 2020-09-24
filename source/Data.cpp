@@ -37,7 +37,9 @@ Data::Data(po::variables_map _params) :
         //callInAndOut();
 
     }
+
     if(subcall == "align") {
+        alignDataPrep();
 
     }
 }
@@ -65,6 +67,22 @@ void Data::preprocDataPrep() {
 
 
 void Data::alignDataPrep() {
+    std::cout << "reads the data to align" << '\n';
+
+    if(params["preproc"].as<std::bitset<1>>() == std::bitset<1>(0)) {
+        std::cout << "skipping preprocessing" << '\n';
+
+        fs::path ctrlsPath = fs::path(params["ctrls"].as<std::string>());
+        fs::path trtmsPath = fs::path(params["trtms"].as<std::string>());
+
+        /*
+         * trtms -> "/Users/..../trtms"
+         * (ctrls -> "/Users/.../crtls")
+         * */
+        GroupsPath group = retrieveGroupsPath(ctrlsPath, trtmsPath); // 
+        retrieveData(group);
+
+    }
 }
 
 void clusteringDatPrep() {
@@ -168,9 +186,18 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
         nrElements = (params["readtype"].as<std::string>() == "PE") ? 2 : 1;
         sampleKeys = {"forward", "reverse"}; 
     }
+    
     if(subcall == "align") {
-        nrElements = 2; // 
-        sampleKeys = {"matched","unmatched"};
+        if(params["preproc"].as<std::bitset<1>>() == std::bitset<1>(0)) {
+            nrElements = 1;
+            sampleKeys = {"forward"};
+        } else {
+            nrElements = 2; // 
+            sampleKeys = {"matched","splits"};
+        }
+
+
+
     }
 
     /* path of the results up to the level of the conditions 
@@ -252,7 +279,26 @@ pt::ptree Data::retrieveOutput(fs::path _outConditionDir, pt::ptree _input) {
             output.put("R1unmerged", r1unmerged);
             output.put("R2unmerged", r2unmerged);
         }
+
+        
     }
+
+    // alignment
+    if(params["subcall"].as<std::string>() == "align") {
+        
+        //
+        fs::path fwd = fs::path(_input.get<std::string>("input.forward"));
+        fwd.replace_extension(".sam");
+        std::string forward = replacePath(_outConditionDir, fwd).string();
+
+        std::string matched = addSuffix(forward, "_matched", {});
+        std::string splits = addSuffix(forward, "_splits", {});
+
+        output.put("matched", matched);
+        output.put("splits", splits);
+
+    }
+
     return output;
 }
 
@@ -317,6 +363,14 @@ void Data::preproc() {
     SeqRickshaw srs(params);
     callInAndOut(std::bind(&SeqRickshaw::start, srs, std::placeholders::_1));
 }
+
+void Data::align() {
+    // create Object of Alignment
+    Align aln(params);
+    callInAndOut(std::bind(&Align::start, aln, std::placeholders::_1));
+
+}
+
 
 
 /*

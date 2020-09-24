@@ -11,7 +11,9 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
 
+
 #include "SeqRickshaw.hpp"
+#include "Align.hpp"
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -40,6 +42,7 @@ class Data {
         Data(po::variables_map _params);
         
         // getter & setter
+        //
         pt::ptree getDataStructure();
 
         //
@@ -69,6 +72,7 @@ class Data {
         void bla(Callable f);
 
         void preproc();
+        void align();
 };
 
 #endif // DATA_HPP

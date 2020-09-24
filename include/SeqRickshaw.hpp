@@ -28,6 +28,8 @@
 #include <seqan3/range/views/char_to.hpp>
 #include <seqan3/range/views/slice.hpp>  
 
+#include <seqan3/std/ranges>
+
 #include <seqan3/range/views/all.hpp>
 #include <seqan3/std/ranges> // std::ranges::copy
 
@@ -85,17 +87,15 @@ class SeqRickshaw {
         std::size_t calcReadPos(auto& sequence, std::size_t& left, std::pair<std::size_t,std::size_t>& right);
 
 
-        void panic(State state, std::string pattern, char mismatch, int readPos);
 
         void smallestShift(std::string pattern, std::string suffix, int left);
 
         int transition(std::string pattern, std::string suffix, int readPos, std::size_t& left, std::pair<std::size_t,std::size_t>& right);
 
-        int extendblock(std::string pattern, std::string suffix, int& left);
+        void merging(auto fwd, auto rev);
 
 
-        int reoccurrence(std::string pattern, std::string suffix, std::size_t& left); 
-
+        std::string longestCommonSubstr(std::string forward, std::string reverse);
 
 
 
@@ -103,14 +103,11 @@ class SeqRickshaw {
         // helper 
         int addState(States &states, State state, States::size_type &size);
         int nextReadPos(std::string state, int currReadPos);
-        std::pair<int,int> countConsecutiveMatches(std::string stateSubstr, int readPos);
         // finds all occurrences of substring in string
         void findAllOcc(std::vector<std::size_t>& fnd, std::string str, std::string substr);
+        void writeLookupTable(std::ofstream &os);
 
         void preprocPattern();
-
-
-        void writeLookupTable(std::ofstream &os);
         
         
         std::size_t boyermoore(auto& read, LookupTable tab, int patlen);

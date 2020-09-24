@@ -58,9 +58,9 @@ std::map<std::pair<std::string,std::string>, LookupTable> SeqRickshaw::calcLooku
     
     using record_type = typename decltype(adpt)::record_type;
     std::vector<record_type> records{};
-    std::ranges::copy(adpt, std::ranges::back_inserter(records));
+//    std::ranges::copy(adpt, std::ranges::back_inserter(records)); -> didn't work when compiling on tesla
 
-    for(auto& rec : records) {
+    for(auto& rec : adpt) {
         auto readID = seqan3::get<seqan3::field::id>(rec) | seqan3::views::to_char;
         auto readSeq = seqan3::get<seqan3::field::seq>(rec) | seqan3::views::to_char;
 
@@ -422,46 +422,6 @@ int SeqRickshaw::nextReadPos(std::string state, int currReadPos) {
     return -1;
 }
 
-// determine consecutive matches, starting (left and right) from readPos
-std::pair<int,int> SeqRickshaw::countConsecutiveMatches(std::string state, int readPos) {
-    // 
-
-    // determine consecutive
-    auto countCons = [](std::string s) -> int {
-        int count = 0;
-
-        for(unsigned i=0;i<s.size();++i) {
-            if(s[i] == 'X') {
-                ++count;
-            } else {
-                break;
-            }
-        }
-        return count;
-    };
-
-
-    int leftBnd = 0;
-    int rightBnd = 0;
-    std::string subState;
-
-    // left
-    if(readPos != 0) {
-        subState = state.substr(0,readPos);
-        std::reverse(subState.begin(),subState.end());
-        leftBnd = readPos - countCons(subState);
-    }
-
-    // right
-    if(state.size()-readPos > 1) { // only consider right part if not on last element
-        subState = state.substr(readPos+1,state.size()-readPos);
-        rightBnd = countCons(subState) + readPos;
-    }
-
-    std::pair<int,int> boundaries(leftBnd,rightBnd); 
-    return boundaries;
-}
-
 
 /*
     auto bla =  seqan3::get<seqan3::field::seq>(_records[0]);
@@ -611,11 +571,16 @@ void SeqRickshaw::start(pt::ptree sample) {
             bool filtRev = filtering(rec2) && (std::ranges::size(trmReadRev) >= minlen);
 
             if(filtFwd && filtRev) {
+                merging(trmReadFwd,trmReadRev);
+
+
                 // perform merging operation
+                /*
                 std::cout << trmReadFwdID << std::endl;
                 std::cout << (trmReadFwd | seqan3::views::to_char) << std::endl;
                 std::cout << trmReadRevID << std::endl;
                 std::cout << (trmReadRev | seqan3::views::to_char) << std::endl;
+                */
             } else {
                 if(filtFwd) {
                     // push to r1only
@@ -647,6 +612,109 @@ void SeqRickshaw::start(pt::ptree sample) {
         */
    // }
 }
+
+
+//
+std::string SeqRickshaw::longestCommonSubstr(std::string s1, std::string s2) {
+    // Find length of both the strings. 
+    int m = s1.length(); 
+    int n = s2.length(); 
+  
+    // Variable to store length of longest 
+    // common substring. 
+    int result = 0; 
+  
+    // Variable to store ending point of 
+    // longest common substring in X. 
+    int end; 
+  
+    // Matrix to store result of two 
+    // consecutive rows at a time. 
+    int len[2][n]; 
+  
+    // Variable to represent which row of 
+    // matrix is current row. 
+    int currRow = 0; 
+
+    // For a particular value of i and j, 
+    // len[currRow][j] stores length of longest 
+    // common substring in string X[0..i] and Y[0..j]. 
+    for (int i = 0; i <= m; i++) { 
+        for (int j = 0; j <= n; j++) { 
+            if (i == 0 || j == 0) { 
+                len[currRow][j] = 0; 
+            } 
+            else if (s1[i - 1] == s2[j - 1]) { 
+                len[currRow][j] = len[1 - currRow][j - 1] + 1; 
+                if (len[currRow][j] > result) { 
+                    result = len[currRow][j]; 
+                    end = i - 1; 
+                } 
+            } 
+            else { 
+                len[currRow][j] = 0; 
+            } 
+        } 
+  
+        // Make current row as previous row and 
+        // previous row as new current row. 
+        currRow = 1 - currRow; 
+    } 
+  
+    // If there is no common substring, print -1. 
+    if (result == 0) { 
+        return "-1"; 
+    } 
+  
+    // Longest common substring is from index 
+    // end - result + 1 to index end in X. 
+    return s1.substr(end - result + 1, result); 
+
+}
+
+
+
+
+
+void SeqRickshaw::merging(auto fwd, auto rev) {
+    std::cout << "merging " << '\n';
+
+    auto forward = fwd | seqan3::views::to_char;
+    auto reverse = rev | seqan3::views::complement | std::views::reverse | seqan3::views::to_char;
+
+
+    std::cout << (rev | seqan3::views::to_char) << std::endl;
+    std::cout << (reverse | seqan3::views::to_char) << std::endl;
+
+
+
+    std::string s1(forward.begin(),forward.end());
+    std::string s2(reverse.begin(),reverse.end());
+
+
+    for(unsigned i=1;i<s1.size()/2;++i) {
+//        std::string subs = s1.substr(s1
+
+        std::cout << s1.substr(s1.size()-1-i,i) << std::endl;
+
+
+    }
+
+
+
+    
+    
+    /*
+    std::size_t n;
+    for(std::size_t i=0;i<n;++i) {
+        if(std::strncmp(lef
+
+    }
+    */
+
+
+}
+
 
 bool SeqRickshaw::filtering(auto& rec) {
     auto qual = seqan3::get<seqan3::field::qual>(rec) | std::views::transform([] (auto q) { return q.to_phred(); });
