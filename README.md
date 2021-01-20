@@ -20,13 +20,18 @@ and cmake into the root directory.
 ```
 cmake ../source/
 ```
-This should be sufficient if the dependencies are located in $PATH. Calling `make` builds RNAnue. 
+This is be sufficient if the dependencies are located in $PATH. Calling `make` builds RNAnue. 
+
+## Overview
+
+![Principle](principle.png)
 
 ## Usage
-In principle, the parameters of RNAnue can be specified on the command line. However
+
 ### Positional Arguments
 RNAnue provides different functional arguments for individual procedures. These include `RNAnue preproc`, 
-`RNAnue align`, `RNAnue clustering`, `RNAnue analysis`.
+`RNAnue align`, `RNAnue clustering`, `RNAnue analysis`. In additon, `RNAnue complete` applies the whole
+workflow.
 
 ## Parameters
 RNAnue accepts parameter settings both from the commandline and through a configuration file.
@@ -38,18 +43,19 @@ RNAnue subcall --config /path/to/params.cfg
 ```
 In any case, the specifying parameters over the command lines has precedence over the config file.
 
+## Results
+
+In principle, the results of the analysis are stored in the specified output folder and its subfolders
+(e.g., ./preproc, ./align, ./clustering, ./analysis). RNAnue reports the split reads in SAM format, the clusters
+and the RNA-RNA interactions. RNAnue reports the split reads in SAM format. Additionally, the complementarity 
+scores and hybridization energies are stored in the tags FC and FE, respectively. We report the clusters in a
+custom format that includes the IDs of the clusters, its length, size and genomic coordinates.
+
+
 ### Docker
 In additon, we provide a ready-to-use Docker container that has RNAnue preconfigured.
 https://hub.docker.com/repository/docker/cobirna/rnanue
 
-### Preproc
-
-### Align
-
-### Clustering
-
-### Analysis
-
-## Output
 
 # Troubleshooting
+contact cobi@ibvt.uni-stuttgart.de or create an issue
