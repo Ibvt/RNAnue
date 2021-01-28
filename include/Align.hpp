@@ -9,15 +9,23 @@
 #include <stdio.h>
 #include <string.h>
 #include <regex>
+#include <utility>
 
-#include <seqan3/io/alignment_file/all.hpp>
+#include <seqan3/core/debug_stream.hpp>
+
 #include <seqan3/std/filesystem>
-#include <seqan3/io/alignment_file/sam_tag_dictionary.hpp>
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
+#include <seqan3/io/alignment_file/all.hpp>
+#include <seqan3/io/alignment_file/sam_tag_dictionary.hpp>
+
+#include <seqan3/alignment/configuration/all.hpp>
+
+#include <seqan3/alignment/scoring/nucleotide_scoring_scheme.hpp>
+#include <seqan3/alignment/pairwise/align_pairwise.hpp>
+
 
 #include <seqan3/alphabet/cigar/cigar.hpp>
 #include <seqan3/alphabet/cigar/cigar_op.hpp>
-
 #include <bitset>
 
 namespace pt = boost::property_tree;
@@ -43,12 +51,13 @@ typedef std::vector<seqan3::cigar> CigarSplt;
 typedef std::vector<
 	std::tuple<
 		std::string,
-		seqan3::sam_flag, 
-		std::optional<int32_t>,
-		std::optional<int32_t>,
+        seqan3::sam_flag,
+        std::optional<int32_t>,
+        std::optional<int32_t>,
         std::vector<seqan3::cigar>,
-        seqan3::dna5_vector,
-        seqan3::sam_tag_dictionary>> Splts;
+        seqan3::dna5_vector>> Splts;
+       // seqan3::sam_tag_dictionary>
+        //> Splts;
 
 class Align {
     private:
@@ -69,7 +78,9 @@ class Align {
         double complementarity(std::string rna1, std::string rna2);
 		
         void processSplits(auto &splitrecords, auto &splitsfile);
-        std::vector<seqan3::dna5> spanToVec(std::span<seqan3::dna5,-1> seq);
+        //std::vector<seqan3::dna5> spanToVec(std::span<seqan3::dna5,-1> seq);
+
+        seqan3::dna5 string2dna5(std::string rna); 
 
         void constructIndex();
         void start(pt::ptree sample);

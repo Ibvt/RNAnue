@@ -28,6 +28,8 @@
 #include <seqan3/range/views/char_to.hpp>
 #include <seqan3/range/views/slice.hpp>  
 
+#include <seqan3/core/debug_stream.hpp>
+
 #include <seqan3/std/ranges>
 
 #include <seqan3/range/views/all.hpp>

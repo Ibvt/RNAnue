@@ -195,9 +195,6 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
             nrElements = 2; // 
             sampleKeys = {"matched","splits"};
         }
-
-
-
     }
 
     /* path of the results up to the level of the conditions 

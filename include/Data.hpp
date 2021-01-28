@@ -21,7 +21,6 @@ namespace pt = boost::property_tree;
 
 using GroupsPath = std::map<std::string, fs::path>; // path to ctrls, trtms
 
-
 template <class DataType>
 using GroupsMap = std::map<std::string, std::pair<std::string, DataType>>;
 
@@ -35,7 +34,6 @@ class Data {
     private:
         po::variables_map params;
         pt::ptree dataStructure;
-
 
     public:
         Data();

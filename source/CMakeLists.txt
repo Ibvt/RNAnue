@@ -29,9 +29,28 @@ endif()
 file(GLOB SOURCES "*.cpp")
 include_directories(../include)
 
-add_executable (RNAnue ${SOURCES} /usr/local/include/ViennaRNA/)
+add_executable (RNAnue ${SOURCES})
 target_link_libraries (RNAnue seqan3::seqan3)
 target_link_libraries (RNAnue Boost::program_options Boost::filesystem)
 
-#target_include_directories(RNAnue PUBLIC "${PROJECT_BINARY_DIR}")
-#target_link_libraries (RNAnue OpenMP::OpenMP_CXX)
+
+# include RNAlib
+#include(ExternalProject)
+#ExternalProject_Add(project_RNAlib
+#    URL https://www.tbi.univie.ac.at/RNA/download/sourcecode/2_4_x/ViennaRNA-2.4.14.tar.gz
+#    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/RNAlib-2.4.14
+#    CONFIGURE_COMMAND ""
+#    BUILD_COMMAND make
+#    INSTALL_COMMAND make install
+#    PREFIX=${CMAKE_CURRENT_BINARY_DIR}/RNAlib-2-4.14
+#)
+#ExternalProject_Get_Property(project_RNAlib install_dir)
+#get_cmake_property(_variableNames VARIABLES)
+#list (SORT _variableNames)
+#foreach (_variableName ${_variableNames})
+#    message(STATUS "${_variableName}=${${_variableName}}")
+#endforeach()
+#include_directories(${install_dir}/include/)
+#add_dependencies(RNAnue project_RNAlib)
+#target_link_libraries (RNAnue ${install_dir}/lib/RNAlib.a)
+
