@@ -5,7 +5,6 @@ Align::Align(po::variables_map params) :
     params(params) {
 
     std::cout << "create align object" << std::endl;
-
     buildIndex();
 }
 
@@ -24,7 +23,6 @@ void Align::alignReads(std::string query, std::string matched, std::string unmat
 
     const char* call = align.c_str();
     system(call);
-
     std::cout << align << std::endl;
 }
 
@@ -163,6 +161,69 @@ void Align::processSplits(auto &splitrecords, auto &splitsfile) {
             seqan3::debug_stream << "xytag: " << xytag << std::endl;
             seqan3::debug_stream << cigar << std::endl;
 
+
+            for(auto &cig : cigar) {
+                cigarOpSize = get<uint32_t>(cig);
+                cigarOp = get<seqan3::cigar_op>(cig);
+                std::cout << cigarOpSize << seqan3::to_char(cigarOp);
+               
+
+                if(cigarOp != 'N'_cigar_op) {
+                    seqan3::cigar cigEl{cigarOpSize, cigarOp};
+                    cigarSplit.push_back(cigEl);
+                }
+
+
+                if(cigarOp == 'N'_cigar_op) {
+                    seqan3::debug_stream << "includes N" << std::endl;
+                    seqan3::debug_stream << "startPosRead: " << startPosRead << " endPosRead: " << endPosRead << std::endl;
+
+                    // determine sequence of the splits
+                    // auto splitSeq = seq | seqan3::views::slice(startPosSplit-1,endPosSplit);
+
+                    
+                    seqan3::debug_stream << "determine sequence of split: start: " << startPosRead  << " end: " << endPosRead << std::endl;
+                    auto splitSeq = seq | seqan3::views::slice(startPosRead-1,endPosRead);
+                    seqan3::debug_stream << splitSeq << std::endl;
+
+                    //endPosSplit = endPosRead++;
+                    startPosRead = endPosRead;
+
+                    
+                    seqan3::debug_stream << "cigar of split" << cigarSplit << std::endl;
+
+                    splits.push_back(
+                            std::make_tuple(
+                                qname,
+                                flag,
+                                refID,
+                                refOffset,
+                                cigarSplit
+//                               
+ //                               refID,
+  //                              refOffset,
+   //                             cigarSplit,
+    //                            splitSeq,
+     //                           tags
+                            ));
+
+
+
+                } else {
+                    if(cigarOp != 'D'_cigar_op) {
+                        endPosRead += cigarOpSize;
+                    }
+                }
+
+            }
+
+            seqan3::debug_stream << "end of read reached: start: " << startPosRead << " end: " << endPosRead << std::endl; 
+        }
+    }
+}
+            
+    
+    /*
 			for(auto &cig: cigar) {
 				cigarOpSize = get<uint32_t>(cig);
 				cigarOp = get<seqan3::cigar_op>(cig);
@@ -215,6 +276,7 @@ void Align::processSplits(auto &splitrecords, auto &splitsfile) {
 					}
 				}
 			}
+
             tags.get<"XY"_tag>() = endPosRead;
 //			std::cout << std::endl;
             seqan3::debug_stream << "startPosRead: " << startPosRead;
@@ -229,10 +291,12 @@ void Align::processSplits(auto &splitrecords, auto &splitsfile) {
                         cigarSplit, 
                         seq, 
                         tags));
-		}
-	}
 
-    
+            */
+		//}
+	//}
+
+    /*
     if(splits.size() >= 2) {
         // 
         std::map<std::pair<uint32_t,uint32_t>,std::pair<double,double>> putSplits;
@@ -273,12 +337,13 @@ void Align::processSplits(auto &splitrecords, auto &splitsfile) {
                     putSplits.insert(
                             std::make_pair(
                                 std::make_pair(i,j),
-                                std::make_pair(0.0,
+                                std::make_pair(
+                                    complementarity(
+                                        std::string(seq1.begin(), seq1.end()),
+                                        std::string(seq2.begin(), seq2.end())),
                                     hybridize(
                                         std::string(seq1.begin(),seq1.end()),
                                         std::string(seq2.begin(),seq2.end())))));
-
-                   // system(call);
                 }
             }
         }
@@ -287,9 +352,9 @@ void Align::processSplits(auto &splitrecords, auto &splitsfile) {
         for(auto &spl : putSplits) {
             seqan3::debug_stream << "(" << spl.first.first << "," <<  spl.first.second << ") -> " << spl.second.second << std::endl;
 
-
         }
 
+        */
 
 /*
 
@@ -308,10 +373,11 @@ void Align::processSplits(auto &splitrecords, auto &splitsfile) {
                 std::get<5>(splt),
                 tags);
         }*/
-    }
+    //}
 
-}
+//}
 
+/*
 double Align::hybridize(std::string rna1, std::string rna2) {
     std::string hyb = "echo '" + rna1 + "&" + rna2 + "' | RNAcofold";
     const char* call = hyb.c_str();
@@ -342,26 +408,45 @@ double Align::hybridize(std::string rna1, std::string rna2) {
 
     std::regex_search(tokens[1], matches, regexp);
     return stod(matches[0]);
+}*/
+
+
+//
+double Align::complementarity(std::string rna1, std::string rna2) {
+    std::cout << "start complementarity" << std::endl;
+
+    seqan3::dna5 s1 = string2dna5(rna1);
+    seqan3::dna5 s2 = string2dna5(rna2);
+    seqan3::debug_stream << s1 << std::endl;
+
+
+
+
+
+    // Configure the alignment kernel.
+    auto config = seqan3::align_cfg::method_local{};
+                //   |seqan3::align_cfg::scoring_scheme{seqan3::nucleotide_scoring_scheme{}};
+
+     /*
+     // Invoke the pairwise alignment which returns a lazy range over alignment results.
+     auto results = seqan3::align_pairwise(std::tie(s1, s2), config);
+     auto & res = *results.begin();
+     seqan3::debug_stream << "Score: " << res.score() << '\n';*/
+    
+
+
+    return 0.0;
 }
 
 //
-double complementarity(std::string rna1, std::string rna2) {
-    std::cout << "start complementarity" << std::endl;
-
-
-    // perform alignment
-
-    // instatiate matrix
-    //
-
-
-    // fill
-
-
-
-
-    // backtracking
+seqan3::dna5 Align::string2dna5(std::string rna) {
+    seqan3::dna5 seq{};
+    for(auto &nt : rna) {
+        seq.assign_char(nt);
+    }
+    return seq;
 }
+
 
 
 //
@@ -379,12 +464,13 @@ void Align::start(pt::ptree sample) {
         detSplits(matched, splits);
     }
 }
-        
+
+/*
 std::vector<seqan3::dna5> Align::spanToVec(std::span<seqan3::dna5,-1> seq) {
     std::vector<seqan3::dna5> out;
     for(auto &nt : seq) {
         out.push_back(nt);
     }
     return(out);
-}
+}*/
 

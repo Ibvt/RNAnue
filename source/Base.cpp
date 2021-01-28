@@ -7,36 +7,22 @@ Base::Base(po::variables_map _params, std::string _subcall):
 
         if(_params["subcall"].as<std::string>() == "preproc") {
             std::cout << "preproc called within Base" << std::endl;
-
             data.preproc();
-
-            // create preprocessing instance (e.g., SeqRickshaw)
-//            SeqRickshaw rsh;
- //           data.bla(std::bind(&SeqRickshaw::start, rsh));
-
-
-
-
-
-
-
-//            std::cout << "call retrieveGroupsPath again" << std::endl;
- //           data.retrieveGroupsPath(fs::path(_params["ctrls"].as<std::string>()), fs::path(_params["trtms"].as<std::string>()));
-
-//            data.callInAndOut(std::bind(&SeqRickshaw::start, rsh));
-
-
-//            testBind(std::bind(&SeqRickshaw::start, rsh));
-            // 
-            //auto bla = std::bind(&SeqRickshaw::start, rsh, std::placeholders::_1);
-            //pt::ptree something;
-            //
-
- //           data.callInAndOut();
-
-//            testBind(std::bind(&SeqRickshaw::start, rsh, std::placeholders::_1));
         }
-    }
+
+        if(_params["subcall"].as<std::string>() == "align") {
+            std::cout << "align called within Base" << '\n';
+            data.align();
+        }
+
+        if(_params["subcall"].as<std::string>() == "clustering") {
+            std::cout << "cluster the split reads" << '\n';
+        }
+
+        if(_params["subcall"].as<std::string>() == "complete") {
+            std::cout << "complete analysis" << std::endl;
+        }
+}
 
 //
 template <typename Callable>
@@ -44,7 +30,6 @@ void Base::testBind(Callable f) {
     std::cout << "asda" << std::endl;
 
     pt::ptree bla;
-
     f();
 }
 
