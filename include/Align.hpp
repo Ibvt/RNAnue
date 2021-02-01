@@ -15,6 +15,8 @@
 
 #include <seqan3/std/filesystem>
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
+#include <seqan3/alphabet/nucleotide/dna15.hpp>
+#include <seqan3/alphabet/nucleotide/dna4.hpp>
 #include <seqan3/io/alignment_file/all.hpp>
 #include <seqan3/io/alignment_file/sam_tag_dictionary.hpp>
 
@@ -35,6 +37,8 @@ namespace fs = boost::filesystem;
 using seqan3::operator""_tag;
 using seqan3::operator""_cigar_op;
 using seqan3::operator""_dna5;
+using seqan3::operator""_dna15;
+using seqan3::operator""_dna4;
 using seqan3::get;
 
 // overload struct to 
@@ -55,9 +59,14 @@ typedef std::vector<
         std::optional<int32_t>,
         std::optional<int32_t>,
         std::vector<seqan3::cigar>,
-        seqan3::dna5_vector>> Splts;
+        seqan3::dna5_vector,
+		seqan3::sam_tag_dictionary>> Splts;	
+        //seqan3::sam_tag_dictionary>> Splts;
+
+
+//        seqan3::dna5_vector>> Splts;
        // seqan3::sam_tag_dictionary>
-        //> Splts;
+        //> Splts;*/
 
 class Align {
     private:
@@ -74,8 +83,11 @@ class Align {
         void alignReads(std::string query, std::string matched, std::string splits);
         void detSplits(std::string matched, std::string splits);
 
-        double hybridize(std::string rna1, std::string rna2);
-        double complementarity(std::string rna1, std::string rna2);
+        //double complementarity(std::string rna1, std::string rna2);
+        //
+
+        double complementarity(seqan3::dna5_vector rna1, seqan3::dna5_vector rna2);
+        double hybridize(seqan3::dna5_vector rna1, seqan3::dna5_vector rna2);
 		
         void processSplits(auto &splitrecords, auto &splitsfile);
         //std::vector<seqan3::dna5> spanToVec(std::span<seqan3::dna5,-1> seq);
