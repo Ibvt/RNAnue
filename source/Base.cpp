@@ -15,12 +15,29 @@ Base::Base(po::variables_map _params, std::string _subcall):
             data.align();
         }
 
+        if(_params["subcall"].as<std::string>() == "detect") {
+            std::cout << "split read calling called within Base " << '\n';
+            data.splitReadCalling();
+        }
+
         if(_params["subcall"].as<std::string>() == "clustering") {
             std::cout << "cluster the split reads" << '\n';
+			data.clustering();
         }
+
+        if(_params["subcall"].as<std::string>() == "analysis") {
+            std::cout << "analysis" << std::endl;
+            data.analysis();
+        }
+
 
         if(_params["subcall"].as<std::string>() == "complete") {
             std::cout << "complete analysis" << std::endl;
+            data.preproc();
+            data.align();
+            data.splitReadCalling();
+            data.clustering();
+            data.analysis();
         }
 }
 

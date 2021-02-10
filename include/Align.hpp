@@ -12,7 +12,6 @@
 #include <utility>
 
 #include <seqan3/core/debug_stream.hpp>
-
 #include <seqan3/std/filesystem>
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
 #include <seqan3/alphabet/nucleotide/dna15.hpp>
@@ -41,11 +40,6 @@ using seqan3::operator""_dna15;
 using seqan3::operator""_dna4;
 using seqan3::get;
 
-// overload struct to 
-template <> struct seqan3::sam_tag_type<"XX"_tag> { using type = int32_t; };
-template <> struct seqan3::sam_tag_type<"XY"_tag> { using type = int32_t; };
-template <> struct seqan3::sam_tag_type<"XJ"_tag> { using type = int32_t; };
-template <> struct seqan3::sam_tag_type<"XH"_tag> { using type = int32_t; };
 
 typedef std::pair<uint32_t,uint32_t> ReadPos;
 typedef std::pair<uint64_t,uint64_t> GenomePos;
@@ -80,11 +74,10 @@ class Align {
         Align();
 
         void buildIndex();
-        void alignReads(std::string query, std::string matched, std::string splits);
+        void alignReads(std::string query, std::string matched);
         void detSplits(std::string matched, std::string splits);
 
         //double complementarity(std::string rna1, std::string rna2);
-        //
 
         double complementarity(seqan3::dna5_vector rna1, seqan3::dna5_vector rna2);
         double hybridize(seqan3::dna5_vector rna1, seqan3::dna5_vector rna2);
@@ -97,4 +90,3 @@ class Align {
         void constructIndex();
         void start(pt::ptree sample);
 };
-

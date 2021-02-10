@@ -33,15 +33,21 @@ Data::Data(po::variables_map _params) :
     // preprocessing
     if(subcall == "preproc") { //
         preprocDataPrep(); // prepares the data files as property tree
-        // iterate
-        //callInAndOut();
-
     }
 
     if(subcall == "align") {
         alignDataPrep();
-
     }
+
+    if(subcall == "detect") {
+        detectDataPrep();
+    }
+
+	if(subcall == "clustering") {
+		clusteringDataPrep();
+	}
+
+
 }
 
 // getter & setter
@@ -55,7 +61,6 @@ void Data::preprocDataPrep() {
     // retrieve paths that contain all the reads
     fs::path ctrlsPath = fs::path(this->params["ctrls"].as<std::string>());
     fs::path trtmsPath = fs::path(this->params["trtms"].as<std::string>());
-
 
     /*
      * trtms -> "/Users/..../trtms"
@@ -81,16 +86,40 @@ void Data::alignDataPrep() {
          * */
         GroupsPath group = retrieveGroupsPath(ctrlsPath, trtmsPath); // 
         retrieveData(group);
-
     }
 }
 
-void clusteringDatPrep() {
+
+void Data::detectDataPrep() {
+    std::cout << "detect split reads in reads" << std::endl;
+    // determine path of the alignments results
+    fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "align/ctrls";
+    if(params["ctrls"].as<std::string>() == "") {
+        ctrlsPath = fs::path("");
+    }
+    fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "align/trtms";
+	
+    GroupsPath group = retrieveGroupsPath(ctrlsPath, trtmsPath);
+	retrieveData(group);
+
 }
 
-void analysisDataPrep() {
+
+void Data::clusteringDataPrep() {
+	std::cout << "reads the data to align" << "\n";
+	
+	fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "align/ctrls";
+	if(params["ctrls"].as<std::string>() == "") {
+		ctrlsPath = fs::path("");
+	}
+	fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "align/trtms";
+
+	GroupsPath group = retrieveGroupsPath(ctrlsPath, trtmsPath);
+	retrieveData(group);
 }
 
+void Data::analysisDataPrep() {
+}
 
 //
 GroupsPath Data::retrieveGroupsPath(fs::path _ctrls, fs::path _trtms) {
@@ -132,12 +161,11 @@ void Data::retrieveData(GroupsPath _groupsPath) {
             std::cout << "\t\t...has been found in the filesystem!" << std::endl;
             if(fs::is_directory(itGroups->second)) { // ... and check if its a directory (not a file)
                 // retrieve content (conditions) within group (e.g., rpl-exp,..) as abs path
-                PathVector conditionsVec = sortDirContent(itGroups->second); 
+                PathVector conditionsVec = sortDirContent(itGroups->second); // sort 
                 PathVector::iterator itConditions = conditionsVec.begin();
                 for(itConditions;itConditions != conditionsVec.end();++itConditions) {
                     condition = retrieveGroup(itGroups->first,*itConditions);
                     // parent output directories
-                    //
                     
                     group.push_back(std::make_pair("", condition));
                 }
@@ -174,12 +202,17 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
 
     std::string conditionName = _conditionPath.stem().string();
 
+
     // define propery trees for the data
     pt::ptree condition, samples, sample, files, input, output;
+
+	//std::cout << "_conditionPath " << _conditionPath << std::endl;
     
     std::vector<std::string> sampleKeys;
+	
+	// lists and sorts content in PathVector
     PathVector dataFiles = sortDirContent(_conditionPath);
-
+	
     std::cout << "\t\t" << conditionName << std::endl;
 
     if(subcall == "preproc") {
@@ -192,10 +225,32 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
             nrElements = 1;
             sampleKeys = {"forward"};
         } else {
-            nrElements = 2; // 
-            sampleKeys = {"matched","splits"};
+            nrElements = 1; // 
+    //        sampleKeys = {"matched","splits"};
+            sampleKeys = {"matched"};
         }
     }
+
+
+    if(subcall == "detect") {
+        nrElements = 1;
+        // remove files that do not contain keyword (matched)
+        PathVector tmpDataFiles = filterDirContent(dataFiles, "matched.sam");
+        sampleKeys = {"matched"};
+        dataFiles = tmpDataFiles;
+    }
+
+
+	if(subcall == "clustering") {
+		//std::cout << "being in retrieve group" << std::endl;
+		nrElements = 1;
+
+		// remove files that do not contain keyword (splis)
+		PathVector tmpDataFiles = filterDirContent(dataFiles, "splits");
+		sampleKeys = {"splits"};
+		dataFiles = tmpDataFiles;
+	}
+
 
     /* path of the results up to the level of the conditions 
      * e.g., /results/preproc/trtms/
@@ -204,11 +259,12 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
     outConditionDir /= fs::path(params["subcall"].as<std::string>());
     outConditionDir /= fs::path(_group);
     outConditionDir /= fs::path(_conditionPath.filename());
-    
+
     //
     elCntr = 0;
     for(unsigned i=0;i<dataFiles.size();++i) {
         files.put(sampleKeys[i % nrElements],dataFiles[i].string());
+		//std::cout << "dataFiles[i]: " << dataFiles[i] << std::endl;
 
         //
         if(elCntr == nrElements-1) { 
@@ -289,12 +345,37 @@ pt::ptree Data::retrieveOutput(fs::path _outConditionDir, pt::ptree _input) {
         std::string forward = replacePath(_outConditionDir, fwd).string();
 
         std::string matched = addSuffix(forward, "_matched", {});
-        std::string splits = addSuffix(forward, "_splits", {});
+ //       std::string splits = addSuffix(forward, "_splits", {});
 
         output.put("matched", matched);
-        output.put("splits", splits);
+//        output.put("splits", splits);
 
     }
+
+    if(params["subcall"].as<std::string>() == "detect") {
+//        output.put("splits","adads");
+
+        fs::path matched = fs::path(_input.get<std::string>("input.matched"));
+        std::string s = replacePath(_outConditionDir, matched).string();
+        
+        std::string splits = addSuffix(s, "splits", {"matched"});
+        output.put("splits",splits);
+
+    }
+
+
+	// clustering
+	if(params["subcall"].as<std::string>() == "clustering") {
+        fs::path splits = fs::path(_input.get<std::string>("input.splits"));
+		splits.replace_extension(".txt");
+		std::string clu = replacePath(_outConditionDir, splits).string();
+		std::string clusters = addSuffix(clu, "_clusters", {"_splits"});
+		output.put("clusters", clusters);
+	}
+    
+    if(params["subcall"].as<std::string>() == "analysis") {
+    }
+
 
     return output;
 }
@@ -365,7 +446,22 @@ void Data::align() {
     // create Object of Alignment
     Align aln(params);
     callInAndOut(std::bind(&Align::start, aln, std::placeholders::_1));
+}
 
+
+void Data::splitReadCalling() {
+    SplitReadCalling src(params);
+    callInAndOut(std::bind(&SplitReadCalling::start, src, std::placeholders::_1));
+}
+
+
+void Data::clustering() {
+    // create Object of CLustering
+	Clustering clu(params);
+	callInAndOut(std::bind(&Clustering::start, clu, std::placeholders::_1));
+}
+
+void Data::analysis() {
 }
 
 
@@ -381,6 +477,19 @@ PathVector Data::sortDirContent(fs::path _path) {
     sort(content.begin(),content.end()); // sort the content 
     return content;
 }
+
+
+// filters content of directory
+PathVector Data::filterDirContent(PathVector vec, std::string sestr) {
+	PathVector content; // create new vector
+	std::copy_if(vec.begin(), vec.end(), std::back_inserter(content), [&sestr] (fs::path x) {
+		// only return if fs::path contains sestr
+		return x.string().find(sestr) != std::string::npos; 
+	});
+	return content;
+}
+
+
 
 // adds suffix to filename (optional: 
 std::string Data::addSuffix(std::string _file, std::string _suffix, std::vector<std::string> _keywords) {
