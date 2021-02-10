@@ -14,6 +14,8 @@
 
 #include "SeqRickshaw.hpp"
 #include "Align.hpp"
+#include "SplitReadCalling.hpp"
+#include "Clustering.hpp"
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -46,6 +48,7 @@ class Data {
         //
         void preprocDataPrep();
         void alignDataPrep();
+        void detectDataPrep();
         void clusteringDataPrep();
         void analysisDataPrep();
 
@@ -63,6 +66,8 @@ class Data {
         // helper methods
         // determine content of directory and sort it (return as vector)
         PathVector sortDirContent(fs::path _path);
+		// filter content of directory to only include files containing search string
+		PathVector filterDirContent(PathVector vec, std::string sestr);
         std::string addSuffix(std::string _file, std::string _suffix, std::vector<std::string> _keys);
 
         // test stuff
@@ -71,6 +76,12 @@ class Data {
 
         void preproc();
         void align();
+        void splitReadCalling();
+        void clustering();
+        void analysis();
+
+
+
 };
 
 #endif // DATA_HPP
