@@ -2,11 +2,11 @@
 #include <string>
 #include <bitset>
 
-//#include <boost/program_options.hpp>
-
 #include "Base.hpp"
 #include "Config.h"
 #include "Closing.hpp"
+
+//#include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
 
@@ -45,14 +45,15 @@ int main(int argc, char* argv[]) {
                 "(output) folder in which the results are stored")
             ("threads,p", po::value<int>()->default_value(1), 
                 "the number of threads")
-            ("quality,q", po::value<int>()->default_value(30), 
+            ("quality,q", po::value<int>()->default_value(20), 
                 "lower limit for the quality (Phred Quality Score) of the reads")
+            ("mapquality", po::value<int>()->default_value(20),
+                "lower limit for the quality (Phred Quality Score) of the alignments")
             ("minlen,l", po::value<int>()->default_value(15), 
                 "minimum length of the reads")
             ("splicing", po::value<std::bitset<1>>()->default_value(0), 
                 "splicing events are considered in the detection of split reads")
 	    ;
-
 
         po::options_description preproc("Preprocessing");
         preproc.add_options()
@@ -80,6 +81,8 @@ int main(int argc, char* argv[]) {
                 "minimum length of a spliced fragment")
             ("minsplicecov", po::value<int>()->default_value(80), 
                 "minimum coverage for spliced transcripts")
+            ("exclclipping", po::value<std::bitset<1>>()->default_value(0),
+                "exclude soft clipping from the alignments")
         ;
 
         po::options_description clustering("Clustering");
@@ -211,10 +214,5 @@ int main(int argc, char* argv[]) {
         std::cerr << e.what();
         return 0;
     }
-//    catch(...) {
- //       std::cerr << "Unknown error" << std::endl; 
-  //  }
-
-
 }
 

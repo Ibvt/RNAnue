@@ -1,4 +1,4 @@
-# RNAnue - 0.0.1
+# RNAnue - 0.1.0
 
 ## About
 RNAnue is a comprehensive analysis to detect RNA-RNA interactions from Direct-Duplex-Detection (DDD) data.
