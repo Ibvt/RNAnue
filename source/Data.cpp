@@ -202,7 +202,6 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
 
     std::string conditionName = _conditionPath.stem().string();
 
-
     // define propery trees for the data
     pt::ptree condition, samples, sample, files, input, output;
 
@@ -230,7 +229,6 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
             sampleKeys = {"matched"};
         }
     }
-
 
     if(subcall == "detect") {
         nrElements = 1;
@@ -359,7 +357,9 @@ pt::ptree Data::retrieveOutput(fs::path _outConditionDir, pt::ptree _input) {
         std::string s = replacePath(_outConditionDir, matched).string();
         
         std::string splits = addSuffix(s, "splits", {"matched"});
+        std::string multsplits = addSuffix(s, "multsplits", {"matched"});
         output.put("splits",splits);
+        output.put("multsplits",multsplits);
 
     }
 
