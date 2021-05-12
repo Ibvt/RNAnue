@@ -185,7 +185,7 @@ void Data::retrieveData(GroupsPath _groupsPath) {
 
     // write folder structure to output file
     fs::path ppPath = params["outdir"].as<std::string>() / fs::path("data.json");
-    std::ofstream ppStr(ppPath);
+    std::ofstream ppStr(ppPath.string());
     boost::property_tree::json_parser::write_json(ppStr, dataStructure);
 }
 
