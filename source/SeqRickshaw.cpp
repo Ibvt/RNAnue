@@ -538,13 +538,52 @@ void SeqRickshaw::start(pt::ptree sample) {
 
     std::string forward = input.get<std::string>("forward");
     seqan3::sequence_file_input fwd{forward};
-                
 
     //
     if(readtype == "SE") {
+        std::string outreads = output.get<std::string>("forward");
+        //seqan3::sequence_file_output outReadsFile{outreads};
+
+        std::ofstream myfile;
+        myfile.open(outreads);
+
         for(auto & [seq, id, qual] : fwd) {
             bndsFwd = trimming(seq);
+
+		//	seqan3::debug_stream << "original sequence: " << seq << std::endl;
+
+            auto trmReadFwd = seq | seqan3::views::slice(bndsFwd.first,bndsFwd.second);
+            auto trmReadFwdQual = qual | seqan3::views::slice(bndsFwd.first,bndsFwd.second);
+
+		//	seqan3::debug_stream << "sequence " << trmReadFwd << std::endl;
+		//	seqan3::debug_stream << "quality " << trmReadFwdQual << std::endl;
+
+
+			// filter reads based on size
+			if(std::ranges::size(trmReadFwd) != 0 && std::ranges::size(trmReadFwd) >= minlen) {
+				auto bla = trmReadFwdQual | std::views::transform([] (auto quality) { return seqan3::to_phred(quality); });
+				auto sum = std::accumulate(bla.begin(), bla.end(), 0);
+				auto qualscore = sum / std::ranges::size(bla);
+
+				//std::cout << qualscore << std::endl;
+				if(qualscore >= phred) {
+//					std::cout << id << std::endl;
+					myfile << id << '\n';
+					for(auto & s: trmReadFwd) {
+						myfile << s.to_char();
+					}
+					myfile << '\n';
+					myfile << '+';
+					myfile << '\n';
+					for(auto & t: trmReadFwdQual) {
+						myfile << t.to_char();
+					}
+					myfile << '\n';
+					}
+			}
         }
+        myfile.close();
+
     } else { // readtype == "PE"
         std::string reverse = input.get<std::string>("reverse");
         seqan3::sequence_file_input rev{reverse};
@@ -682,37 +721,17 @@ void SeqRickshaw::merging(auto fwd, auto rev) {
     auto forward = fwd | seqan3::views::to_char;
     auto reverse = rev | seqan3::views::complement | std::views::reverse | seqan3::views::to_char;
 
-
     std::cout << (rev | seqan3::views::to_char) << std::endl;
     std::cout << (reverse | seqan3::views::to_char) << std::endl;
 
-
-
     std::string s1(forward.begin(),forward.end());
     std::string s2(reverse.begin(),reverse.end());
-
 
     for(unsigned i=1;i<s1.size()/2;++i) {
 //        std::string subs = s1.substr(s1
 
         std::cout << s1.substr(s1.size()-1-i,i) << std::endl;
-
-
     }
-
-
-
-    
-    
-    /*
-    std::size_t n;
-    for(std::size_t i=0;i<n;++i) {
-        if(std::strncmp(lef
-
-    }
-    */
-
-
 }
 
 

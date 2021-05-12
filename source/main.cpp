@@ -120,7 +120,7 @@ int main(int argc, char* argv[]) {
 
         po::options_description subcall("Subcall");
         subcall.add_options()
-            ("subcall", po::value<std::string>(), "preproc, alignment, clustering, analysis")
+            ("subcall", po::value<std::string>(), "preproc, detect, alignment, clustering, analysis")
         ;
 
 
@@ -185,7 +185,7 @@ int main(int argc, char* argv[]) {
         showVersion(std::cout);
         Base bs(vm, vm["subcall"].as<std::string>()); // controls all downstream processing
 
-        // 
+        /* 
         if(vm.count("subcall")) {
             if(vm["subcall"].as<std::string>() == "preproc") {
                 std::cout << "*** start the preprocessing" << std::endl;
@@ -206,7 +206,8 @@ int main(int argc, char* argv[]) {
             if(vm["subcall"].as<std::string>() == "complete") {
                 std::cout << "perform complete analysis" << std::endl;
             }
-        }
+        }*/
+
         cl.show(std::cout);
        
     

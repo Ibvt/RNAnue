@@ -7,6 +7,12 @@ Base::Base(po::variables_map _params, std::string _subcall):
 
         if(_params["subcall"].as<std::string>() == "preproc") {
             std::cout << "preproc called within Base" << std::endl;
+
+            // 
+            if(_params["preproc"].as<std::bitset<1>>() == std::bitset<1>("0")) {
+                std::cout << "preprocessing has been excluded - check parameters" << std::endl;
+                exit(EXIT_SUCCESS);
+            }
             data.preproc();
         }
 
@@ -29,7 +35,6 @@ Base::Base(po::variables_map _params, std::string _subcall):
             std::cout << "analysis" << std::endl;
             data.analysis();
         }
-
 
         if(_params["subcall"].as<std::string>() == "complete") {
             std::cout << "complete analysis" << std::endl;
