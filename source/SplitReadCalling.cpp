@@ -440,6 +440,11 @@ double SplitReadCalling::complementarity2(std::span<seqan3::dna5> &seq1, std::sp
 double SplitReadCalling::complementarity(seqan3::dna5_vector rna1, seqan3::dna5_vector rna2) {
     std::cout << "start complementarity" << std::endl;
 
+
+	/*
+
+
+
 	// reverse rna1
 	seqan3::dna5_vector rna1Rev;
 	for(unsigned z=rna1.size();z-- > 0;) {
@@ -475,6 +480,8 @@ double SplitReadCalling::complementarity(seqan3::dna5_vector rna1, seqan3::dna5_
 	seqan3::debug_stream << "Score: " << res.score() << '\n';
 	seqan3::debug_stream << "Begin: (" << res.sequence1_begin_position() << "," << res.sequence2_begin_position() << ")\n";
 	seqan3::debug_stream << "End: (" << res.sequence1_end_position() << "," << res.sequence2_end_position() << ")\n";
+
+	*/
     
     return 0.0;
 }

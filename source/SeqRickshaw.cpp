@@ -6,6 +6,7 @@ SeqRickshaw::SeqRickshaw(po::variables_map _params) {
     // retrieve parametes for the preprocessing
     minlen = _params["minlen"].as<int>();
     phred = _params["quality"].as<int>();
+	wsize = _params["wsize"].as<int>();
 
     // which adapters to trim (5'/3'/both)
     modus = _params["modetrm"].as<int>();
@@ -548,17 +549,23 @@ void SeqRickshaw::start(pt::ptree sample) {
         myfile.open(outreads);
 
         for(auto & [seq, id, qual] : fwd) {
+//			seqan3::debug_stream << "sequence: " << seq << std::endl;
+//			seqan3::debug_stream << "quality: " << qual << std::endl;
+
             bndsFwd = trimming(seq);
 
-		//	seqan3::debug_stream << "original sequence: " << seq << std::endl;
+			// perform window trimming
+			bndsFwd.second = nibble(seq, qual, bndsFwd);
 
             auto trmReadFwd = seq | seqan3::views::slice(bndsFwd.first,bndsFwd.second);
             auto trmReadFwdQual = qual | seqan3::views::slice(bndsFwd.first,bndsFwd.second);
 
-		//	seqan3::debug_stream << "sequence " << trmReadFwd << std::endl;
-		//	seqan3::debug_stream << "quality " << trmReadFwdQual << std::endl;
+//			seqan3::debug_stream << "5'-end: " << bndsFwd.first << std::endl;
+//			seqan3::debug_stream << "3'-end: " << bndsFwd.second << std::endl;
 
-
+//			seqan3::debug_stream << trmReadFwd << std::endl;
+//			seqan3::debug_stream << trmReadFwdQual << std::endl;
+			
 			// filter reads based on size
 			if(std::ranges::size(trmReadFwd) != 0 && std::ranges::size(trmReadFwd) >= minlen) {
 				auto bla = trmReadFwdQual | std::views::transform([] (auto quality) { return seqan3::to_phred(quality); });
@@ -567,8 +574,7 @@ void SeqRickshaw::start(pt::ptree sample) {
 
 				//std::cout << qualscore << std::endl;
 				if(qualscore >= phred) {
-//					std::cout << id << std::endl;
-					myfile << id << '\n';
+					myfile << "@" << id << '\n';
 					for(auto & s: trmReadFwd) {
 						myfile << s.to_char();
 					}
@@ -611,15 +617,6 @@ void SeqRickshaw::start(pt::ptree sample) {
 
             if(filtFwd && filtRev) {
                 merging(trmReadFwd,trmReadRev);
-
-
-                // perform merging operation
-                /*
-                std::cout << trmReadFwdID << std::endl;
-                std::cout << (trmReadFwd | seqan3::views::to_char) << std::endl;
-                std::cout << trmReadRevID << std::endl;
-                std::cout << (trmReadRev | seqan3::views::to_char) << std::endl;
-                */
             } else {
                 if(filtFwd) {
                     // push to r1only
@@ -630,27 +627,36 @@ void SeqRickshaw::start(pt::ptree sample) {
                     r2onlyOut.emplace_back(trmReadRev,trmReadRevID,trmReadRevQual);
                 }
             }
-
-            /*
-            std::cout << bndsRev.second<< std::endl;
-            std::cout << "original read" <<  (seqan3::get<seqan3::field::seq>(rec2) | seqan3::views::to_char) << std::endl;
-            std::cout << "trimmed read" <<  (trmReadRev | seqan3::views::to_char) << std::endl;
-            */
         }
     }
-
-
-//    seqan3::sequence_file_input reads{infwd};
- //   for (auto & [seq, id, qual] : reads )
-  //  {
-        //processing(seq, adpt3Table);
-        /*
-        seqan3::debug_stream << "ID: "        << id   << '\n';
-        seqan3::debug_stream << "SEQ: "       << seq  << '\n';
-        seqan3::debug_stream << "EMPTY QUAL." << qual << '\n'; // qual is empty for FastA files
-        */
-   // }
 }
+
+
+
+
+// window trimming method
+std::size_t SeqRickshaw::nibble(auto &seq, auto &qual, std::pair<std::size_t,std::size_t> &bnds) {
+	std::size_t threePrimeEnd = bnds.second;
+
+	while((threePrimeEnd - bnds.first) >= wsize ) {
+		auto windowSeq = seq | seqan3::views::slice(threePrimeEnd-3,threePrimeEnd);
+		auto windowQual = qual | seqan3::views::slice(threePrimeEnd-3,threePrimeEnd);
+
+		// determine Phread score of window
+		auto windowPhred = windowQual | std::views::transform([] (auto quality) { return seqan3::to_phred(quality); });
+		auto windowPhredSum = std::accumulate(windowPhred.begin(), windowPhred.end(), 0);
+		auto windowPhredScore = windowPhredSum / std::ranges::size(windowPhred);
+		
+		if(windowPhredScore >= phred) {
+			break;
+		}
+
+		threePrimeEnd -= wsize;
+
+	}
+	return threePrimeEnd;
+}
+
 
 
 //
