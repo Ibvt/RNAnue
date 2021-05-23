@@ -1,9 +1,11 @@
 //boost
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/filesystem.hpp>
 
 
 #include <iostream>
+#include <fstream>
 #include <regex>
 #include <list>
 #include <bitset>
@@ -26,6 +28,7 @@
 
 namespace po = boost::program_options;
 namespace pt = boost::property_tree;
+namespace fs = boost::filesystem;
 
 using seqan3::operator""_tag;
 using seqan3::operator""_cigar_op;
@@ -91,6 +94,11 @@ typedef std::vector<
 class SplitReadCalling {
     private:
         po::variables_map params;
+
+        int readCount;
+        int splitCount;
+        int multCount;
+
     public:
         SplitReadCalling();
         SplitReadCalling(po::variables_map params);
@@ -106,13 +114,11 @@ class SplitReadCalling {
         void addFilterToSamRecord(SamRecord &rec, std::pair<float,float> filters); 
         void writeSamFile(auto &samfile, std::vector<std::pair<SamRecord,SamRecord>> splits );
         
-        double complementarity(seqan3::dna5_vector rna1, seqan3::dna5_vector rna2);
+        double complementarity(std::span<seqan3::dna5> &seq1, std::span<seqan3::dna5> &seq2);
         double complementarity2(std::span<seqan3::dna5> &seq1, std::span<seqan3::dna5> &seq2);
 
 
-
-
-        double hybridize(seqan3::dna5_vector rna1, seqan3::dna5_vector rna2);
+        double hybridize(std::span<seqan3::dna5> &seq1, std::span<seqan3::dna5> &seq2);
 
         void start(pt::ptree sample);
 };

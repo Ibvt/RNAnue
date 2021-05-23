@@ -2,6 +2,9 @@
 
 SplitReadCalling::SplitReadCalling(po::variables_map params) : 
     params(params) {
+        readCount = 0;
+        splitCount = 0;
+        multCount = 0;
 }
 
 //
@@ -67,6 +70,7 @@ void SplitReadCalling::iterate(std::string matched, std::string splits, std::str
 		
 		std::string QNAME = seqan3::get<seqan3::field::id>(rec);
 		if((currentQNAME != "") && (currentQNAME != QNAME)) {
+            readCount++;
 			process(splitrecords, splitsfile, multsplitsfile);	
 			splitrecords.clear();
 			splitrecords.push_back(rec);
@@ -79,6 +83,7 @@ void SplitReadCalling::iterate(std::string matched, std::string splits, std::str
 	if(!splitrecords.empty()) {
 		process(splitrecords, splitsfile, multsplitsfile);
 		splitrecords.clear();
+        readCount++;
 	}
 }
 
@@ -264,14 +269,15 @@ void SplitReadCalling::process(auto &splitrecords, auto &splitsfile, auto &mults
                 for(unsigned i=0;i<splits.size();++i) {
                     for(unsigned j=i+1;j<splits.size();++j) {
                         if(p1.empty() && p2.empty()) {
-                            double res = complementarity2(seqan3::get<seqan3::field::seq>(splits[i]), seqan3::get<seqan3::field::seq>(splits[j]));
-                            filters = std::make_pair(0.6, -0.1415);
+                            double res = complementarity(seqan3::get<seqan3::field::seq>(splits[i]), seqan3::get<seqan3::field::seq>(splits[j]));
+                            float initHyb = hybridize(seqan3::get<seqan3::field::seq>(splits[i]), seqan3::get<seqan3::field::seq>(splits[j])); 
+                            filters = std::make_pair(0.6, initHyb);
                             addFilterToSamRecord(splits[i], filters);
                             addFilterToSamRecord(splits[j], filters);
                             splitSegments.push_back(std::make_pair(splits[i],splits[j]));
                         } else {
                             float cmpl = 0.7;
-                            float hyb = -0.2415;
+                            float hyb = hybridize(seqan3::get<seqan3::field::seq>(splits[i]), seqan3::get<seqan3::field::seq>(splits[j])); 
                             if(cmpl > filters.first) { // complementarity is higher
                                 splitSegments.clear();
                                 filters = std::make_pair(cmpl,hyb);
@@ -306,8 +312,10 @@ void SplitReadCalling::process(auto &splitrecords, auto &splitsfile, auto &mults
     // write to file
     if(splitSegments.size() == 1) {
         writeSamFile(splitsfile, splitSegments);
+        splitCount++;
     } else {
         writeSamFile(multsplitsfile, splitSegments);
+        multCount++;
     }
 }
 
@@ -437,9 +445,74 @@ double SplitReadCalling::complementarity2(std::span<seqan3::dna5> &seq1, std::sp
 
 
 //
-double SplitReadCalling::complementarity(seqan3::dna5_vector rna1, seqan3::dna5_vector rna2) {
+double SplitReadCalling::complementarity(std::span<seqan3::dna5> &seq1, std::span<seqan3::dna5> &seq2) {
     std::cout << "start complementarity" << std::endl;
+  
+    /*
 
+
+
+    std::vector<seqan3::dna5> seq1_vec;
+    std::vector<seqan3::dna5> seq2_vec;
+
+    for(auto &nt : seq1) {
+        seq1_vec.push_back(nt);
+    }
+    for(auto &nt : seq2) {
+        seq2_vec.push_back(nt);
+    }
+	
+    // reverse rna1
+	seqan3::dna5_vector rna1Rev;
+	for(unsigned z=seq1_vec.size();z-- > 0;) {
+		rna1Rev.push_back(seq1_vec[z]);
+	}
+    
+    std::pair p{rna1Rev,seq2_vec};
+
+    auto method = seqan3::align_cfg::method_local{};
+    //seqan3::align_cfg::scoring_scheme scheme{seqan3::nucleotide_scoring_scheme{seqan3::match_score{1}, seqan3::mismatch_score{-1}}};
+    // apply specific scoring scheme
+    //
+    //
+    //
+    */
+
+
+    /*
+    seqan3::nucleotide_scoring_scheme scheme; // hamming distance is default
+    scheme.score('A'_dna15, 'T'_dna15) = 1;
+    scheme.score('T'_dna15, 'A'_dna15) = 1;
+    scheme.score('G'_dna15, 'C'_dna15) = 1;
+    scheme.score('C'_dna15, 'G'_dna15) = 1;
+    scheme.score('G'_dna15, 'T'_dna15) = 1;
+    scheme.score('A'_dna15, 'G'_dna15) = -1;
+    scheme.score('C'_dna15, 'T'_dna15) = -1;
+    */
+    
+
+    /*
+    seqan3::align_cfg::scoring_scheme scheme{seqan3::nucleotide_scoring_scheme{seqan3::match_score{1}, seqan3::mismatch_score{-1}}};
+    seqan3::align_cfg::gap_cost_affine gap_costs{seqan3::align_cfg::open_score{-3}, seqan3::align_cfg::extension_score{-2}};
+    
+    // Configure the output:
+    auto output_config = seqan3::align_cfg::output_score{} |
+    	seqan3::align_cfg::output_begin_position{} |
+    	seqan3::align_cfg::output_end_position{} |
+    	seqan3::align_cfg::output_alignment{};
+    
+    auto config = method | scheme | gap_costs | output_config;
+
+    auto results = seqan3::align_pairwise(p, config);
+    auto & res = *results.begin();
+//	seqan3::debug_stream << "Score: " << res.score() << '\n';
+//	seqan3::debug_stream << "Begin: (" << res.sequence1_begin_position() << "," << res.sequence2_begin_position() << ")\n";
+//	seqan3::debug_stream << "End: (" << res.sequence1_end_position() << "," << res.sequence2_end_position() << ")\n";
+//
+    
+    */
+
+	/*
 	// reverse rna1
 	seqan3::dna5_vector rna1Rev;
 	for(unsigned z=rna1.size();z-- > 0;) {
@@ -475,22 +548,23 @@ double SplitReadCalling::complementarity(seqan3::dna5_vector rna1, seqan3::dna5_
 	seqan3::debug_stream << "Score: " << res.score() << '\n';
 	seqan3::debug_stream << "Begin: (" << res.sequence1_begin_position() << "," << res.sequence2_begin_position() << ")\n";
 	seqan3::debug_stream << "End: (" << res.sequence1_end_position() << "," << res.sequence2_end_position() << ")\n";
+
+	*/
     
     return 0.0;
 }
 
 
-double SplitReadCalling::hybridize(seqan3::dna5_vector rna1, seqan3::dna5_vector rna2) {
-	std::cout << "hyrbidization energy" << std::endl;
-
+double SplitReadCalling::hybridize(std::span<seqan3::dna5> &seq1, std::span<seqan3::dna5> &seq2) {
+    std::cout << "hyrbidization energy" << std::endl;
 	std::string rna1str = "";
 	std::string rna2str = "";
 
-	for(unsigned i=0;i<rna1.size();++i) {
-		rna1str += rna1[i].to_char();
+	for(unsigned i=0;i<seq1.size();++i) {
+		rna1str += seq1[i].to_char();
 	}
-	for(unsigned i=0;i<rna2.size();++i) {
-		rna1str += rna2[i].to_char();
+	for(unsigned i=0;i<seq2.size();++i) {
+		rna1str += seq2[i].to_char();
 	}
 
 	std::string hyb = "echo '" + rna1str + "&" + rna2str + "' | RNAcofold";
@@ -531,6 +605,11 @@ double SplitReadCalling::hybridize(seqan3::dna5_vector rna1, seqan3::dna5_vector
 
 // start
 void SplitReadCalling::start(pt::ptree sample) {
+    // reset 
+    readCount = 0;
+    splitCount = 0;
+    multCount = 0;
+
     pt::ptree input = sample.get_child("input");
     std::string matched = input.get<std::string>("matched");
     
@@ -539,295 +618,23 @@ void SplitReadCalling::start(pt::ptree sample) {
 
     std::string multsplits = output.get<std::string>("multsplits");
 
-    std::cout << matched << std::endl;
-    std::cout << splits << std::endl;
+//    std::cout << matched << std::endl;
+ //   std::cout << splits << std::endl;
 
     // iterate through the reads
     iterate(matched, splits, multsplits);
 
+    // generate stats
+    if(params["stats"].as<std::bitset<1>>() == 1) {
+        fs::path statsfile = fs::path(params["outdir"].as<std::string>()) / "detectStat.txt";
+        std::fstream fs;
+        fs.open(statsfile.string(), std::fstream::app);
 
-
-}
-
-
-    //std::cout << putative.size() << std::endl;
-        /*
-        int splitID = 0;
-        for(unsigned i=0;i<curated.size();++i) {
-            for(unsigned j=i+1;j<curated.size();++j) {
-//                seqan3::debug_stream << "split group" << seqan3::get<seqan3::field::tags>(curated[j]).get<"XN"_tag>() << std::endl;
-                if(seqan3::get<seqan3::field::tags>(curated[j]).get<"XN"_tag>() != splitID) {
-                    break;
-                    ++splitID;
-                }
-
-                // determine complementarity
-                std::span<seqan3::dna5> seq1 = seqan3::get<seqan3::field::seq>(curated[i]);
-                std::span<seqan3::dna5> seq2 = seqan3::get<seqan3::field::seq>(curated[j]);
-
-                seqan3::debug_stream << seq1 << std::endl;
-                seqan3::debug_stream << seq2 << std::endl;
-
-                // hybridization energy
-
-            }
-        }*/
-
-
-            /*
-            std::string tmp = seqan3::get<seqan3::field::id>(curated[i]);
-			splitsfile.emplace_back(
-                    seqan3::get<seqan3::field::id>(curated[i]),
-		            seqan3::get<seqan3::field::flag>(curated[i]),
-                    seqan3::get<seqan3::field::ref_id>(curated[i]),
-                    seqan3::get<seqan3::field::ref_offset>(curated[i]),
-			        seqan3::get<seqan3::field::mapq>(curated[i]).value(),
-			        seqan3::get<seqan3::field::cigar>(curated[i]),
-                    seqan3::get<seqan3::field::seq>(curated[i]),
-                    seqan3::get<seqan3::field::tags>(curated[i]));
-	
-                    //seqan3::debug_stream << curated[i] << std::endl;
-                    */
-
-
-
-    /*
-
-    for(unsigned i=0;i<splitrecords.size();++i) {
-		std::string qname = "";
-        CigarSplt cigarsplit;
-
-//        seqan3::debug_stream << seqan3::get<seqan3::field::id>(splitrecords[i]) << std::endl;
-
-        
-        // exract information
-        qname = seqan3::get<seqan3::field::id>(splitrecords[i]);
-        seqan3::sam_flag flag = seqan3::get<seqan3::field::flag>(splitrecords[i]);
-		std::optional<int32_t> refID = seqan3::get<seqan3::field::ref_id>(splitrecords[i]);
-		std::optional<int32_t> refOffset = seqan3::get<seqan3::field::ref_offset>(splitrecords[i]);
-        // CIGAR string 
-        std::vector<seqan3::cigar> cigar{seqan3::get<seqan3::field::cigar>(splitrecords[i])};
-        std::vector<seqan3::cigar> cigarSplit{}; // individual cigar for each split
-
-        seqan3::dna5_vector seq = seqan3::get<seqan3::field::seq>(splitrecords[i]);
-
-        // extract the tags (information about split reads) 
-        tags = seqan3::get<seqan3::field::tags>(splitrecords[i]);
-		auto xhtag = tags.get<"XH"_tag>();
-		auto xjtag = tags.get<"XJ"_tag>();
-		auto xxtag = tags.get<"XX"_tag>();
-		auto xytag = tags.get<"XY"_tag>();
-        auto xctag = tags.get<"XC"_tag>();
-
-
-        // there has to be at least 2 splits within a read
-		if(xjtag > 2) { // there is a split in SAM record - number of splits != 0
-            segments = xjtag; // retrieve how many segments in total
-            segment++; // segment of the split identified
-
-            // determine the start position within split
-            startPosSplit = xxtag;
-            endPosSplit = xxtag-1;
-
-            // check the cigar string for splits
-            for(auto &cig : cigar) {
-                // determine size and operator of cigar element
-                cigarOpSize = get<uint32_t>(cig);
-                cigarOp = get<seqan3::cigar_op>(cig);
-              
-                if(cigarOp == 'N'_cigar_op) {
-                    seqan3::debug_stream << "includes N" << std::endl;
-                    segment++;
-        
-                    seqan3::debug_stream << "xxtag: " << xxtag << std::endl;
-                    seqan3::debug_stream << "xytag: " << xytag << std::endl;
-
-                    seqan3::debug_stream << "startPosSplit: " << startPosSplit << std::endl;
-                    seqan3::debug_stream << "endPosSplit: " << endPosSplit << std::endl;
-
-
-                    tags["XS"_tag] = 0;
-
-
-                } else {
-                    // deletion does not account for length in split
-                    seqan3::cigar cigarElement{cigarOpSize, cigarOp};
-                    cigarsplit.push_back(cigarElement);
-
-                    if(cigarOp != 'D'_cigar_op) {
-                        endPosSplit += cigarOpSize;
-                    }
-                }
-            }
-
-            if(segment == segments) {
-                segment = 0; // reset segment number
-                cmpl = 0.0;
-                hyb = 0.0;
-            }
-        } // end if 
+        fs << fs::path(matched).stem().string() << "\t";
+        fs << readCount << "\t";
+        fs << splitCount << "\t";
+        fs << multCount << std::endl;
+        fs.close();
     }
 }
 
-
-*/
-
-
-
-
-
-
-                /*
-                if(cigarOp != 'N'_cigar_op) {
-                    seqan3::cigar cigel{cigaropsize, cigarop};
-                    cigarsplit.push_back(cigel);
-                }*/
-
-
-            /*
-			qname = seqan3::get<seqan3::field::id>(splitrecords[i]);
-            seqan3::sam_flag flag = seqan3::get<seqan3::field::flag>(splitrecords[i]);
-			std::optional<int32_t> refID = seqan3::get<seqan3::field::ref_id>(splitrecords[i]);
-			std::optional<int32_t> refOffset = seqan3::get<seqan3::field::ref_offset>(splitrecords[i]);
-            std::vector<seqan3::cigar> cigar{seqan3::get<seqan3::field::cigar>(splitrecords[i])};
-            std::vector<seqan3::cigar> cigarSplit{};
-            
-            // initialize start and endposition within read
-			startPosRead = xxtag; // start equals start in samtag
-			endPosRead = xytag;  // end will counted via cigar
-           
-            // 
-            startPosSplit = 1;
-            endPosSplit = 0;
-		
-            // sequence 
-            seqan3::dna5_vector seq = seqan3::get<seqan3::field::seq>(splitrecords[i]);
-
-            //seqan3::debug_stream << seq[0] << std::endl;
-            uint32_t seqLen = seq.size();
-
-            
-            seqan3::debug_stream << qname << std::endl;
-            seqan3::debug_stream << "complete sequence: " << (seq | seqan3::views::to_char) << std::endl;
-            seqan3::debug_stream << "sequence length: " << seqLen << std::endl;
-
-            seqan3::debug_stream << "xxtag: " << xxtag << " ";
-            seqan3::debug_stream << "xytag: " << xytag << std::endl;
-            seqan3::debug_stream << "cigar string: " << cigar << std::endl;
-            seqan3::debug_stream << "go through cigar" << std::endl;
-            
-            
-            int basesPassed = 0;
-
-         //   seqan3::debug_stream << splitrecords[i] << std::endl;
-            seqan3::debug_stream << cigar << std::endl;
-            
-            for(auto &cig : cigar) {
-                cigarOpSize = get<uint32_t>(cig);
-                cigarOp = get<seqan3::cigar_op>(cig);
-                std::cout << cigarOpSize << seqan3::to_char(cigarOp);
-               
-                if(cigarop != 'n'_cigar_op) {
-                    seqan3::cigar cigel{cigaropsize, cigarop};
-                    cigarsplit.push_back(cigel);
-                }
-
-                if(cigarOp == 'N'_cigar_op) {
-                    seqan3::debug_stream << "includes N" << std::endl;
-                    seqan3::debug_stream << "startPosSplit: " << startPosSplit << " endPosSplit: " << endPosSplit << std::endl;
-
-                    // determine sequence of the splits
-                    // auto splitSeq = seq | seqan3::views::slice(startPosSplit-1,endPosSplit);
-                    //auto splitSeq = seq | seqan3::views::slice(startPosRead-1,endPosRead);
-
-                    // 
-                    seqan3::dna5_vector splitSeq;
-                    for(uint32_t z=startPosSplit-1;z<endPosSplit;z++) {
-                        splitSeq.push_back(seq[z]);
-                    }
-                    seqan3::debug_stream << "subsequence: " << splitSeq << std::endl;
-                   
-                    seqan3::sam_tag_dictionary dict{};
-                    dict.get<"XX"_tag>() = startPosSplit;
-                    dict.get<"XY"_tag>() = endPosSplit;
-
-                    seqan3::debug_stream << "cigar of split" << cigarSplit << std::endl;
-
-                    splits.push_back(
-                            std::make_tuple(
-                                qname, flag, refID, refOffset, cigarSplit, splitSeq, dict));
-
-                    cigarSplit.clear();
-                   
-
-					startPosSplit = endPosSplit+1;
-
-//                    basesPassed += cigarOpSize;
- //                   refOffset.emplace(refOffset.value()+basesPassed);
-                    //refOffset += endPosRead;
-
-                } else {
-                    basesPassed += cigarOpSize;
-                    if(cigarOp != 'D'_cigar_op) {
-                        endPosSplit += cigarOpSize;
-                    }
-                }
-            }
-            seqan3::debug_stream << "\nend of read reached: start: " << startPosRead + startPosSplit -1 << " end: " << startPosRead + endPosSplit -1 << std::endl; 
-//            auto splitSeq = seq | seqan3::views::slice(startPosRead,endPosRead);
-            
-            seqan3::dna5_vector splitSeq2;
-            for(uint32_t z=startPosSplit-1;z<endPosSplit;z++) {
-                splitSeq2.push_back(seq[z]);
-            }
-            seqan3::debug_stream << "split sequence: " << splitSeq2 << std::endl;
-                   
-			
-            seqan3::sam_tag_dictionary dict{};
-            dict.get<"XX"_tag>() = startPosRead;
-            dict.get<"XY"_tag>() = endPosRead;
-
-            splits.push_back(
-                std::make_tuple(
-                    qname, flag, refID, refOffset, cigarSplit, splitSeq2, dict));
-
-        }
-    }
-
-    if(splits.size() > 1) {
-        std::cout << "\n\n############### output" << std::endl;
-        std::cout << splits.size() << std::endl;
-
-        for(unsigned c=0;c<splits.size();++c) {
-            for(unsigned d=c+1;d<splits.size();++d) {
-
-				//double cmpl = complementarity(std::get<5>(splits[c]),std::get<5>(splits[d]));
-			//	std::cout << "complementarity: " << cmpl << std::endl;
-			//	std::cout << "\n";
-
-			//	double nrg = hybridize (std::get<5>(splits[c]),std::get<5>(splits[d]));
-				
-				seqan3::sam_tag_dictionary dict2nd = std::get<6>(splits[d]);
-              //  dict2nd.get<"FC"_tag>() = std::to_string(cmpl);
-               // dict2nd.get<"FE"_tag>() = std::to_string(nrg);
-
-				splitsfile.emplace_back(
-					std::get<0>(splits[c]),
-					std::get<1>(splits[c]),
-					std::get<2>(splits[c]),
-					std::get<3>(splits[c]),
-					std::get<4>(splits[c]),
-					std::get<5>(splits[c]),
-					dict2nd);
-
-				splitsfile.emplace_back(
-					std::get<0>(splits[d]),
-					std::get<1>(splits[d]),
-					std::get<2>(splits[d]),
-					std::get<3>(splits[d]),
-					std::get<4>(splits[d]),
-					std::get<5>(splits[d]),
-					std::get<6>(splits[d]));
-                    
-            }
-            */

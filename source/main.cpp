@@ -67,6 +67,8 @@ int main(int argc, char* argv[]) {
                 "file of the adapter sequences to be removed from the 3' end (.fasta)")
             ("mmrate", po::value<double>()->default_value(0.1),
                 "rate of mismatched allowed when aligning adapter pattern to sequence")
+			("wsize", po::value<int>()->default_value(3),
+				"windows size to trim from 3' end")
         ;
 
         po::options_description alignment("Alignment");

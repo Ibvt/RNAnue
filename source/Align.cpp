@@ -59,6 +59,8 @@ void Align::start(pt::ptree sample) {
     pt::ptree input = sample.get_child("input");
     pt::ptree output = sample.get_child("output");
 
+    std::cout << "start align" << std::endl;
+
     if(params["readtype"].as<std::string>() == "SE") {
         std::string forward = input.get<std::string>("forward");
         std::string matched = output.get<std::string>("matched");

@@ -68,6 +68,7 @@ class SeqRickshaw {
 
         int phred; // the minimum 
         int minlen;
+		int wsize;
 
         std::string readtype;
 
@@ -110,7 +111,11 @@ class SeqRickshaw {
         void writeLookupTable(std::ofstream &os);
 
         void preprocPattern();
-        
+
+		// perform window trimming
+		std::size_t nibble(auto &seq, auto &qual, std::pair<std::size_t,std::size_t> &bnds);
+
+		int trimmingWindow(auto seq);
         
         std::size_t boyermoore(auto& read, LookupTable tab, int patlen);
         std::pair<std::size_t,std::size_t> trimming(auto& read);

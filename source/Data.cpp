@@ -40,6 +40,10 @@ Data::Data(po::variables_map _params) :
     }
 
     if(subcall == "detect") {
+
+        
+
+
         detectDataPrep();
     }
 
@@ -86,12 +90,34 @@ void Data::alignDataPrep() {
          * */
         GroupsPath group = retrieveGroupsPath(ctrlsPath, trtmsPath); // 
         retrieveData(group);
+    } else {
+        if(params["preproc"].as<std::bitset<1>>() == std::bitset<1>("1")) {
+            std::cout << "######" << std::endl;
+
+            fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "preproc/ctrls"; 
+            fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "preproc/trtms"; 
+        
+            GroupsPath group = retrieveGroupsPath(ctrlsPath, trtmsPath); // 
+
+            std::cout << "after groupspath" << std::endl;
+            retrieveData(group);
+        }
     }
 }
 
 
 void Data::detectDataPrep() {
     std::cout << "detect split reads in reads" << std::endl;
+    if(params["stats"].as<std::bitset<1>>() == 1) {
+        fs::path statsfile = fs::path(params["outdir"].as<std::string>()) / "detectStat.txt";
+        std::ofstream ofs;
+        ofs.open(statsfile.string());
+        
+        ofs << "library\tmapped\tsplits\tmultisplits" << std::endl;
+
+        ofs.close();
+    }
+    
     // determine path of the alignments results
     fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "align/ctrls";
     if(params["ctrls"].as<std::string>() == "") {
@@ -149,8 +175,8 @@ void Data::retrieveData(GroupsPath _groupsPath) {
 
     // vector of fs::path that contains the conditions (as paths)
     PathVector conditionsVec;
-
     fs::path pathOut; // buffer output path
+
 
     //
     GroupsPath::iterator itGroups = _groupsPath.begin(); 
@@ -166,7 +192,6 @@ void Data::retrieveData(GroupsPath _groupsPath) {
                 for(itConditions;itConditions != conditionsVec.end();++itConditions) {
                     condition = retrieveGroup(itGroups->first,*itConditions);
                     // parent output directories
-                    
                     group.push_back(std::make_pair("", condition));
                 }
                 subcall.add_child(itGroups->first, group);   
@@ -224,9 +249,12 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
             nrElements = 1;
             sampleKeys = {"forward"};
         } else {
+            PathVector tmpDataFiles = filterDirContent(dataFiles, "preproc.fastq");
+
             nrElements = 1; // 
     //        sampleKeys = {"matched","splits"};
-            sampleKeys = {"matched"};
+            sampleKeys = {"forward"};
+            dataFiles = tmpDataFiles;
         }
     }
 
@@ -262,7 +290,6 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
     elCntr = 0;
     for(unsigned i=0;i<dataFiles.size();++i) {
         files.put(sampleKeys[i % nrElements],dataFiles[i].string());
-		//std::cout << "dataFiles[i]: " << dataFiles[i] << std::endl;
 
         //
         if(elCntr == nrElements-1) { 
@@ -336,9 +363,11 @@ pt::ptree Data::retrieveOutput(fs::path _outConditionDir, pt::ptree _input) {
 
     // alignment
     if(params["subcall"].as<std::string>() == "align") {
-        
+        std::cout << "retrieve output " << std::endl;
+
         //
         fs::path fwd = fs::path(_input.get<std::string>("input.forward"));
+        
         fwd.replace_extension(".sam");
         std::string forward = replacePath(_outConditionDir, fwd).string();
 
@@ -362,7 +391,6 @@ pt::ptree Data::retrieveOutput(fs::path _outConditionDir, pt::ptree _input) {
         output.put("multsplits",multsplits);
 
     }
-
 
 	// clustering
 	if(params["subcall"].as<std::string>() == "clustering") {
