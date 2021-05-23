@@ -69,9 +69,6 @@ int main(int argc, char* argv[]) {
                 "rate of mismatched allowed when aligning adapter pattern to sequence")
 			("wsize", po::value<int>()->default_value(3),
 				"windows size to trim from 3' end")
-
-
-
         ;
 
         po::options_description alignment("Alignment");

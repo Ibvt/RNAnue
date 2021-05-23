@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <limits>
 #include <deque>
 
 #include <boost/program_options.hpp>
@@ -69,6 +70,7 @@ class Data {
 		// filter content of directory to only include files containing search string
 		PathVector filterDirContent(PathVector vec, std::string sestr);
         std::string addSuffix(std::string _file, std::string _suffix, std::vector<std::string> _keys);
+
 
         // test stuff
         template <typename Callable>

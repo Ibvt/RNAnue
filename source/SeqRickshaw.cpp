@@ -463,9 +463,7 @@ std::size_t SeqRickshaw::boyermoore(auto& read, LookupTable tab, int m) {
     int readPos = m - 1; // length of pattern to match against
     std::size_t shift = 0;
 
-
     std::tuple<int,int,int,int> entry;
-
 
     while(align < read.size() - m) {
         auto c = (read | seqan3::views::to_char)[align + readPos];
@@ -487,6 +485,10 @@ std::size_t SeqRickshaw::boyermoore(auto& read, LookupTable tab, int m) {
         }
         align = align + shift;
     }
+//	if
+
+	
+	
     return std::string::npos;
 }
 
