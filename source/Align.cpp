@@ -15,6 +15,7 @@ void Align::alignReads(std::string query, std::string matched) {
     align += " -W " + std::to_string(params["minsplicecov"].as<int>());
     align += " -Z " + std::to_string(params["minfraglen"].as<int>());
     align += " -t " + std::to_string(params["threads"].as<int>());
+    align += " -m " + std::to_string(params["minlen"].as<int>());
     align += " -i " + index;
     align += " -d " + params["dbref"].as<std::string>();
     align += " -q " + query;

@@ -40,16 +40,17 @@ Data::Data(po::variables_map _params) :
     }
 
     if(subcall == "detect") {
-
-        
-
-
         detectDataPrep();
     }
 
 	if(subcall == "clustering") {
 		clusteringDataPrep();
 	}
+
+    if(subcall == "analysis") {
+        analysisDataPrep();
+    }
+
 
 
 }
@@ -91,15 +92,13 @@ void Data::alignDataPrep() {
         GroupsPath group = retrieveGroupsPath(ctrlsPath, trtmsPath); // 
         retrieveData(group);
     } else {
-        if(params["preproc"].as<std::bitset<1>>() == std::bitset<1>("1")) {
-            std::cout << "######" << std::endl;
+        if(params["preproc"].as<std::bitset<1>>() == std::bitset<1>(1)) {
 
             fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "preproc/ctrls"; 
             fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "preproc/trtms"; 
         
             GroupsPath group = retrieveGroupsPath(ctrlsPath, trtmsPath); // 
-
-            std::cout << "after groupspath" << std::endl;
+//            std::cout << "after groupspath" << std::endl;
             retrieveData(group);
         }
     }
@@ -107,14 +106,11 @@ void Data::alignDataPrep() {
 
 
 void Data::detectDataPrep() {
-    std::cout << "detect split reads in reads" << std::endl;
     if(params["stats"].as<std::bitset<1>>() == 1) {
         fs::path statsfile = fs::path(params["outdir"].as<std::string>()) / "detectStat.txt";
         std::ofstream ofs;
         ofs.open(statsfile.string());
-        
         ofs << "library\tmapped\tsplits\tmultisplits" << std::endl;
-
         ofs.close();
     }
     
@@ -134,17 +130,28 @@ void Data::detectDataPrep() {
 void Data::clusteringDataPrep() {
 	std::cout << "reads the data to align" << "\n";
 	
-	fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "align/ctrls";
+	fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
 	if(params["ctrls"].as<std::string>() == "") {
 		ctrlsPath = fs::path("");
 	}
-	fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "align/trtms";
+	fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "detect/trtms";
 
 	GroupsPath group = retrieveGroupsPath(ctrlsPath, trtmsPath);
 	retrieveData(group);
 }
 
 void Data::analysisDataPrep() {
+    std::cout << "reads the data for analysis" << "\n";
+
+    fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
+    if(params["ctrls"].as<std::string>() == "") {
+        ctrlsPath = fs::path("");
+    }
+    fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "detect/trtms";
+
+    GroupsPath group = retrieveGroupsPath(ctrlsPath, trtmsPath);
+    retrieveData(group);
+
 }
 
 //
@@ -272,10 +279,18 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
 		nrElements = 1;
 
 		// remove files that do not contain keyword (splis)
-		PathVector tmpDataFiles = filterDirContent(dataFiles, "splits");
+		PathVector tmpDataFiles = filterDirContent(dataFiles, "_splits.sam");
 		sampleKeys = {"splits"};
 		dataFiles = tmpDataFiles;
 	}
+
+    if(subcall == "analysis") {
+        nrElements = 1;
+		PathVector tmpDataFiles = filterDirContent(dataFiles, "_splits.sam");
+		sampleKeys = {"splits"};
+		dataFiles = tmpDataFiles;
+    }
+
 
 
     /* path of the results up to the level of the conditions 
@@ -290,7 +305,6 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
     elCntr = 0;
     for(unsigned i=0;i<dataFiles.size();++i) {
         files.put(sampleKeys[i % nrElements],dataFiles[i].string());
-
         //
         if(elCntr == nrElements-1) { 
 //            sample.put("group", _group);
@@ -402,8 +416,12 @@ pt::ptree Data::retrieveOutput(fs::path _outConditionDir, pt::ptree _input) {
 	}
     
     if(params["subcall"].as<std::string>() == "analysis") {
+        fs::path splits = fs::path(_input.get<std::string>("input.splits"));
+        splits.replace_extension(".txt");
+        std::string its = replacePath(_outConditionDir, splits).string();
+        std::string ints = addSuffix(its, "_interactions",{"_splits"});
+        output.put("interactions", ints);
     }
-
 
     return output;
 }
@@ -411,7 +429,6 @@ pt::ptree Data::retrieveOutput(fs::path _outConditionDir, pt::ptree _input) {
 //
 template <typename Callable>
 void Data::callInAndOut(Callable f) {
-    std::cout << "InAndOut" << std::endl;
 
     // retrieve paths for parameters
     fs::path outDir = fs::path(params["outdir"].as<std::string>());
@@ -486,12 +503,21 @@ void Data::splitReadCalling() {
 void Data::clustering() {
     // create Object of CLustering
 	Clustering clu(params);
-	callInAndOut(std::bind(&Clustering::start, clu, std::placeholders::_1));
+	callInAndOut(std::bind(&Clustering::start, &clu, std::placeholders::_1));
+
+    clu.sumup();
 }
 
 void Data::analysis() {
-}
+    Analysis anl(params);
+    callInAndOut(std::bind(&Analysis::start, &anl, std::placeholders::_1));
 
+    if(params["outcnt"].as<std::bitset<1>>() == std::bitset<1>(1)) {
+        anl.createCountTable();
+    }
+
+
+}
 
 
 /*

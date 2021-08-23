@@ -3,7 +3,6 @@
 Base::Base(po::variables_map _params, std::string _subcall):
     params(_params),
     data(_params) {
-        std::cout << "create Base" << std::endl;
 
         if(_params["subcall"].as<std::string>() == "preproc") {
             std::cout << "preproc called within Base" << std::endl;
@@ -22,7 +21,6 @@ Base::Base(po::variables_map _params, std::string _subcall):
         }
 
         if(_params["subcall"].as<std::string>() == "detect") {
-            std::cout << "split read calling called within Base " << '\n';
             data.splitReadCalling();
         }
 
@@ -41,7 +39,6 @@ Base::Base(po::variables_map _params, std::string _subcall):
             data.preproc();
             data.align();
             data.splitReadCalling();
-            data.clustering();
             data.analysis();
         }
 }
