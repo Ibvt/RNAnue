@@ -15,9 +15,10 @@ located in $PATH.
 * [SeqAn](https://github.com/seqan/seqan3) (v3.0.2)
 * [Segemehl](http://www.bioinf.uni-leipzig.de/Software/segemehl/) (v0.3.4)
 * [Vienna Package](https://www.tbi.univie.ac.at/RNA/#binary_packages) (v2.4.17)
+* OpenMP v12.0.0 
 
 ### CMake 
-CMake is a cross-platform Makefile generator. For that, we provide the [CMakeLists](./CMakeLists.txt) 
+CMake is a cross-platform Makefile generator. For that, we provide the [CMakeLists](./source/CMakeLists.txt) 
 to simplify the build process. In particular, it utilizes the instructions given in the CMakeLists.
 It is recommended to create a "out-of-source build". For that, create a build folder (e.g., ./bin)
 and cmake into the root directory.
@@ -50,7 +51,7 @@ with arbitrary conditions (e.g., treatment, cell lines,...) that in turn contain
     condition1
     condition2
 ```
-It is to be noted that the `--trtms` needs to be specified. However, `--ctrls` may be not set.
+It is to be noted that the `--trtms` needs to be specified. However, `--ctrls` may be not set (optional).
 
 ## Parameters
 RNAnue accepts parameter settings both from the commandline and through a configuration file.
@@ -70,6 +71,29 @@ In principle, the results of the analysis are stored in the specified output fol
 and the RNA-RNA interactions. RNAnue reports the split reads in SAM format. Additionally, the complementarity 
 scores and hybridization energies are stored in the tags FC and FE, respectively. We report the clusters in a
 custom format that includes the IDs of the clusters, its length, size and genomic coordinates.
+
+### Split Reads (.SAM)
+
+RNAnue reports the detected splits in .SAM format (RNAnue `detect`). In this file, pairs of rows represent the
+split reads, consisting of the individual segments, e.g
+```
+A00551:29:H73LYDSXX:1:1101:7274:10645	16	gi|170079663|ref|NC_010473.1|	3520484	22	1X51=	*	0	0	AGGGGTCTTTCCGTCTTGCCGCGGGTACACTGCATCTTCACAGCGAGTTCAA	*	XA:Z:TTTCTGG	XC:f:0.714286	XE:f:-15.6	XL:i:7	XM:i:5	XN:i:0	XR:f:0.0735294	XS:i:5	XX:i:1	XY:i:52
+A00551:29:H73LYDSXX:1:1101:7274:10645	16	gi|170079663|ref|NC_010473.1|	3520662	22	11=5S	*	0	0	TTCGATCAAGAAGAAC	*	XA:Z:GAAGAAC	XC:f:0.714286	XE:f:-15.6	XL:i:7	XM:i:5	XN:i:0	XR:f:0.0735294	XS:i:5	XX:i:53	XY:i:68
+
+```
+In the following the tags are listed that are reported in the detected split reads. Please note that in the upper 
+segment the alignment is in reverse as done in the calculation of the complemtarity to represent the 3'-5' and 5'-3' 
+duplex.
+
+| tag | description |
+| --- | ----------- |
+| XC:f | complementarity |
+| XL:f | length of alignment |
+| XR:f | site length ratio |
+| XM:i | matches in alignment |
+| XA:Z | alignment of sequence | 
+| XE:f | hybridization energy |
+
 
 ### Docker
 In additon, we provide a ready-to-use Docker container that has RNAnue preconfigured.

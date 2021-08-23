@@ -17,6 +17,7 @@
 #include "Align.hpp"
 #include "SplitReadCalling.hpp"
 #include "Clustering.hpp"
+#include "Analysis.hpp"
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;

@@ -1,6 +1,6 @@
 #include "SeqRickshaw.hpp"
 
-SeqRickshaw::SeqRickshaw(po::variables_map _params) {
+SeqRickshaw::SeqRickshaw(po::variables_map _params) : params(_params) {
     std::cout << "created instance of sequence RickShaw" << std::endl;
     
     // retrieve parametes for the preprocessing
@@ -134,13 +134,14 @@ LookupTable SeqRickshaw::calcShift(auto sequence) {
             right = std::get<2>(states[i]);
             readPos = std::get<3>(states[i]);
 
+            /*
             std::cout << "-----------------------------------" << std::endl;
             std::cout << sequence << " length: " << sequence.size() << std::endl;
             std::cout << "current state: " << state << std::endl;
             std::cout << "readPos: " << readPos << std::endl;
             std::cout << "left: " << left << std::endl;
             std::cout << "rightStart: " << right.first << std::endl;
-            std::cout << "rightEnd: " << right.second << std::endl;
+            std::cout << "rightEnd: " << right.second << std::endl;*/
            
             /*
             readPos = calcReadPos(sequence,left,right); // determines the readPos
@@ -149,9 +150,9 @@ LookupTable SeqRickshaw::calcShift(auto sequence) {
             }*/
 
             for(unsigned j=0;j<alphabet.size();++j) { // iterate through any other possibility
-                std::cout << "\t---------" << std::endl;
+/*                std::cout << "\t---------" << std::endl;
                 std::cout << "\talphabet " << alphabet[j] << std::endl;
-                std::cout << "\tletter " << sequence[readPos] << " (" << readPos << ")" << std::endl;
+                std::cout << "\tletter " << sequence[readPos] << " (" << readPos << ")" << std::endl;*/
 
                 std::size_t nextLeft = left;
                 std::pair<std::size_t,std::size_t> nextRight = right;
@@ -159,7 +160,7 @@ LookupTable SeqRickshaw::calcShift(auto sequence) {
                 std::size_t nextReadPos;
                 
                 if(sequence[readPos] == alphabet[j]) { //  match
-                    std::cout << "\tmatch" << std::endl;
+//                    std::cout << "\tmatch" << std::endl;
 
                     if(right.first == std::string::npos && right.second == std::string::npos) {
                         nextRight.first = sequence.size()-1;
@@ -172,19 +173,21 @@ LookupTable SeqRickshaw::calcShift(auto sequence) {
                         }
                     }
                     nextState[readPos] = 'X';
+
+                    /*
                     std::cout << "\tNextLeft: " << nextLeft << std::endl;
                     std::cout << "\tNextRightStart " << nextRight.first << std::endl;
                     std::cout << "\tNextRightEnd " << nextRight.second << std::endl;
-                    std::cout << "\tNextState: " << nextState << std::endl;
+                    std::cout << "\tNextState: " << nextState << std::endl;*/
                         
                     nextReadPos = calcReadPos(sequence,nextLeft,nextRight); // determines the readPos
-                    std::cout << "\tNextReadPos: " << nextReadPos << std::endl;
+//                    std::cout << "\tNextReadPos: " << nextReadPos << std::endl;
 
                     // exclude state with all matches
                     if(std::count(nextState.begin(), nextState.end(), 'X') != sequence.size()) {
                         
                         nextStateID = addState(states, std::make_tuple(nextState, nextLeft, nextRight, nextReadPos), statesSize);
-                        std::cout << "\tnextStateID " << nextStateID << '\n';
+ //                       std::cout << "\tnextStateID " << nextStateID << '\n';
 
                         // add to lookup table
                         lookup.insert(std::make_pair(std::make_pair(i, alphabet[j]), std::make_tuple(0,nextStateID,nextReadPos,0)));
@@ -196,7 +199,7 @@ LookupTable SeqRickshaw::calcShift(auto sequence) {
 
 
                 } else {
-                    std::cout << "\tmismatch" << std::endl;
+  //                  std::cout << "\tmismatch" << std::endl;
 
                     // convert range to container
                     auto tmp = sequence | ranges::to<std::vector<char>>;
@@ -214,14 +217,16 @@ LookupTable SeqRickshaw::calcShift(auto sequence) {
                         }
                     }
 
-                    std::cout << "\tsuffix " << suffix << std::endl;
+   //                 std::cout << "\tsuffix " << suffix << std::endl;
                     shift = transition(pattern, suffix, readPos, nextLeft, nextRight);
-                    std::cout << "\tLeft " << left << std::endl;
-                    
+    //                std::cout << "\tLeft " << left << std::endl;
+     
+                    /*
                     std::cout << "\tshift " << shift << std::endl;
                     std::cout << "\tnextLeft " << nextLeft << std::endl;
                     std::cout << "\tnextRightStart " << nextRight.first << std::endl;
                     std::cout << "\tnextRightEnd " << nextRight.second << std::endl;
+                    */
 
                     nextState = std::string(sequence.size(),'0');
 
@@ -240,17 +245,17 @@ LookupTable SeqRickshaw::calcShift(auto sequence) {
                         
                     nextReadPos = calcReadPos(sequence,nextLeft,nextRight); // determines the readPos
 
-                    std::cout << "\tnextReadPos " << nextReadPos << '\n';
-
-                    std::cout << "\tnextState " << nextState << std::endl;
+                    //std::cout << "\tnextReadPos " << nextReadPos << '\n';
+                    //std::cout << "\tnextState " << nextState << std::endl;
                     nextStateID = addState(states, std::make_tuple(nextState, nextLeft, nextRight, nextReadPos), statesSize);
 
-                    std::cout << "\tnextStateID " << nextStateID << '\n';
+                    //std::cout << "\tnextStateID " << nextStateID << '\n';
                         
                     lookup.insert(std::make_pair(std::make_pair(i, alphabet[j]), std::make_tuple(shift, nextStateID, nextReadPos, 0)));
                 }
             }
         }
+        /*
         std::cout << "list all states" << std::endl;
         States::iterator it;
         for(it = states.begin();it!=states.end();++it) {
@@ -262,7 +267,7 @@ LookupTable SeqRickshaw::calcShift(auto sequence) {
         for(auto const& x: lookup) {
             std::cout << "(" << x.first.first << "," << x.first.second << ") -> ";
             std::cout << "(" << std::get<0>(x.second) << "," << std::get<1>(x.second) << "," << std::get<2>(x.second) <<  "," << std::get<3>(x.second) << ")" << std::endl;
-        }
+        }*/
 
     return lookup;
 
@@ -304,10 +309,7 @@ std::size_t SeqRickshaw::calcReadPos(auto& sequence, std::size_t& left, std::pai
         
 int SeqRickshaw::transition(std::string pattern, std::string suffix, int readPos, std::size_t& left, std::pair<std::size_t,std::size_t>& right) {
     int shift = 0;
-
-
     std::string subsuffix;
-
 
     std::size_t localShift = 0;
 
@@ -351,11 +353,11 @@ int SeqRickshaw::transition(std::string pattern, std::string suffix, int readPos
     } else {
         for(unsigned j=1;j<suffix.size();++j) {
             subsuffix = suffix.substr(j,suffix.size()-j);
-            std::cout << "\t\tsubsuffix: " << subsuffix << std::endl;
+//            std::cout << "\t\tsubsuffix: " << subsuffix << std::endl;
 
             if(pattern.substr(0,subsuffix.size()) == subsuffix) {
                 fnd = 0;
-                std::cout << "\t\tfound " << std::endl;
+//                std::cout << "\t\tfound " << std::endl;
 
                 left = subsuffix.size()-1;
                 right.first = std::string::npos;
@@ -555,16 +557,17 @@ void SeqRickshaw::start(pt::ptree sample) {
 //			seqan3::debug_stream << "quality: " << qual << std::endl;
 
             bndsFwd = trimming(seq);
-
-			// perform window trimming
-			bndsFwd.second = nibble(seq, qual, bndsFwd);
+            // perform window trimming if specified
+            if(params["wtrim"].as<std::bitset<1>>() == std::bitset<1>("1")) {
+			    // perform window trimming
+			    bndsFwd.second = nibble(seq, qual, bndsFwd);
+            }
 
             auto trmReadFwd = seq | seqan3::views::slice(bndsFwd.first,bndsFwd.second);
             auto trmReadFwdQual = qual | seqan3::views::slice(bndsFwd.first,bndsFwd.second);
 
 //			seqan3::debug_stream << "5'-end: " << bndsFwd.first << std::endl;
 //			seqan3::debug_stream << "3'-end: " << bndsFwd.second << std::endl;
-
 //			seqan3::debug_stream << trmReadFwd << std::endl;
 //			seqan3::debug_stream << trmReadFwdQual << std::endl;
 			
@@ -603,8 +606,13 @@ void SeqRickshaw::start(pt::ptree sample) {
         seqan3::sequence_file_output r1onlyOut{r1only};
         seqan3::sequence_file_output r2onlyOut{r2only};
         
-        for(auto && [rec1,rec2] : seqan3::views::zip(fwd,rev)) {
+        std::string outreads = output.get<std::string>("forward");
+        std::ofstream myfile;
+        myfile.open(outreads);
 
+//        std::tuple<seqan3::field::id,seqan3::field::seq,seqan3::field:qual> tt;
+        
+        for(auto && [rec1,rec2] : seqan3::views::zip(fwd,rev)) {
             bndsFwd = trimming(seqan3::get<seqan3::field::seq>(rec1));
             auto trmReadFwdID = seqan3::get<seqan3::field::id>(rec1);
             auto trmReadFwd = seqan3::get<seqan3::field::seq>(rec1) | seqan3::views::slice(bndsFwd.first,bndsFwd.second);
@@ -618,7 +626,13 @@ void SeqRickshaw::start(pt::ptree sample) {
             bool filtRev = filtering(rec2) && (std::ranges::size(trmReadRev) >= minlen);
 
             if(filtFwd && filtRev) {
-                merging(trmReadFwd,trmReadRev);
+                std::pair<std::string, std::string> mrg = merging(trmReadFwd,trmReadRev,trmReadFwdQual,trmReadRevQual);
+                myfile << "@" << trmReadFwdID << '\n';
+                myfile << mrg.first.c_str() << '\n';
+                myfile << '+' << '\n';
+                myfile << mrg.second << '\n';
+
+
             } else {
                 if(filtFwd) {
                     // push to r1only
@@ -630,10 +644,10 @@ void SeqRickshaw::start(pt::ptree sample) {
                 }
             }
         }
+
+        myfile.close();
     }
 }
-
-
 
 
 // window trimming method
@@ -652,93 +666,90 @@ std::size_t SeqRickshaw::nibble(auto &seq, auto &qual, std::pair<std::size_t,std
 		if(windowPhredScore >= phred) {
 			break;
 		}
-
 		threePrimeEnd -= wsize;
-
 	}
 	return threePrimeEnd;
 }
 
 
 
-//
+// determines the longest common substring between forward and reverse read
 std::string SeqRickshaw::longestCommonSubstr(std::string s1, std::string s2) {
     // Find length of both the strings. 
     int m = s1.length(); 
     int n = s2.length(); 
-  
-    // Variable to store length of longest 
-    // common substring. 
-    int result = 0; 
-  
-    // Variable to store ending point of 
-    // longest common substring in X. 
-    int end; 
-  
-    // Matrix to store result of two 
-    // consecutive rows at a time. 
-    int len[2][n]; 
-  
-    // Variable to represent which row of 
-    // matrix is current row. 
-    int currRow = 0; 
 
-    // For a particular value of i and j, 
-    // len[currRow][j] stores length of longest 
-    // common substring in string X[0..i] and Y[0..j]. 
-    for (int i = 0; i <= m; i++) { 
-        for (int j = 0; j <= n; j++) { 
-            if (i == 0 || j == 0) { 
-                len[currRow][j] = 0; 
-            } 
-            else if (s1[i - 1] == s2[j - 1]) { 
-                len[currRow][j] = len[1 - currRow][j - 1] + 1; 
-                if (len[currRow][j] > result) { 
-                    result = len[currRow][j]; 
-                    end = i - 1; 
-                } 
-            } 
-            else { 
-                len[currRow][j] = 0; 
-            } 
-        } 
-  
-        // Make current row as previous row and 
-        // previous row as new current row. 
-        currRow = 1 - currRow; 
-    } 
-  
-    // If there is no common substring, print -1. 
-    if (result == 0) { 
-        return "-1"; 
-    } 
-  
-    // Longest common substring is from index 
-    // end - result + 1 to index end in X. 
-    return s1.substr(end - result + 1, result); 
+    int dp[2][n+1];
+    int curr=0,res=0,end=0;
+    
+    for(int i=0;i<=m;++i) {
+        for(int j=0;j<=n;++j) {
+            if(i==0 || j ==0) {
+                dp[curr][j]=0;
+            } else {
+                if(s1[i-1] == s2[j-1]) {
+                    dp[curr][j]=dp[1-curr][j-1]+1;
+                    if(res<dp[curr][j]) {
+                        res=dp[curr][j];
+                        end=i-1;
+                    }
+                } else {
+                    dp[curr][j]=0;
+                }
+            }
+        }
+        curr=1-curr;
+    }
+
+    if(res==0) {
+        return "";
+    }
+    std::string ans;
+    ans = s1.substr(end-res+1,res);
+    return ans;
 
 }
 
 
-
-
-
-void SeqRickshaw::merging(auto fwd, auto rev) {
-    std::cout << "merging " << '\n';
-
+std::pair<std::string,std::string> SeqRickshaw::merging(auto fwd, auto rev, auto fwdQual, auto revQual) {
     auto forward = fwd | seqan3::views::to_char;
     auto reverse = rev | seqan3::views::complement | std::views::reverse | seqan3::views::to_char;
 
-    std::cout << (rev | seqan3::views::to_char) << std::endl;
-    std::cout << (reverse | seqan3::views::to_char) << std::endl;
+    auto forwardQual = fwdQual | seqan3::views::to_char;
+    auto reverseQual = revQual | seqan3::views::to_char;
 
+    /*
+    std::cout << "new" << std::endl;
+    seqan3::debug_stream << "fwd: " << fwd << std::endl;
+    seqan3::debug_stream << "rev: " << rev << std::endl;
+    seqan3::debug_stream << "reverse: " << reverse << std::endl;
+    */
+
+  //  std::cout << (forward | seqan3::views::to_char) << std::endl;
+   // std::cout << (reverse | seqan3::views::to_char) << std::endl;
+ 
     std::string s1(forward.begin(),forward.end());
     std::string s2(reverse.begin(),reverse.end());
 
-    for(unsigned i=1;i<s1.size()/2;++i) {
-//        std::string subs = s1.substr(s1
+    std::string s1q(forwardQual.begin(),forwardQual.end());
+    std::string s2q(reverseQual.begin(),reverseQual.end());
 
-        std::cout << s1.substr(s1.size()-1-i,i) << std::endl;
+    std::string lcs = longestCommonSubstr(s1,s2);
+
+//    std::cout << "longest common substring: " << lcs << std::endl;
+    if(lcs.size() < 1 || lcs.size() < params["minovlps"].as<int>()) {
+        return std::make_pair("","");
+    } else {
+        std::size_t s1Found = s1.find(lcs);
+        std::size_t s2Found = s2.find(lcs);
+
+        std::string mergedSeq = s1.substr(0,s1Found+lcs.size())+s2.substr(0,s2Found);
+        std::string mergedQual = s1q.substr(0,s1Found+lcs.size())+s2q.substr(0,s2Found);
+
+ //       std::cout << "mergedSeq: " << mergedSeq << std::endl;
+  //      std::cout << "mergedQual: " << mergedQual << std::endl;
+
+        return std::make_pair(mergedSeq,mergedQual);
     }
 }
 

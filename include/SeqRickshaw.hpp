@@ -25,16 +25,14 @@
 #include <seqan3/io/exception.hpp>
 #include <seqan3/alphabet/nucleotide/dna4.hpp>
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
+
+
 #include <seqan3/range/views/char_to.hpp>
-#include <seqan3/range/views/slice.hpp>  
-
+#include <seqan3/range/views/slice.hpp>
 #include <seqan3/core/debug_stream.hpp>
-
 #include <seqan3/std/ranges>
-
 #include <seqan3/range/views/all.hpp>
 #include <seqan3/std/ranges> // std::ranges::copy
-
 #include <range/v3/all.hpp>
 #include <range/v3/view/transform.hpp>
 
@@ -50,6 +48,8 @@ typedef std::map<std::pair<int,char>,std::tuple<int,int,int,int>> LookupTable;
 
 typedef std::map<std::pair<std::string,std::string>, LookupTable> Adapters;
 
+//typedef std::tuple<seqan3::field::id,seqan3::field::seq,seqan3::field:qual> 
+
 //typedef std::map<std::pair<int,string::string>
 //
 
@@ -59,6 +59,8 @@ using seqan3::operator""_dna4;
 class SeqRickshaw {
     private:
         int modus; // defines the modus of the trimming procedure (
+        
+        po::variables_map params;
 
         std::string adpt5prime;
         std::string adpt3prime;
@@ -90,17 +92,14 @@ class SeqRickshaw {
         std::size_t calcReadPos(auto& sequence, std::size_t& left, std::pair<std::size_t,std::size_t>& right);
 
 
-
         void smallestShift(std::string pattern, std::string suffix, int left);
 
         int transition(std::string pattern, std::string suffix, int readPos, std::size_t& left, std::pair<std::size_t,std::size_t>& right);
 
-        void merging(auto fwd, auto rev);
+        std::pair<std::string, std::string> merging(auto fwd, auto rev, auto fwdQual, auto revQual);
 
 
         std::string longestCommonSubstr(std::string forward, std::string reverse);
-
-
 
 
         // helper 
@@ -122,7 +121,6 @@ class SeqRickshaw {
         void start(pt::ptree sample);
 
         bool filtering(auto &rec);
-
 };
 
 #endif

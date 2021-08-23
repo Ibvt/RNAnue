@@ -16,17 +16,14 @@
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
 #include <seqan3/alphabet/nucleotide/dna15.hpp>
 #include <seqan3/alphabet/nucleotide/dna4.hpp>
-#include <seqan3/io/alignment_file/all.hpp>
+
+#include <seqan3/io/alignment_file/input.hpp>
 #include <seqan3/io/alignment_file/sam_tag_dictionary.hpp>
-
 #include <seqan3/alignment/configuration/all.hpp>
-
 #include <seqan3/alignment/scoring/nucleotide_scoring_scheme.hpp>
 #include <seqan3/alignment/pairwise/align_pairwise.hpp>
-
-
 #include <seqan3/alphabet/cigar/cigar.hpp>
-#include <seqan3/alphabet/cigar/cigar_op.hpp>
+
 #include <bitset>
 
 namespace pt = boost::property_tree;

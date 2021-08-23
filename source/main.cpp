@@ -65,10 +65,14 @@ int main(int argc, char* argv[]) {
                 "file of the adapter sequences to be removed from the 5' end (.fasta)")
             ("adpt3", po::value<std::string>()->default_value(""), 
                 "file of the adapter sequences to be removed from the 3' end (.fasta)")
+            ("wtrim", po::value<std::bitset<1>>()->default_value(0),
+                "on whether (=1) or not (=0) to include window trimming")
             ("mmrate", po::value<double>()->default_value(0.1),
                 "rate of mismatched allowed when aligning adapter pattern to sequence")
 			("wsize", po::value<int>()->default_value(3),
 				"windows size to trim from 3' end")
+            ("minovlps", po::value<int>()->default_value(5),
+                "minimal overlap to merge paired-end reads")
         ;
 
         po::options_description alignment("Alignment");
@@ -87,6 +91,15 @@ int main(int argc, char* argv[]) {
                 "exclude soft clipping from the alignments")
         ;
 
+        po::options_description detect("Split Read Calling");
+        detect.add_options()
+            ("cmplmin", po::value<double>()->default_value(0.0), "complementarity cutoff for split reads")
+            ("sitelenratio", po::value<double>()->default_value(0.1),
+                "aligned portion of the read (complementarity)")
+            ("nrgmax", po::value<double>()->default_value(0), "hybridization energy cutoff for split reads")
+        ;
+
+
         po::options_description clustering("Clustering");
         clustering.add_options()
             ("clust", po::value<std::bitset<1>>()->default_value(1), 
@@ -97,9 +110,6 @@ int main(int argc, char* argv[]) {
         po::options_description analysis("Analysis");
         analysis.add_options()
             ("features", po::value<std::string>(), "annotation/features in .GFF3 format")
-            ("cmplmin", po::value<double>()->default_value(0.0), "complementarity cutoff for split reads")
-            ("cmplminlen", po::value<double>()->default_value(0.5), "cutoff for the minimum length of the complementarity")
-            ("nrgmax", po::value<int>()->default_value(0), "hybridization energy cutoff for split reads")
         ;
 
         po::options_description output("Output");
@@ -125,12 +135,12 @@ int main(int argc, char* argv[]) {
             ("subcall", po::value<std::string>(), "preproc, detect, alignment, clustering, analysis")
         ;
 
-
         po::options_description cmdlineOptions;
         cmdlineOptions
             .add(general)
             .add(preproc)
             .add(alignment)
+            .add(detect)
             .add(clustering)
             .add(analysis)
             .add(output)
@@ -142,11 +152,10 @@ int main(int argc, char* argv[]) {
             .add(general)
             .add(preproc)
             .add(alignment)
+            .add(detect)
             .add(clustering)
             .add(analysis)
             .add(output);
-
-        std::cout << "after parameters" << std::endl;
 
         // translate all positional options into subcall options 
         po::positional_options_description p;

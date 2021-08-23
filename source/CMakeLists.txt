@@ -12,7 +12,7 @@ set(Boost_USE_MULTITHREADED TRUE)
 set(SeqAn3_DIR "${CMAKE_SOURCE_DIR}/../../seqan3/build_system")
 find_package (SeqAn3 REQUIRED)
 
-#find_package(OpenMP)
+find_package(OpenMP)
 
 # ----------------------------------------------------------------------------
 # Dependencies
@@ -32,6 +32,9 @@ include_directories(../include)
 add_executable (RNAnue ${SOURCES})
 target_link_libraries (RNAnue seqan3::seqan3)
 target_link_libraries (RNAnue Boost::program_options Boost::filesystem)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries (RNAnue OpenMP::OpenMP_CXX)
+endif()
 
 
 # include RNAlib
