@@ -627,11 +627,12 @@ void SeqRickshaw::start(pt::ptree sample) {
 
             if(filtFwd && filtRev) {
                 std::pair<std::string, std::string> mrg = merging(trmReadFwd,trmReadRev,trmReadFwdQual,trmReadRevQual);
-                myfile << "@" << trmReadFwdID << '\n';
-                myfile << mrg.first.c_str() << '\n';
-                myfile << '+' << '\n';
-                myfile << mrg.second << '\n';
-
+                if(mrg.first != "" && mrg.second != "") {
+                    myfile << "@" << trmReadFwdID << '\n';
+                    myfile << mrg.first.c_str() << '\n';
+                    myfile << '+' << '\n';
+                    myfile << mrg.second << '\n';
+                }
 
             } else {
                 if(filtFwd) {

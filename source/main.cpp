@@ -196,29 +196,6 @@ int main(int argc, char* argv[]) {
         showVersion(std::cout);
         Base bs(vm, vm["subcall"].as<std::string>()); // controls all downstream processing
 
-        /* 
-        if(vm.count("subcall")) {
-            if(vm["subcall"].as<std::string>() == "preproc") {
-                std::cout << "*** start the preprocessing" << std::endl;
-            }
-
-            if(vm["subcall"].as<std::string>() == "alignment") {
-                std::cout << "alignment" << std::endl;
-            }
-            
-            if(vm["subcall"].as<std::string>() == "clustering") {
-                std::cout << "clustering" << std::endl;
-            }
-            
-            if(vm["subcall"].as<std::string>() == "detect") {
-                std::cout << "detect" << std::endl;
-            }
-            
-            if(vm["subcall"].as<std::string>() == "complete") {
-                std::cout << "perform complete analysis" << std::endl;
-            }
-        }*/
-
         cl.show(std::cout);
        
     
