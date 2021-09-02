@@ -52,13 +52,9 @@ void Analysis::createCountTable() {
             exit(EXIT_FAILURE);
         }
 
-
         std::string line;
         while(getline(intsfile, line)){  //read data from file object and put it into string.
             if(line[0] == '#') { continue; }
-
-
-
 
             std::vector<std::string> tokens;
             std::istringstream iss(line);
@@ -73,7 +69,7 @@ void Analysis::createCountTable() {
             key2 = std::make_tuple(tokens[5],tokens[8],tokens[13],tokens[16]);
 
             //
-            if(counts.count(key1) == 0 || counts.count(key2) == 0) {
+            if(counts.count(key1) == 0 && counts.count(key2) == 0) {
                 std::vector<std::tuple<int,std::vector<float>,std::vector<float>>> content;
 
                 for(unsigned j=0; j<interPaths.size();++j) {
@@ -108,9 +104,6 @@ void Analysis::createCountTable() {
                     std::get<2>(oldVal) = oldValCmpl;
 
                     counts[key1][i] = oldVal;
-
-
-
                 } else {
                     if(counts.count(key2) > 0) {
                         std::tuple<int,std::vector<float>,std::vector<float>> oldVal;
@@ -126,27 +119,17 @@ void Analysis::createCountTable() {
                         std::get<1>(oldVal) = oldValEnergy;
                         std::get<2>(oldVal) = oldValCmpl;
 
-                        counts[key1][i] = oldVal;
-
+                        counts[key2][i] = oldVal;
                     }
                 }
-
             }
-
         }
-
     }
 
 
     // write back to file
     std::string outfile = params["outdir"].as<std::string>();
     fs::path outPath = fs::path(outfile) / "allints.txt";
-
-
-    
-
-
-
 
     std::ofstream outFileHandle;
     outFileHandle.open(outPath.string());
@@ -160,21 +143,18 @@ void Analysis::createCountTable() {
     }
     outFileHandle << "\n";
 
-
     for(auto it=counts.begin(); it!=counts.end(); ++it) {
         outFileHandle << std::get<0>(it->first) << "\t";
         outFileHandle << std::get<2>(it->first) << "\t";
         outFileHandle << std::get<1>(it->first) << "\t";
         outFileHandle << std::get<3>(it->first) << "\t";
 
-       
         //
         for(unsigned z=0;z<it->second.size();++z) {
             outFileHandle << std::get<0>(it->second[z]) << "\t";
 
             std::vector<float> vecNrg = std::get<1>(it->second[z]);
             std::vector<float> vecCpl = std::get<2>(it->second[z]);
-
 
             // determine ges
             float ges = 0.0;
@@ -190,7 +170,6 @@ void Analysis::createCountTable() {
             }
             outFileHandle << ges << "\t";
 
-
             // determine gcs
             float gcs = 0.0;
             if(vecCpl.size() == 1) {
@@ -204,24 +183,10 @@ void Analysis::createCountTable() {
                 }
             }
             outFileHandle << gcs << "\t";
-
         }
-
-
-
         outFileHandle << "\n";
-
     }
-
-
-
-
-
-
     outFileHandle.close();
-
-
-
 }
 
 
