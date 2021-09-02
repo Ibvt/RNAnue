@@ -5,6 +5,7 @@
 #include <fstream>
 #include <limits>
 #include <deque>
+#include <math.h>
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -20,8 +21,8 @@
 #include "Analysis.hpp"
 
 namespace po = boost::program_options;
-namespace fs = boost::filesystem;
 namespace pt = boost::property_tree;
+namespace fs = boost::filesystem;
 
 using GroupsPath = std::map<std::string, fs::path>; // path to ctrls, trtms
 

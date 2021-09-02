@@ -34,9 +34,8 @@ This is be sufficient if the dependencies are located in $PATH. Calling `make` b
 ## Usage
 
 ### Positional Arguments
-RNAnue provides different functional arguments for individual procedures. These include `RNAnue preproc`, 
-`RNAnue align`, `RNAnue clustering`, `RNAnue analysis`. In additon, `RNAnue complete` applies the whole
-workflow.
+RNAnue provides different functional arguments (subcalls) for individual procedures. These include `RNAnue preproc`, 
+`RNAnue align`, `RNAnue clustering`, `RNAnue analysis`. In additon, `RNAnue complete` applies the whole workflow.
 
 ## Input
 RNAnue requires the sequencing files to be in a specific folder structure. The root folders of the 
@@ -59,9 +58,10 @@ For the latter, we provide a template configuration file ([params.cfg](./build/p
 allows to set the parameters in a more convenient fashion. This means that the call of RNAnue 
 is reduced to the following call. 
 ```
-RNAnue subcall --config /path/to/params.cfg
+RNAnue <subcall> --config /path/to/params.cfg
 ```
-In any case, the specifying parameters over the command lines has precedence over the config file.
+Here, subcall corresponds to positional arguments.In any case, the specifying parameters over the command lines has 
+precedence over the config file.
 
 
 ## Results
