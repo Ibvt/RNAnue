@@ -28,7 +28,7 @@ Data::Data(po::variables_map _params) :
 
     // create output directory
     fs::path resultsDir = fs::path(_params["outdir"].as<std::string>()); 
-//    createOutDir(resultsDir, subcall, std::cout);
+    createOutDir(resultsDir, subcall, std::cout);
 
     // preprocessing
     if(subcall == "preproc") { //
@@ -50,7 +50,6 @@ Data::Data(po::variables_map _params) :
     if(subcall == "analysis") {
         analysisDataPrep();
     }
-
 
 
 }
@@ -184,7 +183,6 @@ void Data::retrieveData(GroupsPath _groupsPath) {
     PathVector conditionsVec;
     fs::path pathOut; // buffer output path
 
-
     //
     GroupsPath::iterator itGroups = _groupsPath.begin(); 
     for(itGroups;itGroups != _groupsPath.end();++itGroups) { // iterate through the groups (e.g., ctrls, trtms)
@@ -215,6 +213,8 @@ void Data::retrieveData(GroupsPath _groupsPath) {
 
     dataStructure.add_child(params["subcall"].as<std::string>(), subcall);
 
+
+    std::cout << "write to output file" << std::endl;
     // write folder structure to output file
     fs::path ppPath = params["outdir"].as<std::string>() / fs::path("data.json");
     std::ofstream ppStr(ppPath.string());
