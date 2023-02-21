@@ -130,6 +130,8 @@ int main(int argc, char* argv[]) {
                 "configuration file that contains the parameters")
         ;
 
+
+
         po::options_description subcall("Subcall");
         subcall.add_options()
             ("subcall", po::value<std::string>(), "preproc, detect, alignment, clustering, analysis")
@@ -192,6 +194,12 @@ int main(int argc, char* argv[]) {
             return 0;
         }
 
+        if (!vm.count("subcall")) {
+            std::cout << "Please provide a subcall." << std::endl;
+            return 0;
+        }
+
+
         // start execution
         showVersion(std::cout);
         Base bs(vm, vm["subcall"].as<std::string>()); // controls all downstream processing
@@ -200,7 +208,8 @@ int main(int argc, char* argv[]) {
        
     
     } catch(po::error& e) {
-        std::cerr << e.what();
+        std::cout << "please provide a correct function call" << std::endl;
+        std::cerr << e.what() << " at line " << __LINE__ << std::endl;
         return 0;
     }
 }
