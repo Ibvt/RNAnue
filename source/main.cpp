@@ -6,7 +6,7 @@
 #include "Config.h"
 #include "Closing.hpp"
 
-//#include <boost/program_options.hpp>
+//#include <boost/program_options.hpp   >
 
 namespace po = boost::program_options;
 
@@ -130,8 +130,6 @@ int main(int argc, char* argv[]) {
                 "configuration file that contains the parameters")
         ;
 
-
-
         po::options_description subcall("Subcall");
         subcall.add_options()
             ("subcall", po::value<std::string>(), "preproc, detect, alignment, clustering, analysis")
@@ -167,21 +165,10 @@ int main(int argc, char* argv[]) {
         store(po::command_line_parser(argc, argv).options(cmdlineOptions).positional(p).run(),vm);
         notify(vm);
 
-
         // include parameters from the configfile if available
         std::ifstream ifs(configFile.c_str());
-    
-        if(!ifs) {
-            std::cout << "configuration file" << configFile << "could not be opened!" << std::endl;
-            return 0;
-        } else {
-            po::store(po::parse_config_file(ifs, configFileOptions),vm);
-            notify(vm);
-        }
-
 
         Closing cl; // class that handles the closing remarks
-        
         if(vm.count("help")) {
             std::cout << cmdlineOptions << std::endl;
             cl.show(std::cout);
@@ -194,11 +181,19 @@ int main(int argc, char* argv[]) {
             return 0;
         }
 
+        if(!ifs) {
+            std::cout << "configuration file" << configFile << "could not be opened!" << std::endl;
+            return 0;
+        } else {
+            po::store(po::parse_config_file(ifs, configFileOptions),vm);
+            notify(vm);
+        }
+
+
         if (!vm.count("subcall")) {
             std::cout << "Please provide a subcall." << std::endl;
             return 0;
         }
-
 
         // start execution
         showVersion(std::cout);

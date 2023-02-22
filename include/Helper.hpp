@@ -3,6 +3,7 @@
 
 #include <boost/filesystem.hpp>
 #include <iostream>
+#include <iomanip>
 
 namespace fs = boost::filesystem;
 
@@ -15,6 +16,8 @@ namespace helper {
     int lineCount(fs::path file, std::string command); // count lines of file
     std::vector<fs::path> listFiles(fs::path path);
     void concatFiles(fs::path target, std::vector<fs::path> files);
+
+    std::string getTime(); // reports the current time
 
 
 }

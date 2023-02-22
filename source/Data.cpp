@@ -1,4 +1,6 @@
 #include "Data.hpp"
+#include "Helper.hpp"
+
 
 //
 void createDirectory(fs::path& _path, std::ostream& _str) {
@@ -150,13 +152,12 @@ void Data::analysisDataPrep() {
 
     GroupsPath group = retrieveGroupsPath(ctrlsPath, trtmsPath);
     retrieveData(group);
-
 }
 
 //
 GroupsPath Data::retrieveGroupsPath(fs::path _ctrls, fs::path _trtms) {
     GroupsPath groups;
-    std::cout << "*** collect the data" << std::endl;
+    std::cout << helper::getTime() << " collect the datasets" << std::endl;
 
     if(_trtms != "") { // '--trtms' has been set in the config file or cmdline
         if(_ctrls != "") { // '--ctrls' has been set in the config or cmdline
@@ -190,12 +191,21 @@ void Data::retrieveData(GroupsPath _groupsPath) {
         std::cout << "\t" << itGroups->first << ":\t" << itGroups->second << std::endl;
         if(fs::exists(itGroups->second)) { // check if the provided path exists...
             std::cout << "\t\t...has been found in the filesystem!" << std::endl;
+
             if(fs::is_directory(itGroups->second)) { // ... and check if its a directory (not a file)
+
                 // retrieve content (conditions) within group (e.g., rpl-exp,..) as abs path
-                PathVector conditionsVec = sortDirContent(itGroups->second); // sort 
+                PathVector conditionsVec = sortDirContent(itGroups->second); // sort
+
                 PathVector::iterator itConditions = conditionsVec.begin();
                 for(itConditions;itConditions != conditionsVec.end();++itConditions) {
+
+                    if(fs::exists(*itConditions) && !fs::is_directory(*itConditions)) {
+                        std::cout << "\t\tBut contains files (which will be ignored!)" << std::endl;
+                        continue;
+                    }
                     condition = retrieveGroup(itGroups->first,*itConditions);
+
                     // parent output directories
                     group.push_back(std::make_pair("", condition));
                 }
@@ -214,7 +224,7 @@ void Data::retrieveData(GroupsPath _groupsPath) {
     dataStructure.add_child(params["subcall"].as<std::string>(), subcall);
 
 
-    std::cout << "write to output file" << std::endl;
+    std::cout << "*** write to output file" << std::endl;
     // write folder structure to output file
     fs::path ppPath = params["outdir"].as<std::string>() / fs::path("data.json");
     std::ofstream ppStr(ppPath.string());

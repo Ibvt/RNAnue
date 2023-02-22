@@ -5,8 +5,6 @@ void helper::createFolder(fs::path path) {
     if(!fs::exists(path)) {
         fs::create_directory(path);
     }
-
-
 }
 
 void helper::deleteFolder(fs::path path) {
@@ -59,6 +57,19 @@ void helper::concatFiles(fs::path target, std::vector<fs::path> files) {
     if(files.size() > 0) {
         system(call.c_str());
     }
+}
+
+//
+std::string helper::getTime() {
+    // Get the current time and date
+    auto now = std::chrono::system_clock::now();
+    std::time_t current_time = std::chrono::system_clock::to_time_t(now);
+
+    // Convert the time and date to a string in the format: YYYY-MM-DD
+    std::stringstream time_stream;
+    time_stream << std::put_time(std::localtime(&current_time), "[%Y-%m-%d %H:%M:%S]");
+    std::string time_string = time_stream.str();
+    return time_string;
 }
 
 
