@@ -1,7 +1,7 @@
 #include "SeqRickshaw.hpp"
 
 SeqRickshaw::SeqRickshaw(po::variables_map _params) : params(_params) {
-    std::cout << "created instance of sequence RickShaw" << std::endl;
+    std::cout << helper::getTime() << " start the pre-processing" << std::endl;
     
     // retrieve parametes for the preprocessing
     minlen = _params["minlen"].as<int>();
@@ -51,7 +51,7 @@ SeqRickshaw::SeqRickshaw(po::variables_map _params) : params(_params) {
 
 // calculate the smart state transition table for the patterns
 std::map<std::pair<std::string,std::string>, LookupTable> SeqRickshaw::calcLookupTable(std::string _type, std::string _adptFile) {
-    std::cout << "create lookup table using " << _adptFile << std::endl;
+    std::cout << helper::getTime() << " create lookup table using " << _adptFile << std::endl;
 
     // 
     Adapters tables;
@@ -488,9 +488,6 @@ std::size_t SeqRickshaw::boyermoore(auto& read, LookupTable tab, int m) {
         align = align + shift;
     }
 //	if
-
-	
-	
     return std::string::npos;
 }
 
@@ -533,7 +530,7 @@ SeqRickshaw::SeqRickshaw() {
 }
 
 void SeqRickshaw::start(pt::ptree sample) {
-    std::cout << "start" << std::endl;
+    std::cout << helper::getTime() << " process the reads" << std::endl;
     
     std::pair<std::size_t,std::size_t> bndsFwd; //
     std::pair<std::size_t,std::size_t> bndsRev; //
@@ -645,7 +642,6 @@ void SeqRickshaw::start(pt::ptree sample) {
                 }
             }
         }
-
         myfile.close();
     }
 }
@@ -671,8 +667,6 @@ std::size_t SeqRickshaw::nibble(auto &seq, auto &qual, std::pair<std::size_t,std
 	}
 	return threePrimeEnd;
 }
-
-
 
 // determines the longest common substring between forward and reverse read
 std::string SeqRickshaw::longestCommonSubstr(std::string s1, std::string s2) {
@@ -767,8 +761,6 @@ bool SeqRickshaw::filtering(auto& rec) {
     }
 }
 
-
-
 // write lookup table
 void SeqRickshaw::writeLookupTable(std::ofstream& ofs) {
     for(auto const& [key, val] : adpt3Table) {
@@ -785,5 +777,3 @@ void SeqRickshaw::writeLookupTable(std::ofstream& ofs) {
         ofs << '\n';
     }
 }
-
-

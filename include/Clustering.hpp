@@ -1,3 +1,5 @@
+#include "Helper.hpp"
+
 #include <algorithm>
 
 #include <omp.h>
@@ -5,6 +7,7 @@
 // boost
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/filesystem.hpp>
 
 #include <seqan3/io/alignment_file/input.hpp>
 #include <seqan3/io/alignment_file/sam_tag_dictionary.hpp>
@@ -18,6 +21,7 @@
 
 namespace po = boost::program_options;
 namespace pt = boost::property_tree;
+namespace fs = boost::filesystem;
 
 struct Segment {
     std::string refid;
@@ -50,7 +54,7 @@ class Clustering {
 		Clustering(po::variables_map params);
 		Clustering();
 
-        void iterate(std::string splits, std::string clusters);
+        void iterate(std::string splits);
         void overlaps(std::vector<Cluster> &clusterlist);
         bool startPosCmp(Cluster &a, Cluster &b);
         void start(pt::ptree sample);

@@ -124,12 +124,10 @@ void Data::detectDataPrep() {
 	
     GroupsPath group = retrieveGroupsPath(ctrlsPath, trtmsPath);
 	retrieveData(group);
-
 }
 
-
 void Data::clusteringDataPrep() {
-	std::cout << "reads the data to align" << "\n";
+	std::cout << "reads the data to clustering" << "\n";
 	
 	fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
 	if(params["ctrls"].as<std::string>() == "") {
@@ -288,7 +286,7 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
 		//std::cout << "being in retrieve group" << std::endl;
 		nrElements = 1;
 
-		// remove files that do not contain keyword (splis)
+		// remove files that do not contain keyword (splits)
 		PathVector tmpDataFiles = filterDirContent(dataFiles, "_splits.sam");
 		sampleKeys = {"splits"};
 		dataFiles = tmpDataFiles;
@@ -300,8 +298,6 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
 		sampleKeys = {"splits"};
 		dataFiles = tmpDataFiles;
     }
-
-
 
     /* path of the results up to the level of the conditions 
      * e.g., /results/preproc/trtms/
@@ -321,7 +317,9 @@ pt::ptree Data::retrieveGroup(std::string _group, fs::path _conditionPath) {
  //           sample.put("condition", conditionName);
             // input and output
             sample.add_child("input", files);
-            output = retrieveOutput(outConditionDir, sample); 
+            output = retrieveOutput(outConditionDir, sample);
+
+
             sample.add_child("output",output);
    
             samples.push_back(std::make_pair("",sample));
@@ -361,7 +359,7 @@ pt::ptree Data::retrieveOutput(fs::path _outConditionDir, pt::ptree _input) {
         // create output files using the input files with an additonal suffix
         std::string forwardOut = addSuffix(forward,"_preproc", {"_R1","fwd"});
         output.put("forward", forwardOut); // write output back to ptree
-        
+
         // using paired-end reads results in additional files for unassembled reads
         if(params["readtype"].as<std::string>() == "PE") { 
             // replace 
@@ -413,7 +411,6 @@ pt::ptree Data::retrieveOutput(fs::path _outConditionDir, pt::ptree _input) {
         std::string multsplits = addSuffix(s, "multsplits", {"matched"});
         output.put("splits",splits);
         output.put("multsplits",multsplits);
-
     }
 
 	// clustering
@@ -422,7 +419,7 @@ pt::ptree Data::retrieveOutput(fs::path _outConditionDir, pt::ptree _input) {
 		splits.replace_extension(".txt");
 		std::string clu = replacePath(_outConditionDir, splits).string();
 		std::string clusters = addSuffix(clu, "_clusters", {"_splits"});
-		output.put("clusters", clusters);
+        //output.put("clusters", clusters); # no individual outputs for each - instead one file
 	}
     
     if(params["subcall"].as<std::string>() == "analysis") {
@@ -432,7 +429,6 @@ pt::ptree Data::retrieveOutput(fs::path _outConditionDir, pt::ptree _input) {
         std::string ints = addSuffix(its, "_interactions",{"_splits"});
         output.put("interactions", ints);
     }
-
     return output;
 }
 
@@ -461,7 +457,11 @@ void Data::callInAndOut(Callable f) {
     for(unsigned i=0;i<groups.size();++i) {
         // create directory for groups (e.g., ctrls, trtms)
         outGroupDir = outSubcallDir / fs::path(groups[i]);
+
+        // don't create subfolders for clustering && analysis
+        //if(params["subcall"].as<std::string>() != "clustering") {
         createDirectory(outGroupDir, std::cout);
+        //}
 
         conditions = subcall.get_child(groups[i]);
         BOOST_FOREACH(pt::ptree::value_type const &v, conditions.get_child("")) {
@@ -525,8 +525,6 @@ void Data::analysis() {
     if(params["outcnt"].as<std::bitset<1>>() == std::bitset<1>(1)) {
         anl.createCountTable();
     }
-
-
 }
 
 

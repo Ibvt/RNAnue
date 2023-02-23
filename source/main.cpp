@@ -33,6 +33,8 @@ int main(int argc, char* argv[]) {
         std::string readType;
         std::string configFile;
 
+        std::cout << "before general" << std::endl;
+
         po::options_description general("General");
         general.add_options()
 		    ("readtype,r", po::value<std::string>(&readType)->default_value("SE"), 
@@ -161,9 +163,16 @@ int main(int argc, char* argv[]) {
         po::positional_options_description p;
         p.add("subcall", -1);
 
+
+
         po::variables_map vm;
         store(po::command_line_parser(argc, argv).options(cmdlineOptions).positional(p).run(),vm);
         notify(vm);
+
+
+
+
+
 
         // include parameters from the configfile if available
         std::ifstream ifs(configFile.c_str());
@@ -195,12 +204,15 @@ int main(int argc, char* argv[]) {
             return 0;
         }
 
+
+        std::cout << "before calling subcall" << std::endl;
+
         // start execution
         showVersion(std::cout);
         Base bs(vm, vm["subcall"].as<std::string>()); // controls all downstream processing
 
         cl.show(std::cout);
-       
+
     
     } catch(po::error& e) {
         std::cout << "please provide a correct function call" << std::endl;

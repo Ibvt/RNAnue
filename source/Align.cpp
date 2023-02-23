@@ -8,6 +8,8 @@ Align::Align(po::variables_map params) :
 }
 
 void Align::alignReads(std::string query, std::string matched) {
+    std::cout << "calling segemehl" << std::endl;
+
     std::string align = "segemehl.x";
     align += " -S ";
     align += " -A " + std::to_string(params["accuracy"].as<int>()); 
@@ -20,10 +22,10 @@ void Align::alignReads(std::string query, std::string matched) {
     align += " -d " + params["dbref"].as<std::string>();
     align += " -q " + query;
     align += " -o " + matched;
+    std::cout << align << std::endl;
 
     const char* call = align.c_str();
     system(call);
-    std::cout << align << std::endl;
 }
 
 void Align::buildIndex() {
@@ -38,12 +40,12 @@ void Align::buildIndex() {
     } else {
         std::cout << "generate index " << "\n";
         std::string genIndex = "segemehl.x -x " + gen.string() + " -d " + ref;
+        std::cout << genIndex << std::endl;
         const char* call = genIndex.c_str();
         system(call);
     }
     index = gen.string();
 }
-
 
 //
 seqan3::dna5 Align::string2dna5(std::string rna) {
@@ -54,7 +56,6 @@ seqan3::dna5 Align::string2dna5(std::string rna) {
     return seq;
 }
 
-
 //
 void Align::start(pt::ptree sample) {
     pt::ptree input = sample.get_child("input");
@@ -64,6 +65,4 @@ void Align::start(pt::ptree sample) {
     std::string forward = input.get<std::string>("forward");
     std::string matched = output.get<std::string>("matched");
     alignReads(forward, matched);
-
 }
-    

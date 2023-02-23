@@ -3,11 +3,11 @@
 
 Clustering::Clustering(po::variables_map params) : 
     params(params) {
+        std::cout << helper::getTime() << " start the clustering procedure" << std::endl;
         result = {}; 
 }
 
-
-void Clustering::iterate(std::string splits, std::string clusters) {
+void Clustering::iterate(std::string splits) {
 
     // input .sam record
     seqan3::alignment_file_input fin{splits, 
@@ -21,7 +21,6 @@ void Clustering::iterate(std::string splits, std::string clusters) {
     int chunks = 5;
     std::vector<Cluster> subset;
 
-    //
     std::vector<seqan3::sam_flag> flags;
     std::vector<std::string> refIDs;
     std::vector<std::optional<int32_t>> refOffsets;
@@ -30,6 +29,7 @@ void Clustering::iterate(std::string splits, std::string clusters) {
 	for(auto &info : fin.header().ref_id_info) {
 		ref_lengths.push_back(std::get<0>(info));
 	}
+
     std::deque<std::string> ref_ids = fin.header().ref_ids();
 
     uint32_t flag, start, end;
@@ -40,8 +40,7 @@ void Clustering::iterate(std::string splits, std::string clusters) {
             uint32_t flag{0}; // SAMFLAG
             if(static_cast<bool>(seqan3::get<seqan3::field::flag>(split) & seqan3::sam_flag::on_reverse_strand)) {
                 flag = 16;
-            } 
-            
+            }
             // start & end
             uint32_t start = seqan3::get<seqan3::field::ref_offset>(split).value();
             uint32_t end = start + seqan3::get<seqan3::field::seq>(split).size()-1;
@@ -58,42 +57,72 @@ void Clustering::iterate(std::string splits, std::string clusters) {
         }
         subset.push_back(cl);
 
-        std::cout << "size of subset: " << subset.size() << std::endl;
+        //std::cout << "size of subset: " << subset.size() << std::endl;
 
         if(subset.size() == chunks) {
             overlaps(subset);
             result.insert(result.end(),subset.begin(),subset.end());
-            std::cout << "results size: " << result.size() << std::endl;
+            //std::cout << "results size: " << result.size() << std::endl;
             subset.clear();
         }
     }
     if(subset.size() > 0) {
         overlaps(subset);
         result.insert(result.end(),subset.begin(),subset.end());
-        std::cout << "results size: " << result.size() << std::endl;
+      //  std::cout << "results size: " << result.size() << std::endl;
         subset.clear();
     }
 
     overlaps(result);
-    std::cout << "final results size: " << result.size() << std::endl;
+    //std::cout << "final results size: " << result.size() << std::endl;
 }
-
 
 //
 bool Clustering::startPosCmp(Cluster &a, Cluster &b) {
     return a.elements[0].start < b.elements[0].start;
 }
 
-
 void Clustering::sumup() {
-    std::cout << "sumup" << std::endl;
-    std::cout << result.size() << std::endl;
+    std::cout << helper::getTime() << " write clusters to file" << std::endl;
+
+    //std::cout << "sumup" << std::endl;
+    //std::cout << result.size() << std::endl;
+
+    // retrieve output directory
+    fs::path output = fs::path(params["outdir"].as<std::string>()) / fs::path("clustering");
+    fs::path cluster_results = output / fs::path("clusters.tab");
+
+    std::ofstream outputFile(cluster_results.string());
+    for(unsigned i=0;i<result.size();++i) {
+        if(outputFile.is_open()) {
+            outputFile << result[i].elements[0].refid << "\t";
+            if(result[i].elements[0].flag == 0) {
+                outputFile << "+" << "\t";
+            } else {
+                outputFile << "-" << "\t";
+            }
+            outputFile << result[i].elements[0].start << "\t";
+            outputFile << result[i].elements[0].end << "\t";
+
+            outputFile << result[i].elements[1].refid << "\t";
+            if(result[i].elements[1].flag == 0) {
+                outputFile << "+" << "\t";
+            } else {
+                outputFile << "-" << "\t";
+            }
+            outputFile << result[i].elements[1].start << "\t";
+            outputFile << result[i].elements[1].end << "\t";
+            outputFile << result[i].count << "\t";
+            outputFile << (result[i].elements[0].end+1) - result[i].elements[0].start << "\t";
+            outputFile << (result[i].elements[1].end+1) - result[i].elements[1].start << "\n";
+        }
+    }
+    outputFile.close();
+
     /*
     for(unsigned i=0;clusters.size();++i) {
         //std::cout << clusters[i].count << std::endl;
-
     }*/
-
 }
 void Clustering::overlaps(std::vector<Cluster> &clusterlist) {
     std::sort(clusterlist.begin(), clusterlist.end());
@@ -167,7 +196,6 @@ void Clustering::overlaps(std::vector<Cluster> &clusterlist) {
                             clusterlist.erase(clusterlist.begin()+i);
                             //std::remove(clusterlist.begin(),clusterlist.end(),clusterlist[i]);
 
-
                         }
                     }
                 }
@@ -177,17 +205,17 @@ void Clustering::overlaps(std::vector<Cluster> &clusterlist) {
 }
 
 
-
 void Clustering::start(pt::ptree sample) {
     pt::ptree input = sample.get_child("input");
-    pt::ptree output = sample.get_child("output");
+    //pt::ptree output = sample.get_child("output");
 
     std::string splits = input.get<std::string>("splits");
-    std::string clusters = output.get<std::string>("clusters");
+    //std::string clusters = output.get<std::string>("clusters");
 
-    std::cout << splits << std::endl;
+    //std::cout << clusters << std::endl;
+    //std::cout << splits << std::endl;
 
-    iterate(splits,clusters);
+    iterate(splits);
 
     //std::cout << "within start" << splits << std::endl;
 }
