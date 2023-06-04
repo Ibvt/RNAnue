@@ -46,7 +46,6 @@ SeqRickshaw::SeqRickshaw(po::variables_map _params) : params(_params) {
     catch (std::exception& e) {
         std::cout << e.what() << std::endl;
     }
-
 }
 
 // calculate the smart state transition table for the patterns
