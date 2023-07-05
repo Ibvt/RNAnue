@@ -4,10 +4,6 @@ project (RNAnue VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-message("Configuring Config.h")
-message("Input file: ${CMAKE_CURRENT_SOURCE_DIR}/include/Config.h.in")
-message("Output file: ${CMAKE_CURRENT_BINARY_DIR}/include/Config.h")
-
 
 # configure header file to pass the version number to  the source code
 #configure_file(./include/Config.h.in ./include/Config.h)
@@ -34,7 +30,7 @@ endif()
 file(GLOB SOURCES "./source/*.cpp")
 include_directories(./include)
 
-add_executable (RNAnue ${SOURCES})
+add_executable (RNAnue ${SOURCES} include/LookupTable.hpp)
 target_link_libraries (RNAnue seqan3::seqan3)
 target_link_libraries (RNAnue Boost::program_options Boost::filesystem)
 if(OpenMP_CXX_FOUND)

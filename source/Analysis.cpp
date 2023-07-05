@@ -321,7 +321,6 @@ void Analysis::start(pt::ptree sample) {
                     } else {
                         entry += "antisense\t";
                     }
-
                     segCntMatch++;
                     segFound = 0;
                 }

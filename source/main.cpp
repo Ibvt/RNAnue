@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
         po::options_description detect("Split Read Calling");
         detect.add_options()
             ("cmplmin", po::value<double>()->default_value(0.0), "complementarity cutoff for split reads")
-            ("sitelenratio", po::value<double>()->default_value(0.1),
+            ("sitelenratio", po::value<double>()->default_value(0.0),
                 "aligned portion of the read (complementarity)")
             ("nrgmax", po::value<double>()->default_value(0), "hybridization energy cutoff for split reads")
         ;
@@ -163,15 +163,9 @@ int main(int argc, char* argv[]) {
         po::positional_options_description p;
         p.add("subcall", -1);
 
-
-
         po::variables_map vm;
         store(po::command_line_parser(argc, argv).options(cmdlineOptions).positional(p).run(),vm);
         notify(vm);
-
-
-
-
 
 
         // include parameters from the configfile if available

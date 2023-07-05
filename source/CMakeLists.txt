@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.4)
-project (RNAnue VERSION 0.1.0)
+project (RNAnue VERSION 0.1.1)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)

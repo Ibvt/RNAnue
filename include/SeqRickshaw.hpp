@@ -2,6 +2,7 @@
 #define SEQRICKSHAW_H
 
 #include "Helper.hpp"
+#include "LookupTable.hpp"
 
 // openMP
 #include <omp.h>
@@ -51,6 +52,7 @@ namespace po = boost::program_options;
 typedef std::tuple<std::string,int,std::pair<int,int>,std::size_t> State;
 typedef std::vector<State> States;
 
+// change that to short
 typedef std::map<std::pair<int,char>,std::tuple<int,int,int,int>> LookupTable;
 
 typedef std::map<std::pair<std::string,std::string>, LookupTable> Adapters;
