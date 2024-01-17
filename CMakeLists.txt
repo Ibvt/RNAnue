@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 3.4)
-project (RNAnue VERSION 0.1.0)
+project (RNAnue VERSION 0.1.1)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -10,7 +10,7 @@ message("Output file: ${CMAKE_CURRENT_BINARY_DIR}/include/Config.h")
 
 
 # configure header file to pass the version number to  the source code
-#configure_file(./include/Config.h.in ./include/Config.h)
+#configure_file(./include/Config.h.in ./include/Config.h)/
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/Config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/include/Config.h)
 
 set(Boost_USE_MULTITHREADED TRUE)
@@ -21,7 +21,7 @@ find_package(OpenMP)
 
 # ----------------------------------------------------------------------------
 # Dependencies
-# ----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 set(Boost_DEBUG ON)
 ### boost

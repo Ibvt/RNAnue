@@ -3,6 +3,7 @@
 
 #include "Data.hpp"
 #include "SeqRickshaw.hpp"
+#include "Helper.hpp"
 
 // namespace
 
