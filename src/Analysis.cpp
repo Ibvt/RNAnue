@@ -4,12 +4,12 @@
 Analysis::Analysis(po::variables_map _params) : params(_params) {
     std::string line;
     std::ifstream anno;
-    anno.open(params["features"].as<std::string>());
 
+    anno.open(params["features"].as<std::string>());
     // parse annotations
     if(!anno.is_open()) {
-      perror("Error open");
-      exit(EXIT_FAILURE);
+        perror("Error open");
+        exit(EXIT_FAILURE);
     }
     while(getline(anno, line)) {
         if(line[0] == '#') { continue; }
@@ -20,11 +20,11 @@ Analysis::Analysis(po::variables_map _params) : params(_params) {
         while(std::getline(iss, token, '\t')) {
             tokens.push_back(token);
         }
-        
+
         // boundaries
         std::pair<int,int> bnds = std::make_pair(std::stoi(tokens[3]),std::stoi(tokens[4]));
         std::pair<std::pair<int,int>,std::string> con = std::make_pair(bnds,"strand="+tokens[6]+";"+tokens[8]);
-        
+
         std::size_t start_position;
         if(features.count(tokens[0]) == 0) { // check of RefName is in map
             if(start_position != std::string::npos) {
@@ -34,8 +34,23 @@ Analysis::Analysis(po::variables_map _params) : params(_params) {
             features[tokens[0]].push_back(con);
         }
     }
-}
 
+    // read file
+    fs::path freqFile = fs::path(params["outdir"].as<std::string>()) / fs::path("frequency.txt");
+    std::ifstream freqHandle;
+    freqHandle.open(freqFile.string());
+
+    // iterate and store into frquency map
+    while(getline(freqHandle, line)) {
+        std::vector<std::string> tokens;
+        std::istringstream iss(line);
+        std::string token;
+        while(std::getline(iss, token, '\t')) {
+            tokens.push_back(token);
+        }
+        frequency.insert(std::pair<std::string,int>(tokens[0],std::stoi(tokens[1])));
+    }
+}
 
 //
 void Analysis::createCountTable() {
@@ -46,7 +61,7 @@ void Analysis::createCountTable() {
         intsfile.open(interPaths[i]);
 
         std::cout << interPaths[i] << std::endl;
-    
+
         if(!intsfile.is_open()) {
             perror("Error open");
             exit(EXIT_FAILURE);
@@ -93,7 +108,7 @@ void Analysis::createCountTable() {
                     std::tuple<int,std::vector<float>,std::vector<float>> oldVal;
                     oldVal = counts[key1][i];
                     std::get<0>(oldVal) = std::get<0>(oldVal) + 1;
-                    
+
                     std::vector<float> oldValEnergy = std::get<1>(oldVal);
                     std::vector<float> oldValCmpl = std::get<2>(oldVal);
 
@@ -109,7 +124,7 @@ void Analysis::createCountTable() {
                         std::tuple<int,std::vector<float>,std::vector<float>> oldVal;
                         oldVal = counts[key2][i];
                         std::get<0>(oldVal) = std::get<0>(oldVal) + 1;
-                        
+
                         std::vector<float> oldValEnergy = std::get<1>(oldVal);
                         std::vector<float> oldValCmpl = std::get<2>(oldVal);
 
@@ -191,7 +206,7 @@ void Analysis::createCountTable() {
 
 
 
-// 
+//
 std::string Analysis::retrieveTagValue(std::string tags, std::string tagName, std::string oldValue) {
     std::size_t start_position = tags.find(tagName+"=");
     // gene name
@@ -199,11 +214,18 @@ std::string Analysis::retrieveTagValue(std::string tags, std::string tagName, st
         std::string sub = tags.substr(start_position+tagName.size()+1,tags.length());
         std::size_t end_position = sub.find(";");
         oldValue = sub.substr(0,end_position);
-    } 
+    }
     return oldValue;
 }
 
 
+float Analysis::calc_pvalue(int x, int n, float p) {
+    // simulate draw from binomial distribution
+    std::binomial_distribution<int> binomial(n, p);
+    // assign p value
+    float pval = 1.0 - cdf(binomial, x);
+    return pval;
+}
 
 void Analysis::start(pt::ptree sample) {
     // retrieve input and output files
@@ -216,24 +238,24 @@ void Analysis::start(pt::ptree sample) {
     interPaths.push_back(interactions);
 
     // input .sam record
-    seqan3::alignment_file_input fin{splits, 
-		seqan3::fields<seqan3::field::id,
-		                seqan3::field::flag,
-                        seqan3::field::ref_id,
-						seqan3::field::ref_offset,
-						seqan3::field::seq,
-						seqan3::field::tags>{}};
-    
+    seqan3::alignment_file_input fin{splits,
+                                     seqan3::fields<seqan3::field::id,
+                                             seqan3::field::flag,
+                                             seqan3::field::ref_id,
+                                             seqan3::field::ref_offset,
+                                             seqan3::field::seq,
+                                             seqan3::field::tags>{}};
+
     std::vector<seqan3::sam_flag> flags;
     std::vector<std::string> refIDs;
     std::vector<std::optional<int32_t>> refOffsets;
-    
+
     std::vector<size_t> ref_lengths{};
-	for(auto &info : fin.header().ref_id_info) {
-		ref_lengths.push_back(std::get<0>(info));
-	}
+    for(auto &info : fin.header().ref_id_info) {
+        ref_lengths.push_back(std::get<0>(info));
+    }
     std::deque<std::string> ref_ids = fin.header().ref_ids();
-    
+
 //    uint32_t flag, start, end;
 
     // open file
@@ -245,12 +267,15 @@ void Analysis::start(pt::ptree sample) {
     // variables for interactions file
     std::string qNAME, flag;
     uint32_t start, end;
-    std::string geneName, product, annoStrand;
+    std::string geneID, geneName, product, annoStrand;
     float hybnrg, cmpl;
 
     seqan3::sam_tag_dictionary tags;
 
-    outInts << "#QNAME\tSegment1Strand\tSegment1Start\tSegment1End\tSegment1RefName\tSegment1Name\tSegment1AnnoStrand\tSegment1Product\tSegment1Orientation\tSegment2Strand\tSegment2Start\tSegment2End\tSegment2RefName\tSegment2Name\tSegment2AnnoStrand\tSegment2Product\tSegment1Orientation\tenergy\tcomplementarity\n";
+    outInts << "#QNAME\tSegment1Strand\tSegment1Start\tSegment1End\tSegment1RefName"
+    outInts << "\tSegment1Name\tSegment1AnnoStrand\tSegment1Product\tSegment1Orientation"
+    outInts << "\tSegment2Strand\tSegment2Start\tSegment2End\tSegment2RefName\tSegment2Name"
+    outInts << "\tSegment2AnnoStrand\tSegment2Product\tSegment1Orientation\tenergy\tcomplementarity\n";
 
     int segCnt = 0;
     int segCntMatch = 0;
@@ -261,21 +286,21 @@ void Analysis::start(pt::ptree sample) {
         hybnrg = 0.0;
         cmpl = 0.0;
         for(auto & split : rec) {
- //           seqan3::debug_stream << split << std::endl;
-            
+            //           seqan3::debug_stream << split << std::endl;
+
             qNAME = seqan3::get<seqan3::field::id>(split);
             flag = "+";
-            if(static_cast<bool>(seqan3::get<seqan3::field::flag>(split) 
-                        & seqan3::sam_flag::on_reverse_strand)) {
+            if(static_cast<bool>(seqan3::get<seqan3::field::flag>(split)
+                                 & seqan3::sam_flag::on_reverse_strand)) {
                 flag = "-";
             }
-            
+
             // start & end
             start = seqan3::get<seqan3::field::ref_offset>(split).value();
             end = start + seqan3::get<seqan3::field::seq>(split).size()-1;
 
             // refID
-            std::optional<int32_t> refIDidx = seqan3::get<seqan3::field::ref_id>(split); 
+            std::optional<int32_t> refIDidx = seqan3::get<seqan3::field::ref_id>(split);
             std::string refID = ref_ids[refIDidx.value()];
 
             tags = seqan3::get<seqan3::field::tags>(split);
@@ -284,20 +309,24 @@ void Analysis::start(pt::ptree sample) {
             hybnrg = std::get<float>(nrg);
             cmpl = std::get<float>(cpl);
 
-//            std::cout << std::get<float>(nrg) << std::endl;
-
             std::vector<std::pair<std::pair<int,int>,std::string>> feat;
             if(features.count(refID) > 0) {
                 feat = features[refID];
 
+                std::pair<std::string, std::string> geneNames;
+                geneID = ".";
                 geneName = ".";
                 product = ".";
                 annoStrand = ".";
                 for(unsigned i=0;i<feat.size();++i) {
                     if((start >= feat[i].first.first && start <= feat[i].first.second) ||
-                            (end >= feat[i].first.first && end <= feat[i].first.second)) {
+                       (end >= feat[i].first.first && end <= feat[i].first.second)) {
 
-                        geneName = retrieveTagValue(feat[i].second, "ID", geneName);
+                        // make sure that overlap is in exon
+                        if(params["splicing"].as<std::bitset<1>() && feat[i].second.find("exon") == std::string::npos) {
+                            continue;
+                        }
+                        geneID = retrieveTagValue(feat[i].second, "ID", geneName);
                         geneName = retrieveTagValue(feat[i].second, "gene", geneName);
                         product = retrieveTagValue(feat[i].second, "product", product);
                         annoStrand = retrieveTagValue(feat[i].second, "strand", annoStrand);
@@ -305,6 +334,26 @@ void Analysis::start(pt::ptree sample) {
                         segFound = 1; // found a match (in annotation) for segment
                     }
                 }
+
+                // search for geneNames in frequency map
+                geneNames = std::make_pair(retrieveTagValue(feat[0].second, "gene", geneName), retrieveTagValue(feat[1].second, "gene", geneName));
+
+                float value;
+                // check if geneNames first in frequency map
+                if(frequency.count(geneNames.first) > 0 && frequency.count(geneNames.second) > 0) {
+                    if (geneNames.first == geneNames.second) {
+                        value = frequency[geneNames.first] * frequency[geneNames.second];
+                    } else {
+                        value = 2 * (frequency[geneNames.first] * frequency[geneNames.second]);
+                    }
+                } else{
+                    value = 0;
+                }
+
+                // calculate p-value
+                int draws = frequency[geneNames.first] + frequency[geneNames.second];
+                float pval = calc_pvalue(segCntMatch, draws, value);
+
 
                 if(segFound == 1) {
                     if(segCnt == 0) { entry += qNAME + "\t";}
@@ -321,6 +370,8 @@ void Analysis::start(pt::ptree sample) {
                     } else {
                         entry += "antisense\t";
                     }
+
+                    entry += pval + "\t";
 
                     segCntMatch++;
                     segFound = 0;
