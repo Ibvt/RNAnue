@@ -1,9 +1,16 @@
+
+#ifndef RNANUE_ANALYSIS_HPP
+#define RNANUE_ANALYSIS_HPP
+
 #ifndef ANALYSIS_HPP
 #define ANALYSIS_HPP
 
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <
 #include <boost/filesystem.hpp>
+#include <boost/random.hpp>
+#include <boost/random/uniform_real_distribution.hpp>
 #include <string>
 #include<math.h>
 
@@ -31,26 +38,27 @@ template <> struct seqan3::sam_tag_type<"XC"_tag> { using type = std::string; };
 
 class Analysis {
 
-    private:
-        po::variables_map params;
-        std::map<std::string, std::vector<std::pair<std::pair<int,int>,std::string>>> features;
+private:
+    po::variables_map params;
+    std::map<std::string, std::vector<std::pair<std::pair<int,int>,std::string>>> features;
+    std::map<std::string, int> frequency;
+    std::map<std::pair<std::string, std::string>, double> pdf;
 
-        std::vector<std::string> interPaths; // paths of the interactions file
+    std::vector<std::string> interPaths; // paths of the interactions file
 
+public:
+    Analysis();
+    Analysis(po::variables_map params);
 
-    public:
-        Analysis();
-        Analysis(po::variables_map params);
+    std::string retrieveTagValue(std::string tags, std::string tagName, std::string oldValue);
+    void createCountTable();
+    float calc_pvalue(int x, int n, float p);
 
-        std::string retrieveTagValue(std::string tags, std::string tagName, std::string oldValue);
-
-
-        void createCountTable();
-
-        void parseAnnotations();
-        void start(pt::ptree sample);
-
+    void parseAnnotations();
+    void start(pt::ptree sample);
 
 };
 
 #endif // ANALYSIS_HPP
+
+#endif //RNANUE_ANALYSIS_HPP

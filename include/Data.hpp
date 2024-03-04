@@ -1,11 +1,12 @@
-#ifndef DATA_HPP
-#define DATA_HPP
+//
+// Created by Richard Albin Schaefer on 1/24/24.
+//
 
-#include <iostream>
-#include <fstream>
-#include <limits>
+#ifndef RNANUE_DATA_HPP
+#define RNANUE_DATA_HPP
+
+#include <typeinfo>
 #include <deque>
-#include <math.h>
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -13,79 +14,59 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
 
-
+#include "Utility.hpp"
 #include "SeqRickshaw.hpp"
-#include "Align.hpp"
 #include "SplitReadCalling.hpp"
-#include "Clustering.hpp"
-#include "Analysis.hpp"
+#include "Align.hpp"
 
 namespace po = boost::program_options;
-namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
+namespace pt = boost::property_tree;
+namespace jp = boost::property_tree::json_parser;
 
-using GroupsPath = std::map<std::string, fs::path>; // path to ctrls, trtms
+// map that contains the paths to the groups (e.g., ctrls, trtms)
+using GroupsPath = std::map<std::string, fs::path>;
+using PathVector = std::vector<fs::path>;
 
-template <class DataType>
-using GroupsMap = std::map<std::string, std::pair<std::string, DataType>>;
+class Data{
+    public:
+        Data(po::variables_map params);
+        ~Data();
 
-typedef std::vector<fs::path> PathVector;
+        // get Data
+        GroupsPath getGroupsPath(fs::path& ctrls, fs::path& trtms);
+        void getCondition(GroupsPath& groups);
+        pt::ptree getData(const std::string group, fs::path& condition);
 
-class Data {
-    /*
-     * the type of the data:
-     * 
-    */
+        // get output data
+        pt::ptree getOutputData(pt::ptree& input, fs::path& conditionOutDir);
+        pt::ptree getPreprocOutputData(pt::ptree& input, fs::path& conditionOutDir);
+        pt::ptree getAlignOutputData(pt::ptree& input, fs::path& conditionOutDir);
+        pt::ptree getDetectOutputData(pt::ptree& input, fs::path& conditionOutDir);
+
+        //
+        int getNumberElements(PathVector& vec);
+        std::vector<std::string> getSampleKeys();
+
+        // prep functions
+        void preprocDataPrep();
+        void alignDataPrep();
+        void detectDataPrep();
+
+        //
+        template <typename Callable>
+        void callInAndOut(Callable f);
+
+        // callables
+        void preproc();
+        void align();
+        void detect();
+
     private:
         po::variables_map params;
         pt::ptree dataStructure;
 
-    public:
-        Data();
-        Data(po::variables_map _params);
-        
-        // getter & setter
-        //
-        pt::ptree getDataStructure();
-
-        //
-        void preprocDataPrep();
-        void alignDataPrep();
-        void detectDataPrep();
-        void clusteringDataPrep();
-        void analysisDataPrep();
-
-        //  
-        GroupsPath retrieveGroupsPath(fs::path _ctrls, fs::path _trtms);
-        void retrieveData(GroupsPath _groupsPaths);
-        pt::ptree retrieveGroup(std::string _group, fs::path _condition);
-        pt::ptree retrieveOutput(fs::path _outConditionDir, pt::ptree _input);
-
-        // iterates through the data structure and excutes the subcall
-        
-        template <typename Callable>
-        void callInAndOut(Callable f);
-
-        // helper methods
-        // determine content of directory and sort it (return as vector)
-        PathVector sortDirContent(fs::path _path);
-		// filter content of directory to only include files containing search string
-		PathVector filterDirContent(PathVector vec, std::string sestr);
-        std::string addSuffix(std::string _file, std::string _suffix, std::vector<std::string> _keys);
-
-
-        // test stuff
-        template <typename Callable>
-        void bla(Callable f);
-
-        void preproc();
-        void align();
-        void splitReadCalling();
-        void clustering();
-        void analysis();
-
-
-
 };
 
-#endif // DATA_HPP
+
+#endif //RNANUE_DATA_HPP

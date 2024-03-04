@@ -1,4 +1,6 @@
-#include "Helper.hpp"
+#ifndef RNANUE_CLUSTERING_HPP
+#define RNANUE_CLUSTERING_HPP
+
 
 #include <algorithm>
 
@@ -15,7 +17,7 @@
 #include <seqan3/core/debug_stream.hpp>
 #include <seqan3/std/filesystem>
 
-// probably deprecated in 3.3.0 
+// probably deprecated in 3.3.0
 //#include <seqan3/utility/views/chunk.hpp>
 #include <seqan3/range/views/chunk.hpp>
 
@@ -31,7 +33,7 @@ struct Segment {
 
     Segment() : refid(""), flag(0), start(0), end(0) {};
     Segment(std::string _refid, uint32_t _flag, unsigned int _start, unsigned int _end) :
-        refid(_refid), flag(_flag), start(_start), end(_end) {};
+            refid(_refid), flag(_flag), start(_start), end(_end) {};
 };
 
 struct Cluster {
@@ -46,17 +48,22 @@ struct Cluster {
 
 
 class Clustering {
-    private:
-        po::variables_map params;
-        std::vector<Cluster> result;
+private:
+    po::variables_map params;
+    std::vector<Cluster> result;
 
-	public:
-		Clustering(po::variables_map params);
-		Clustering();
+public:
+    Clustering(po::variables_map params);
+    Clustering();
 
-        void iterate(std::string splits);
-        void overlaps(std::vector<Cluster> &clusterlist);
-        bool startPosCmp(Cluster &a, Cluster &b);
-        void start(pt::ptree sample);
-        void sumup();
+    void iterate(std::string splits);
+    void overlaps(std::vector<Cluster> &clusterlist);
+    bool startPosCmp(Cluster &a, Cluster &b);
+    void start(pt::ptree sample);
+    void sumup();
 };
+
+
+
+
+#endif //RNANUE_CLUSTERING_HPP

@@ -1,4 +1,4 @@
-# RNAnue - 0.1.0
+# RNAnue - 0.2.0
 
 ## About
 RNAnue is a comprehensive analysis to detect RNA-RNA interactions from Direct-Duplex-Detection (DDD) data.
@@ -15,7 +15,6 @@ located in $PATH.
 * [SeqAn](https://github.com/seqan/seqan3) (v3.0.2)
 * [Segemehl](http://www.bioinf.uni-leipzig.de/Software/segemehl/) (v0.3.4)
 * [Vienna Package](https://www.tbi.univie.ac.at/RNA/#binary_packages) (v2.4.17)
-* OpenMP v12.0.0 
 
 ### CMake 
 CMake is a cross-platform Makefile generator. For that, we provide the [CMakeLists](./source/CMakeLists.txt) 
