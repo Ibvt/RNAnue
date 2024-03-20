@@ -34,9 +34,8 @@ class IBPTree {
 
     private:
         po::variables_map params;
-        std::vector<std::pair<std::string,Node*>> rootnodes;
-
-        Node* root; // root of the IBPTree
+        // tree structure for each chromosome
+        std::vector<std::pair<std::string,Node*>> rootnodes; // gener
         int order; // order of the IBPTree
 };
 

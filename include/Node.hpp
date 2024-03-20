@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <array>
 
 class Interval {
     public:
@@ -20,31 +21,11 @@ class Interval {
 
 class Node {
     public:
-        virtual ~Node() {}
-        virtual bool isLeaf() const = 0;
-};
-
-class InternalNode: public Node {
-    public:
-        InternalNode();
-        ~InternalNode();
-
-        bool isLeaf();
-
-        std::vector<int> keys;
-        std::vector<Node*> children;
-};
-
-class LeafNode: public Node {
-    public:
-        LeafNode(const Interval& interval);
-        ~LeafNode();
-
-        bool isLeaf() const;
+        Node(int order);
 
     private:
-        std::vector<Interval> intervals;
-        std::string attributes;
+        int* keys;
+        Node** children;
 };
 
 #endif //RNANUE_NODE_HPP

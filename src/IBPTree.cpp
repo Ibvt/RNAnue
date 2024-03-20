@@ -1,18 +1,84 @@
 #include "IBPTree.hpp"
 
-IBPTree::IBPTree(po::variables_map params, int b) : params(params), order(order), root(nullptr) {}
+IBPTree::IBPTree(po::variables_map params, int order) : params(params) {
+    this->order = order; // can be later extracted from config file
+    construct();
+}
 IBPTree::~IBPTree() {}
 
-// constructs the IBPTree
+// constructs the IBPTree (either from annotations/clusters or both)
 void IBPTree::construct() {
     std::string subcall = params["subcall"].as<std::string>();
     // fill tree with annotation
-    if(subcall == "detect") {
+    if(subcall == "detect") { // in the case of detect only annotation is needed
         iterateFeatures(params["features"].as<std::string>());
     }
 }
 
 void IBPTree::insert(std::string chrom, const Interval& interval) {
+    // check if chrom is already in the tree (and if not add it)
+    auto it = std::find_if(rootnodes.begin(), rootnodes.end(),
+                           [&chrom](const std::pair<std::string, Node*>& p) {
+        return p.first == chrom;
+    });
+    if(it == rootnodes.end()) {
+        rootnodes.push_back(std::make_pair(chrom, nullptr));
+    } else {
+        if(it->second == nullptr) {
+
+
+        }
+
+    }
+
+
+
+
+
+
+
+    auto it = std::find_if(rootnodes.begin(),rootnodes.end(),[&chrom](const std::pair<std::string, Node*>& p) {
+        return p.first == chrom;
+    });
+    if(it == rootnodes.end()) {
+        rootnodes.push_back(std::make_pair(chrom, nullptr));
+    } else {
+        if(it->second == nullptr) {
+            it->second = new Node()
+
+
+
+        }
+
+
+
+
+
+
+
+
+        // search for the node and insert the interval
+        if(it->second == nullptr) {
+            it->second = new LeafNode(interval);
+        } else {
+            if(it->second->isLeaf()) {
+                LeafNode* leaf = static_cast<LeafNode*>(it->second);
+                if(leaf->intervals.size() == 2 * order - 1) {
+                    InternalNode* newRoot = new InternalNode();
+                    newRoot->children.push_back(it->second);
+                    splitChild(newRoot, 0);
+                    it->second = newRoot;
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
     if(root == nullptr) { // tree is empty
         root = new LeafNode(interval);
         return;
@@ -191,8 +257,8 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
         while(getline(ss2, token, ';')) {
             attr.push_back(token);
         }
-
-        insert(chrom, Interval(std::stoi(start), std::stoi(end), strand[0], attr))
+//        insert(chrom, )
+//        insert(chrom, Interval(std::stoi(start), std::stoi(end), strand[0], attr))
 
     }
     gff.close();

@@ -10,24 +10,9 @@ void Interval::extend(int lower, int upper) {
     this->upper = upper;
 }
 
-InternalNode::InternalNode() {
+// create new node
+Node::Node(int order) {
+    this->keys = new int[order]; // initialize keys array
+    this->children = new Node*[order+1]; // array of pointers to children
 }
-
-InternalNode::~InternalNode() {
-}
-
-LeafNode::LeafNode(const Interval& interval) {
-    intervals.push_back(interval);
-}
-
-bool LeafNode::isLeaf() const {
-    return true;
-}
-
-LeafNode::~LeafNode() {
-}
-
-
-
-
 
