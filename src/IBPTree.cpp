@@ -24,31 +24,17 @@ void IBPTree::insert(std::string chrom, const Interval& interval) {
     if(it == rootnodes.end()) {
         rootnodes.push_back(std::make_pair(chrom, nullptr));
     } else {
-        if(it->second == nullptr) {
+        if(it->second == nullptr) { // the tree is empty
+            it->second = new Node(order);
+
+
+
 
 
         }
-
     }
 
 
-
-
-
-
-
-    auto it = std::find_if(rootnodes.begin(),rootnodes.end(),[&chrom](const std::pair<std::string, Node*>& p) {
-        return p.first == chrom;
-    });
-    if(it == rootnodes.end()) {
-        rootnodes.push_back(std::make_pair(chrom, nullptr));
-    } else {
-        if(it->second == nullptr) {
-            it->second = new Node()
-
-
-
-        }
 
 
 
