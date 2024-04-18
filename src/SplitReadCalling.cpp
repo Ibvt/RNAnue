@@ -5,8 +5,10 @@ SplitReadCalling::SplitReadCalling(po::variables_map params) {
     this->params = params;
     // create IBPTree (if splicing need to be considered)
     if(params["splicing"].as<std::bitset<1>>() ==  std::bitset<1>("1")) {
+        // order of the IBPTree
+        int k = 3; // can be later extracted from config file
         // create IBPT
-        this->features = IBPTree(params, 3);
+        this->features = IBPTree(params, k);
     }
 }
 
@@ -25,8 +27,6 @@ void SplitReadCalling::start(pt::ptree sample) {
     pt::ptree output = sample.get_child("output");
     std::string splits = output.get<std::string>("splits");
     std::string multsplits = output.get<std::string>("multsplits");
-
-
 
 }
 

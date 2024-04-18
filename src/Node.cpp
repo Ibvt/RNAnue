@@ -10,9 +10,27 @@ void Interval::extend(int lower, int upper) {
     this->upper = upper;
 }
 
+int Interval::getLower() const {
+    return lower;
+}
+
 // create new node
-Node::Node(int order) {
-    this->keys = new int[order]; // initialize keys array
-    this->children = new Node*[order+1]; // array of pointers to children
+Node::Node(int order) : order(order), keys(), children() {}
+
+void Node::addInterval(Interval& interval) {
+    // check if the node is a leaf
+    if(leaf == std::bitset<1>("1")) {
+        // check if there is space in the node
+        if(keys.size() < order) {
+
+        }
+
+    }
+
+    // check if there is still space in the node
+    if(keys.size() < order) { // node is not full
+
+
+    }
 }
 

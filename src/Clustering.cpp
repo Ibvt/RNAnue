@@ -4,14 +4,13 @@
 #include <iostream>
 #include "Clustering.hpp"
 
-Clustering::Clustering(po::variables_map params) :
-        params(params) {
+Clustering::Clustering(po::variables_map params) : params(params) {
     std::cout << helper::getTime() << " start the clustering procedure" << std::endl;
     result = {};
 }
 
 void Clustering::iterate(std::string splits) {
-
+    /*
     // input .sam record
     seqan3::alignment_file_input fin{splits,
                                      seqan3::fields<seqan3::field::id,
@@ -78,6 +77,7 @@ void Clustering::iterate(std::string splits) {
 
     overlaps(result);
     //std::cout << "final results size: " << result.size() << std::endl;
+     */
 }
 
 //
@@ -222,4 +222,3 @@ void Clustering::start(pt::ptree sample) {
 
     //std::cout << "within start" << splits << std::endl;
 }
-gTg

@@ -28,7 +28,6 @@ class SplitReadCalling {
     private:
         po::variables_map params;
         IBPTree features;
-
 };
 
 #endif //RNANUE_DETECT_HPP

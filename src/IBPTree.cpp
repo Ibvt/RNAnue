@@ -1,10 +1,16 @@
 #include "IBPTree.hpp"
 
-IBPTree::IBPTree(po::variables_map params, int order) : params(params) {
-    this->order = order; // can be later extracted from config file
+IBPTree::IBPTree(po::variables_map params, int k) : params(params) {
+    this->rootnodes = std::vector<std::pair<std::string, Node*>>();
+    this->order = k; // can be later extracted from config file
+
+    std::cout << helper::getTime() << " Constructing IBPTree\n";
     construct();
 }
+
+IBPTree::IBPTree() {}
 IBPTree::~IBPTree() {}
+
 
 // constructs the IBPTree (either from annotations/clusters or both)
 void IBPTree::construct() {
@@ -15,6 +21,60 @@ void IBPTree::construct() {
     }
 }
 
+void IBPTree::iterateFeatures(std::string featuresFile) {
+    // iterate over features
+    std::ifstream gff(featuresFile);
+    if(!gff) {
+        std::cout << helper::getTime() << " Annotation file " << featuresFile << " could not be opened!\n";
+        EXIT_FAILURE;
+    }
+
+    // create variables for GFF file
+    std::string chrom = "";
+    std::string source = "";
+    std::string biotype = "";
+    std::string start = "";
+    std::string end = "";
+    std::string score = "";
+    std::string strand = "";
+    std::string attributes = "";
+
+    std::string line;
+    while(getline(gff, line)) {
+        if(line[0] == '#') { // ignore header lines
+            continue;
+        }
+
+        std::string token;
+        std::vector<std::string> tokens;
+        std::istringstream ss(line);
+
+        // split the input string
+        while(getline(ss, token, '\t')) {
+            tokens.push_back(token);
+        }
+
+        chrom = tokens[0]; // chromosome
+        source = tokens[1]; // source
+        biotype = tokens[2]; // biotype
+        start = tokens[3]; // start
+        end = tokens[4]; // end
+        score = tokens[5]; // score
+        strand = tokens[6]; // strand
+        attributes = tokens[8]; // attributes
+
+        // split the attributes
+        std::vector<std::string> attr;
+        std::istringstream ss2(attributes);
+        while(getline(ss2, token, ';')) {
+            attr.push_back(token);
+        }
+        std::cout << "add " << chrom << " " << start << " " << end << " " << strand << " " << attr[0] << "\n";
+    }
+    gff.close();
+}
+
+/*
 void IBPTree::insert(std::string chrom, const Interval& interval) {
     // check if chrom is already in the tree (and if not add it)
     auto it = std::find_if(rootnodes.begin(), rootnodes.end(),
@@ -195,58 +255,5 @@ void IBPTree::iterateClusters(std::string clusterFile) {
     }
 }
 
-void IBPTree::iterateFeatures(std::string featuresFile) {
-    // iterate over features
-    std::ifstream gff(featuresFile);
-    if(!gff) {
-        std::cout << helper::getTime() << " Annotation file " << featuresFile << " could not be opened!\n";
-        EXIT_FAILURE;
-    }
 
-    // create variables for GFF file
-    std::string chrom = "";
-    std::string source = "";
-    std::string biotype = "";
-    std::string start = "";
-    std::string end = "";
-    std::string score = "";
-    std::string strand = "";
-    std::string attributes = "";
-
-    std::string line;
-    while(getline(gff, line)) {
-        if(line[0] == '#') { // ignore header lines
-            continue;
-        }
-
-        std::string token;
-        std::vector<std::string> tokens;
-        std::istringstream ss(line);
-
-        // split the input string
-        while(getline(ss, token, '\t')) {
-            tokens.push_back(token);
-        }
-
-        chrom = tokens[0]; // chromosome
-        source = tokens[1]; // source
-        biotype = tokens[2]; // biotype
-        start = tokens[3]; // start
-        end = tokens[4]; // end
-        score = tokens[5]; // score
-        strand = tokens[6]; // strand
-        attributes = tokens[8]; // attributes
-
-        // split the attributes
-        std::vector<std::string> attr;
-        std::istringstream ss2(attributes);
-        while(getline(ss2, token, ';')) {
-            attr.push_back(token);
-        }
-//        insert(chrom, )
-//        insert(chrom, Interval(std::stoi(start), std::stoi(end), strand[0], attr))
-
-    }
-    gff.close();
-}
-
+*/

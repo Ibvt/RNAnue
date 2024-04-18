@@ -30,9 +30,7 @@ namespace dtp {
     using State = std::tuple<std::string, int, std::pair<int, int>, std::size_t>;
 
     using Bases = std::map<std::pair<std::string,DNAVector>,DNAVector>;
-
     using STTEntry = std::tuple<int,int,int,int>;
-
 
 }
 

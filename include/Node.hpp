@@ -9,13 +9,16 @@
 class Interval {
     public:
         Interval();
+        Interval(int lower, int upper, char strand, std::string attributes);
         ~Interval();
+
+
 
         // getter & setter
         int getLower() const;
 
 
-        void extend();
+        void extend(int lower, int upper);
 
     private:
         int lower;
