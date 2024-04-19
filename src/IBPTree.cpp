@@ -74,6 +74,10 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
     gff.close();
 }
 
+
+
+
+
 /*
 void IBPTree::insert(std::string chrom, const Interval& interval) {
     // check if chrom is already in the tree (and if not add it)

@@ -26,6 +26,8 @@ class IBPTree {
         void construct();
         void iterateFeatures(std::string featureFile);
 
+        void insert(std::string chrom, const Interval& interval);
+
         /*
 
         void iterateFeatures(std::string featureFile);

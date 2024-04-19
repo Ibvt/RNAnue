@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
         other.add_options()
                 ("version,v", "display the version number")
                 ("help,h", "display this help message")
-                ("config,c", po::value<std::string>(&configFile)->default_value("params.cfg"),
+                ("config,c", po::value<std::string>(&configFile),
                  "configuration file that contains the parameters")
                 ;
 
