@@ -163,6 +163,12 @@ int main(int argc, char* argv[]) {
 
         Closing cl;
 
+        // check if subcall is empty
+        if(params["subcall"].empty()) {
+            std::cout << helper::getTime() << "Please provide a subcall\n";
+            return 0;
+        }
+
         // include parameters from the configfile
         std::ifstream ifs{configFile};
         if(params.count("help")) {
