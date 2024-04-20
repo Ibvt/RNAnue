@@ -69,10 +69,21 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
         while(getline(ss2, token, ';')) {
             attr.push_back(token);
         }
+
+
+
+
         std::cout << "add " << chrom << " " << start << " " << end << " " << strand << " " << attr[0] << "\n";
+
+
     }
     gff.close();
 }
+
+void IBPTree::insert(std::string chrom, const Interval& interval) {
+
+}
+
 
 
 
