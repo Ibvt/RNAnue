@@ -29,15 +29,13 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
         EXIT_FAILURE;
     }
 
+    // null pointer
+    Interval* intvl = nullptr;
+
     // create variables for GFF file
-    std::string chrom = "";
-    std::string source = "";
-    std::string biotype = "";
-    std::string start = "";
-    std::string end = "";
-    std::string score = "";
-    std::string strand = "";
-    std::string attributes = "";
+    std::string chrom = "", source = "", biotype = "", start = "";
+    std::string end = "", score = "", attributes = "";
+    char strand = ' ';
 
     std::string line;
     while(getline(gff, line)) {
@@ -53,37 +51,60 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
         while(getline(ss, token, '\t')) {
             tokens.push_back(token);
         }
-
         chrom = tokens[0]; // chromosome
         source = tokens[1]; // source
         biotype = tokens[2]; // biotype
-        start = tokens[3]; // start
-        end = tokens[4]; // end
+        start = std::stoi(tokens[3]); // start
+        end = std::stoi(tokens[4]); // end
         score = tokens[5]; // score
-        strand = tokens[6]; // strand
+        strand = tokens[6].toChar();
         attributes = tokens[8]; // attributes
 
-        // split the attributes
-        std::vector<std::string> attr;
-        std::istringstream ss2(attributes);
-        while(getline(ss2, token, ';')) {
-            attr.push_back(token);
+        if(biotype == "region") {
+            continue;
+        }
+        std::map<std::string, std::string> attr = getAttributes(attributes);
+        // check if id is in the attributes - can also be substring
+
+        if(attr.find("ID") != attr.end()) {
+            std::string id = attr["ID"];
+        } else {
+            std::string id = "";
         }
 
-
-
-
-        std::cout << "add " << chrom << " " << start << " " << end << " " << strand << " " << attr[0] << "\n";
-
-
+        if(intvl == nullptr) {
+            std::string id = "", name = "";
+            // the next element that is read should be 'gene'
+            if(attr.find("gene_name") != attr.end()) {
+                name = attr["gene_name"];
+            } else {
+                if(attr.find("Name") != attr.end()) {
+                    std::string name = attr["Name"];
+                }
+            }
+            intvl = new Interval(chrom, strand, id, name, start, end);
+        }
     }
     gff.close();
 }
 
 void IBPTree::insert(std::string chrom, const Interval& interval) {
 
+
 }
 
+// return
+std::map<std::string, std::string> IBPTree::getAttributes(const std::string& attributes) {
+    std::map<std::string, std::string> attr; // output to be map with key-value pairs
+    std::istringstream ss(attributes); // create string stream
+    std::string token;
+    while(getline(ss, token, ';')) {
+        std::string key = token.substr(0, token.find("="));
+        std::string value = token.substr(token.find("=") + 1);
+        attr.insert(std::make_pair(key, value));
+    }
+    return attr;
+}
 
 
 

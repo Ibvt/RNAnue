@@ -8,23 +8,25 @@
 
 class Interval {
     public:
-        Interval();
-        Interval(int lower, int upper, char strand, std::string attributes);
+        Interval(std::string chrom, char strand, std::string id, std::string name, int lower, int upper);
         ~Interval();
-
-
-
         // getter & setter
         int getLower() const;
+
+        // operations
+        std::string getAttribute(std::string key);
+
 
 
         void extend(int lower, int upper);
 
     private:
+        std::string chrom;
+        char strand;
+        std::string id;
+        std::string name;
         int lower;
         int upper;
-        char strand;
-        std::string attributes;
 };
 
 class Node {

@@ -1,8 +1,8 @@
 #include "Node.hpp"
 
-Interval::Interval(int lower, int upper, char strand, std::string attributes) :
-    lower(lower), upper(upper), strand(strand), attributes(attributes) {
-}
+Interval::Interval(std::string chrom, char strand, std::string id, std::string name, int lower, int upper) :
+    chrom(chrom), strand(strand), id(""), name(""), lower(-1), upper(-1)  {}
+
 Interval::~Interval() {}
 
 void Interval::extend(int lower, int upper) {

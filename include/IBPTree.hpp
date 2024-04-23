@@ -25,8 +25,11 @@ class IBPTree {
         // constructs the IBPTree (either from annotations/clusters or both)
         void construct();
         void iterateFeatures(std::string featureFile);
-
         void insert(std::string chrom, const Interval& interval);
+
+        std::map<std::string, std::string> getAttributes(const std::string& attributes);
+
+
 
         /*
 
