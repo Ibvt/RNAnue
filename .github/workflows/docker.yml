@@ -1,0 +1,45 @@
+name: docker-release
+on:
+  push:
+    branches:
+      - ["master"]
+  pull_request:
+    branches:
+      - ["master"]
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: rnanue
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: set up docker buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: login to dockerhub
+        uses: docker/
+
+      - name: build and push
+        uses: docker/build-push-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: extract version
+        id: extract_version
+        run: | 
+          VERSION=$(grep 'ARG VERSION=' Dockerfile | cut -d'=' -f2)
+          echo "::set-output name=VERSION::$VERSION"
+
+      - name: build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: "{{defaultContext}}"
+          platforms: linux/amd64, linux/arm64, linux/arm/v7
+          push: true
+          tags: cobirna/rnanue:${{ steps.extract_version.outputs.VERSION }}
+
