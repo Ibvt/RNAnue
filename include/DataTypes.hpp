@@ -30,12 +30,23 @@ namespace dtp {
     using State = std::tuple<std::string, int, std::pair<int, int>, std::size_t>;
 
     using Bases = std::map<std::pair<std::string,DNAVector>,DNAVector>;
-
     using STTEntry = std::tuple<int,int,int,int>;
 
-
+    // FeaturesFields for GFF3/GTF
+    struct FeatureFields {
+        std::string seqid;
+        std::string source;
+        std::string type;
+        int start;
+        int end;
+        std::string score;
+        char strand;
+        char phase;
+        std::string attributes;
+        FeatureFields() : seqid(""), source(""), type(""), start(-1), end(-1), score(""),
+            strand(' '), phase(' '), attributes("") {}
+    };
 }
-
 
 
 #endif //RNANUE_DATATYPES_HPP

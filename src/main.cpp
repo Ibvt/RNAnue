@@ -123,7 +123,7 @@ int main(int argc, char* argv[]) {
         other.add_options()
                 ("version,v", "display the version number")
                 ("help,h", "display this help message")
-                ("config,c", po::value<std::string>(&configFile)->default_value("params.cfg"),
+                ("config,c", po::value<std::string>(&configFile),
                  "configuration file that contains the parameters")
                 ;
 
@@ -162,6 +162,12 @@ int main(int argc, char* argv[]) {
         notify(params);
 
         Closing cl;
+
+        // check if subcall is empty
+        if(params["subcall"].empty()) {
+            std::cout << helper::getTime() << "Please provide a subcall\n";
+            return 0;
+        }
 
         // include parameters from the configfile
         std::ifstream ifs{configFile};

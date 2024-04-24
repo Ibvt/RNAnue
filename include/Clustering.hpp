@@ -11,15 +11,13 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/filesystem.hpp>
 
-#include <seqan3/io/alignment_file/input.hpp>
-#include <seqan3/io/alignment_file/sam_tag_dictionary.hpp>
 
 #include <seqan3/core/debug_stream.hpp>
-#include <seqan3/std/filesystem>
 
 // probably deprecated in 3.3.0
 //#include <seqan3/utility/views/chunk.hpp>
-#include <seqan3/range/views/chunk.hpp>
+
+#include "Utility.hpp"
 
 namespace po = boost::program_options;
 namespace pt = boost::property_tree;

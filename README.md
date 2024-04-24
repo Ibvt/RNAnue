@@ -7,16 +7,33 @@ RNAnue is a comprehensive analysis to detect RNA-RNA interactions from Direct-Du
 ### Dependencies
 RNAnue has the following dependencies, whereas the brackets indicate the version RNAnue has 
 been build and tested on. Make sure the requirements are satified by your system. cmake is able
-to detect the Boost libraries system-wide. However seqan is expected to be located in the parent 
+to detect the Boost libraries system-wide. However seqan is expected to be located in the current 
 folder of RNAnue as specified in the CMakeLists.txt. Segemehl and the Vienna binaries need to be
 located in $PATH.
 
 * [Boost C++ Libraries](https://www.boost.org/) (v1.7.2)
-* [SeqAn](https://github.com/seqan/seqan3) (v3.0.2)
+* [SeqAn](https://github.com/seqan/seqan3) (v3.3.0)
 * [Segemehl](http://www.bioinf.uni-leipzig.de/Software/segemehl/) (v0.3.4)
 * [Vienna Package](https://www.tbi.univie.ac.at/RNA/#binary_packages) (v2.4.17)
 
-### CMake 
+
+
+### CMake
+RNAnue is build using CMake. At first, clone the repository and change into the source directory.
+```
+git clone https://github.com/Ibvt/RNAnue.git
+cd RNAnue 
+```
+In the next step, retrieve the SeqAn library and place it in the root folder of RNAnue
+```
+
+```
+
+
+
+
+
+
 CMake is a cross-platform Makefile generator. For that, we provide the [CMakeLists](./source/CMakeLists.txt) 
 to simplify the build process. In particular, it utilizes the instructions given in the CMakeLists.
 It is recommended to create a "out-of-source build". For that, create a build folder (e.g., ./bin)

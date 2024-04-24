@@ -1,18 +1,199 @@
 #include "IBPTree.hpp"
 
-IBPTree::IBPTree(po::variables_map params, int b) : params(params), order(order), root(nullptr) {}
+IBPTree::IBPTree(po::variables_map params, int k) : params(params) {
+    this->rootnodes = std::vector<std::pair<std::string, Node*>>();
+    this->order = k; // can be later extracted from config file
+
+    std::cout << helper::getTime() << "Constructing IBPTree using ";
+    std::cout << "features from " << params["features"].as<std::string>() << "\n";
+    construct();
+    std::cout << helper::getTime() << "IBPTree constructed\n";
+}
+
+IBPTree::IBPTree() {}
 IBPTree::~IBPTree() {}
 
-// constructs the IBPTree
+
+// constructs the IBPTree (either from annotations/clusters or both)
 void IBPTree::construct() {
     std::string subcall = params["subcall"].as<std::string>();
     // fill tree with annotation
-    if(subcall == "detect") {
+    if(subcall == "detect") { // in the case of detect only annotation is needed
         iterateFeatures(params["features"].as<std::string>());
     }
 }
 
+void IBPTree::iterateFeatures(std::string featuresFile) {
+    // iterate over features
+    std::ifstream gff(featuresFile);
+    if(!gff) {
+        std::cout << helper::getTime() << " Annotation file " << featuresFile << " could not be opened!\n";
+        EXIT_FAILURE;
+    }
+
+    // null pointer
+    Interval* intvl = nullptr;
+    dtp::FeatureFields fields;
+    int junctionPos = -1; // position of the splice junction
+
+    std::string line;
+    while(getline(gff, line)) {
+        if(line[0] == '#') { // ignore header lines
+            continue;
+        }
+        std::string token;
+        std::vector<std::string> tokens;
+        std::istringstream ss(line);
+
+        // split the input string
+        while(getline(ss, token, '\t')) {
+            tokens.push_back(token);
+        }
+        fields.seqid = tokens[0];
+        fields.source = tokens[1];
+        fields.type = tokens[2];
+        fields.start = std::stoi(tokens[3]);
+        fields.end = std::stoi(tokens[4]);
+        fields.score = tokens[5];
+        fields.strand = tokens[6][0];
+        fields.phase = tokens[7][0];
+        fields.attributes = tokens[8];
+
+        if(fields.type == "region") {
+            continue;
+        }
+        std::map<std::string, std::string> attr = getAttributes(fields.attributes);
+
+        // get tags needed for the intervals
+        std::string id = getTag(attr, "ID");
+        std::string name = getTag(attr, "Name");
+        if(name == "") {
+            name = getTag(attr, fields.type + "_name");
+        }
+        std::string biotype = getTag(attr, fields.type + "_biotype");
+        if(biotype == "") {
+            biotype = getTag(attr, fields.type + "_type");
+        }
+
+        // new gene/transcript indicated by missing 'Parent' attribute
+        if(attr.find("Parent") == attr.end()) {
+            if(intvl != nullptr) {
+               insert(intvl->getChrom(),*intvl);
+            }
+            intvl = new Interval(fields.seqid, fields.strand, id,
+                                           name, biotype, fields.start, fields.end);
+
+            //std::cout << intvl << std::endl;
+        } else { // Parent detected
+            if(fields.type == "transcript") {
+                // check if ID/Parent is the same
+                std::string parent = getTag(attr, "Parent");
+                if(parent == intvl->getId()) { // the IDs match
+                    if(intvl->isSubset(fields.start, fields.end)) {
+                        intvl->narrow(fields.start, fields.end);
+                        intvl->setId(id);
+                    }
+                }
+            } else {
+                // scan annotations for splice junctions (only needed for detect step)
+                if(params["subcall"].as<std::string>() == "detect") {
+                    if(fields.type == "exon") {
+                        if(junctionPos == -1) {
+                            // first exon (that has been read)
+                            junctionPos = fields.end+1;
+                        } else {
+                            intvl->setJunction(std::make_pair(junctionPos, fields.start));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    gff.close();
+}
+
+//
 void IBPTree::insert(std::string chrom, const Interval& interval) {
+//    std::cout << "Inserting interval\n";
+}
+
+// get attribute from the attributes fields
+std::string IBPTree::getTag(std::map<std::string, std::string>& attributes, const std::string& key) {
+    if(attributes.find(key) != attributes.end()) {
+        return attributes[key];
+    } else {
+        return "";
+    }
+}
+
+// return
+std::map<std::string, std::string> IBPTree::getAttributes(const std::string& attributes) {
+    std::map<std::string, std::string> attr; // output to be map with key-value pairs
+    std::istringstream ss(attributes); // create string stream
+    std::string token;
+    while(getline(ss, token, ';')) {
+        std::string key = token.substr(0, token.find("="));
+        std::string value = token.substr(token.find("=") + 1);
+        attr.insert(std::make_pair(key, value));
+    }
+    return attr;
+}
+
+
+
+
+
+/*
+void IBPTree::insert(std::string chrom, const Interval& interval) {
+    // check if chrom is already in the tree (and if not add it)
+    auto it = std::find_if(rootnodes.begin(), rootnodes.end(),
+                           [&chrom](const std::pair<std::string, Node*>& p) {
+        return p.first == chrom;
+    });
+    if(it == rootnodes.end()) {
+        rootnodes.push_back(std::make_pair(chrom, nullptr));
+    } else {
+        if(it->second == nullptr) { // the tree is empty
+            it->second = new Node(order);
+
+
+
+
+
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+        // search for the node and insert the interval
+        if(it->second == nullptr) {
+            it->second = new LeafNode(interval);
+        } else {
+            if(it->second->isLeaf()) {
+                LeafNode* leaf = static_cast<LeafNode*>(it->second);
+                if(leaf->intervals.size() == 2 * order - 1) {
+                    InternalNode* newRoot = new InternalNode();
+                    newRoot->children.push_back(it->second);
+                    splitChild(newRoot, 0);
+                    it->second = newRoot;
+                }
+            }
+        }
+    }
+
+
+
+
+
+
+
     if(root == nullptr) { // tree is empty
         root = new LeafNode(interval);
         return;
@@ -143,58 +324,5 @@ void IBPTree::iterateClusters(std::string clusterFile) {
     }
 }
 
-void IBPTree::iterateFeatures(std::string featuresFile) {
-    // iterate over features
-    std::ifstream gff(featuresFile);
-    if(!gff) {
-        std::cout << helper::getTime() << " Annotation file " << featuresFile << " could not be opened!\n";
-        EXIT_FAILURE;
-    }
 
-    // create variables for GFF file
-    std::string chrom = "";
-    std::string source = "";
-    std::string biotype = "";
-    std::string start = "";
-    std::string end = "";
-    std::string score = "";
-    std::string strand = "";
-    std::string attributes = "";
-
-    std::string line;
-    while(getline(gff, line)) {
-        if(line[0] == '#') { // ignore header lines
-            continue;
-        }
-
-        std::string token;
-        std::vector<std::string> tokens;
-        std::istringstream ss(line);
-
-        // split the input string
-        while(getline(ss, token, '\t')) {
-            tokens.push_back(token);
-        }
-
-        chrom = tokens[0]; // chromosome
-        source = tokens[1]; // source
-        biotype = tokens[2]; // biotype
-        start = tokens[3]; // start
-        end = tokens[4]; // end
-        score = tokens[5]; // score
-        strand = tokens[6]; // strand
-        attributes = tokens[8]; // attributes
-
-        // split the attributes
-        std::vector<std::string> attr;
-        std::istringstream ss2(attributes);
-        while(getline(ss2, token, ';')) {
-            attr.push_back(token);
-        }
-
-        insert(chrom, Interval(std::stoi(start), std::stoi(end), strand[0], attr))
-
-    }
-    gff.close();
-}
-
+*/

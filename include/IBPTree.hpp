@@ -12,31 +12,29 @@
 // Class
 #include "Utility.hpp"
 #include "Node.hpp"
+#include "DataTypes.hpp"
 
 namespace po = boost::program_options;
+using RootNodes = std::vector<std::pair<std::string, Node*>>;
 
 class IBPTree {
     public:
-        IBPTree(po::variables_map params, int order);
+        IBPTree(po::variables_map params, int k);
+        IBPTree();
         ~IBPTree();
 
-        void iterateFeatures(std::string featureFile);
-        void iterateClusters(std::string clusters);
-
-        // operations on the tree structure
+        // constructs the IBPTree (either from annotations/clusters or both)
         void construct();
+        void iterateFeatures(std::string featureFile);
         void insert(std::string chrom, const Interval& interval);
-        void splitChild(InternalNode* parent, int index);
-        void insertNonFull(Node* node, const Interval& interval);
 
-        std::vector<Interval> search(const Interval& interval);
-        void searchHelper(Node* node, const Interval& interval, std::vector<Interval>& result);
+        std::map<std::string, std::string> getAttributes(const std::string& attributes);
+        std::string getTag(std::map<std::string, std::string>& attributes, const std::string& key);
 
     private:
         po::variables_map params;
-        std::vector<std::pair<std::string,Node*>> rootnodes;
-
-        Node* root; // root of the IBPTree
+        // tree structure for each chromosome
+        RootNodes rootnodes; // generate a tree for each chromosome
         int order; // order of the IBPTree
 };
 
