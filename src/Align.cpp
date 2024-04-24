@@ -1,16 +1,12 @@
-//
-// Created by Richard Albin Schaefer on 2/12/24.
-//
-
 #include "Align.hpp"
 
 Align::Align(po::variables_map params) : params(params) {
-    // build index (if necessary)
+    // build segemehl index (if necessary)
     buildIndex();
-
 }
 Align::~Align() {}
 
+// builds the index for the reference genome
 void Align::buildIndex() {
     // get path of specified reference genome
     std::string ref = params["dbref"].as<std::string>();
@@ -26,12 +22,15 @@ void Align::buildIndex() {
         std::cout << helper::getTime() << "Create index for " << ref << "\n";
         std::string idxCall = "segemehl.x -x " + idx.string() + " -d " + ref;
         const char* idxCallChar = idxCall.c_str();
-        system(idxCallChar);
+        int result = system(idxCallChar);
+        if(result != 0) {
+            std::cout << helper::getTime() << "Error: Could not create index for " << ref << "\n";
+        }
     }
     index = idx.string();
 }
 
-//
+// aligns the reads to the reference genome
 void Align::alignReads(std::string query, std::string mate, std::string matched) {
     std::cout << helper::getTime() << "Start Alignment\n";
     std::string align = "segemehl.x";
@@ -50,9 +49,11 @@ void Align::alignReads(std::string query, std::string mate, std::string matched)
         align += " -p " + mate;
     }
     align += " -o " + matched;
-
-    const char* call = align.c_str();
-    system(call);
+    const char* alignCallChar = align.c_str();
+    int result = system(alignCallChar);
+    if(result != 0) {
+        std::cerr << helper::getTime() << "Error: Could not align reads\n";
+    }
 }
 
 

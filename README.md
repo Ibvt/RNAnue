@@ -1,3 +1,5 @@
+[![docker-release](https://github.com/Ibvt/RNAnue/actions/workflows/docker.yml/badge.svg)](https://github.com/Ibvt/RNAnue/actions/workflows/docker.yml)
+
 # RNAnue - 0.2.0
 
 ## About

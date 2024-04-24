@@ -25,7 +25,6 @@ Base::Base(po::variables_map params) : params(params), data(params) {
             data.align();
         } else {
             if(subcall == "detect") {
-                std::cout << "detect\n";
                 data.detect();
             } else {
                 if(subcall == "clustering") {
