@@ -39,7 +39,6 @@ RUN cp segemehl.x /usr/local/bin
 WORKDIR /
 RUN git clone https://github.com/Ibvt/RNAnue.git
 WORKDIR /RNAnue
-RUN git checkout recent_changes
 
 # retrieve SeqAn
 RUN curl -L https://github.com/seqan/seqan3/releases/download/3.3.0/seqan3-3.3.0-Source.tar.xz -o seqan3-3.3.0-Source.tar.xz
