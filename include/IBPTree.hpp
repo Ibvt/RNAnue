@@ -12,6 +12,7 @@
 // Class
 #include "Utility.hpp"
 #include "Node.hpp"
+#include "DataTypes.hpp"
 
 namespace po = boost::program_options;
 using RootNodes = std::vector<std::pair<std::string, Node*>>;
@@ -28,23 +29,7 @@ class IBPTree {
         void insert(std::string chrom, const Interval& interval);
 
         std::map<std::string, std::string> getAttributes(const std::string& attributes);
-
-
-
-        /*
-
-        void iterateFeatures(std::string featureFile);
-        void iterateClusters(std::string clusters);
-
-        // operations on the tree structure
-        void construct();
-        void insert(std::string chrom, const Interval& interval);
-        //void splitChild(InternalNode* parent, int index);
-        void insertNonFull(Node* node, const Interval& interval);
-
-        std::vector<Interval> search(const Interval& interval);
-        void searchHelper(Node* node, const Interval& interval, std::vector<Interval>& result);
-         */
+        std::string getTag(std::map<std::string, std::string>& attributes, const std::string& key);
 
     private:
         po::variables_map params;

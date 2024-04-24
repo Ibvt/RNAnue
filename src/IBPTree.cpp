@@ -4,8 +4,10 @@ IBPTree::IBPTree(po::variables_map params, int k) : params(params) {
     this->rootnodes = std::vector<std::pair<std::string, Node*>>();
     this->order = k; // can be later extracted from config file
 
-    std::cout << helper::getTime() << " Constructing IBPTree\n";
+    std::cout << helper::getTime() << "Constructing IBPTree using ";
+    std::cout << "features from " << params["features"].as<std::string>() << "\n";
     construct();
+    std::cout << helper::getTime() << "IBPTree constructed\n";
 }
 
 IBPTree::IBPTree() {}
@@ -31,18 +33,14 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
 
     // null pointer
     Interval* intvl = nullptr;
-
-    // create variables for GFF file
-    std::string chrom = "", source = "", biotype = "", start = "";
-    std::string end = "", score = "", attributes = "";
-    char strand = ' ';
+    dtp::FeatureFields fields;
+    int junctionPos = -1; // position of the splice junction
 
     std::string line;
     while(getline(gff, line)) {
         if(line[0] == '#') { // ignore header lines
             continue;
         }
-
         std::string token;
         std::vector<std::string> tokens;
         std::istringstream ss(line);
@@ -51,46 +49,81 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
         while(getline(ss, token, '\t')) {
             tokens.push_back(token);
         }
-        chrom = tokens[0]; // chromosome
-        source = tokens[1]; // source
-        biotype = tokens[2]; // biotype
-        start = std::stoi(tokens[3]); // start
-        end = std::stoi(tokens[4]); // end
-        score = tokens[5]; // score
-        strand = tokens[6].toChar();
-        attributes = tokens[8]; // attributes
+        fields.seqid = tokens[0];
+        fields.source = tokens[1];
+        fields.type = tokens[2];
+        fields.start = std::stoi(tokens[3]);
+        fields.end = std::stoi(tokens[4]);
+        fields.score = tokens[5];
+        fields.strand = tokens[6][0];
+        fields.phase = tokens[7][0];
+        fields.attributes = tokens[8];
 
-        if(biotype == "region") {
+        if(fields.type == "region") {
             continue;
         }
-        std::map<std::string, std::string> attr = getAttributes(attributes);
-        // check if id is in the attributes - can also be substring
+        std::map<std::string, std::string> attr = getAttributes(fields.attributes);
 
-        if(attr.find("ID") != attr.end()) {
-            std::string id = attr["ID"];
-        } else {
-            std::string id = "";
+        // get tags needed for the intervals
+        std::string id = getTag(attr, "ID");
+        std::string name = getTag(attr, "Name");
+        if(name == "") {
+            name = getTag(attr, fields.type + "_name");
+        }
+        std::string biotype = getTag(attr, fields.type + "_biotype");
+        if(biotype == "") {
+            biotype = getTag(attr, fields.type + "_type");
         }
 
-        if(intvl == nullptr) {
-            std::string id = "", name = "";
-            // the next element that is read should be 'gene'
-            if(attr.find("gene_name") != attr.end()) {
-                name = attr["gene_name"];
+        // new gene/transcript indicated by missing 'Parent' attribute
+        if(attr.find("Parent") == attr.end()) {
+            if(intvl != nullptr) {
+               insert(intvl->getChrom(),*intvl);
+            }
+            intvl = new Interval(fields.seqid, fields.strand, id,
+                                           name, biotype, fields.start, fields.end);
+
+            //std::cout << intvl << std::endl;
+        } else { // Parent detected
+            if(fields.type == "transcript") {
+                // check if ID/Parent is the same
+                std::string parent = getTag(attr, "Parent");
+                if(parent == intvl->getId()) { // the IDs match
+                    if(intvl->isSubset(fields.start, fields.end)) {
+                        intvl->narrow(fields.start, fields.end);
+                        intvl->setId(id);
+                    }
+                }
             } else {
-                if(attr.find("Name") != attr.end()) {
-                    std::string name = attr["Name"];
+                // scan annotations for splice junctions (only needed for detect step)
+                if(params["subcall"].as<std::string>() == "detect") {
+                    if(fields.type == "exon") {
+                        if(junctionPos == -1) {
+                            // first exon (that has been read)
+                            junctionPos = fields.end+1;
+                        } else {
+                            intvl->setJunction(std::make_pair(junctionPos, fields.start));
+                        }
+                    }
                 }
             }
-            intvl = new Interval(chrom, strand, id, name, start, end);
         }
     }
     gff.close();
 }
 
+//
 void IBPTree::insert(std::string chrom, const Interval& interval) {
+//    std::cout << "Inserting interval\n";
+}
 
-
+// get attribute from the attributes fields
+std::string IBPTree::getTag(std::map<std::string, std::string>& attributes, const std::string& key) {
+    if(attributes.find(key) != attributes.end()) {
+        return attributes[key];
+    } else {
+        return "";
+    }
 }
 
 // return
