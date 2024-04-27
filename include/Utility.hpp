@@ -1,18 +1,18 @@
-//
-// Created by Richard Albin Schaefer on 1/23/24.
-//
-
 #ifndef HELPER_HPP
 #define HELPER_HPP
 
-#include <boost/filesystem.hpp>
-
+// Standard
 #include <iostream>
 #include <iomanip>
 #include <chrono>
 
+// Boost
+#include <boost/filesystem.hpp>
+
+// SeqAn3
 #include <seqan3/io/sequence_file/all.hpp>
 
+// Class
 #include "DataTypes.hpp"
 
 namespace fs = boost::filesystem;
@@ -42,6 +42,7 @@ namespace helper {
     std::string getTime(); // reports the current time
 }
 
+// sequence input/output
 namespace seqIO {
     bool filterReads(auto& qual, int quality, int minlen);
 

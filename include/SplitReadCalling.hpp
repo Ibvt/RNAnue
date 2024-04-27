@@ -10,7 +10,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-// Classes
+// Class
 #include "IBPTree.hpp"
 
 namespace po = boost::program_options;

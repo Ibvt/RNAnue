@@ -1,13 +1,13 @@
-//
-// Created by Richard Albin Schaefer on 1/23/24.
-//
-
 #ifndef RNANUE_BASE_HPP
 #define RNANUE_BASE_HPP
 
+// Boost
 #include <boost/program_options.hpp>
-#include "Utility.hpp"
+
+// Class
 #include "Data.hpp"
+#include "ParameterValidation.hpp"
+#include "Utility.hpp"
 
 namespace po = boost::program_options;
 
@@ -15,11 +15,11 @@ class Base {
     public:
         Base(po::variables_map params);
         ~Base();
-        Data data;
 
     private:
         po::variables_map params;
-//        Data data;
+        ParameterValidation paramsVal;
+        Data data;
 };
 
 #endif //RNANUE_BASE_HPP

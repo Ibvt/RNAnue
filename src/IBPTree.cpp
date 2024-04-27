@@ -1,7 +1,7 @@
 #include "IBPTree.hpp"
 
 IBPTree::IBPTree(po::variables_map params, int k) : params(params) {
-    this->rootnodes = std::vector<std::pair<std::string, Node*>>();
+    this->rootnodes = std::map<std::string, Node*>();
     this->order = k; // can be later extracted from config file
 
     std::cout << helper::getTime() << "Constructing IBPTree using ";
@@ -12,7 +12,6 @@ IBPTree::IBPTree(po::variables_map params, int k) : params(params) {
 
 IBPTree::IBPTree() {}
 IBPTree::~IBPTree() {}
-
 
 // constructs the IBPTree (either from annotations/clusters or both)
 void IBPTree::construct() {
@@ -114,7 +113,17 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
 
 //
 void IBPTree::insert(std::string chrom, const Interval& interval) {
+    if(rootnodes.find(chrom) == rootnodes.end()) {
+
+    }
+
+
+
+
 //    std::cout << "Inserting interval\n";
+
+
+
 }
 
 // get attribute from the attributes fields

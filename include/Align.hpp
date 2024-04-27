@@ -1,6 +1,11 @@
 #ifndef RNANUE_ALIGN_HPP
 #define RNANUE_ALIGN_HPP
 
+// Standard
+#include <iostream>
+#include <filesystem>
+#include <bitset>
+
 // Boost
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -9,11 +14,6 @@
 
 // Class
 #include "Utility.hpp"
-
-// Standard
-#include <iostream>
-#include <filesystem>
-#include <bitset>
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -33,7 +33,6 @@ class Align {
     private:
         po::variables_map params;
         std::string index;
-
 };
 
 #endif //RNANUE_ALIGN_HPP

@@ -5,7 +5,6 @@
 #include "Data.hpp"
 
 Data::Data(po::variables_map params) : params(params) {
-    // get
     std::string subcall = params["subcall"].as<std::string>();
     fs::path outDir = fs::path(params["outdir"].as<std::string>());
 

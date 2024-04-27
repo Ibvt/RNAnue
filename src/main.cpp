@@ -34,11 +34,11 @@ int main(int argc, char* argv[]) {
         general.add_options()
                 ("readtype,r", po::value<std::string>(&readType)->default_value("SE"),
                  "single-end (=SE) or paired-end (=PE) reads")
-                ("trtms,t", po::value<std::string>(),
+                ("trtms,t", po::value<std::string>()->default_value(""),
                  "folder containing the raw reads of the treatments including replicates located within subfolders (condition)")
-                ("ctrls,s", po::value<std::string>(),
+                ("ctrls,s", po::value<std::string>()->default_value(""),
                  "folder containing the the raw reads of the controls including replicates located within subfolders (condition)")
-                ("outdir,o", po::value<std::string>(),
+                ("outdir,o", po::value<std::string>()->default_value(""),
                  "(output) folder in which the results are stored")
                 ("threads,p", po::value<int>()->default_value(1),
                  "the number of threads")
@@ -50,8 +50,9 @@ int main(int argc, char* argv[]) {
                  "minimum length of the reads")
                 ("splicing", po::value<std::bitset<1>>()->default_value(0),
                  "splicing events are considered in the detection of split reads")
-                ("features, f", po::value<std::string>(),
+                ("features, f", po::value<std::string>()->default_value(""),
                         "annotation/features in .GFF3 format")
+                ("overwrite", "overwrite existing results")
                 ;
 
         po::options_description preproc("Preprocessing");
@@ -166,8 +167,9 @@ int main(int argc, char* argv[]) {
         // check if subcall is empty
         if(params["subcall"].empty()) {
             std::cout << helper::getTime() << "Please provide a subcall\n";
-            return 0;
+            exit(EXIT_FAILURE);
         }
+
 
         // include parameters from the configfile
         std::ifstream ifs{configFile};
@@ -182,21 +184,22 @@ int main(int argc, char* argv[]) {
             return 0;
         }
 
-        if(!ifs) {
-            std::cout << helper::getTime() << " Configuration file " << configFile << " could not be opened!\n";
-            return 0;
-        } else{
-            // update the parameters from configfile
-            po::store(po::parse_config_file(ifs, configFileOptions), params);
-            notify(params);
+        if(!configFile.empty()) { // check that a config file has been provided
+            std::ifstream ifs{configFile};
+            if(!ifs) {
+                std::cout << helper::getTime() << " Configuration file " << configFile << " could not be opened!\n";
+                return 0;
+            } else{
+                // update the parameters from configfile
+                po::store(po::parse_config_file(ifs, configFileOptions), params);
+                notify(params);
+            }
         }
 
         showVersion(std::cout);
         Base base(params);
-        //, params["subcall"].as<std::string>());
 
     } catch(po::error& e) {
         std::cout << "Please provide a correct function call\n";
-
     }
 }

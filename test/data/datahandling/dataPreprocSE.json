@@ -1,0 +1,124 @@
+{
+    "preproc": {
+        "ctrls": [
+            {
+                "condition": "cond1",
+                "samples": [
+                    {
+                        "input": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_SE\/ctrls\/cond1\/S1_cond1.fastq"
+                        },
+                        "output": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_SE\/preproc\/ctrls\/cond1\/S1_cond1_preproc.fastq"
+                        }
+                    },
+                    {
+                        "input": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_SE\/ctrls\/cond1\/S2_cond1.fastq"
+                        },
+                        "output": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_SE\/preproc\/ctrls\/cond1\/S2_cond1_preproc.fastq"
+                        }
+                    },
+                    {
+                        "input": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_SE\/ctrls\/cond1\/S3_cond1.fastq"
+                        },
+                        "output": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_SE\/preproc\/ctrls\/cond1\/S3_cond1_preproc.fastq"
+                        }
+                    }
+                ]
+            },
+            {
+                "condition": "cond2",
+                "samples": [
+                    {
+                        "input": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_SE\/ctrls\/cond2\/S4_cond2.fastq"
+                        },
+                        "output": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_SE\/preproc\/ctrls\/cond2\/S4_cond2_preproc.fastq"
+                        }
+                    },
+                    {
+                        "input": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_SE\/ctrls\/cond2\/S5_cond2.fastq"
+                        },
+                        "output": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_SE\/preproc\/ctrls\/cond2\/S5_cond2_preproc.fastq"
+                        }
+                    },
+                    {
+                        "input": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_SE\/ctrls\/cond2\/S6_cond2.fastq"
+                        },
+                        "output": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_SE\/preproc\/ctrls\/cond2\/S6_cond2_preproc.fastq"
+                        }
+                    }
+                ]
+            }
+        ],
+        "trtms": [
+            {
+                "condition": "cond1",
+                "samples": [
+                    {
+                        "input": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_SE\/trtms\/cond1\/S7_cond1.fastq"
+                        },
+                        "output": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_SE\/preproc\/trtms\/cond1\/S7_cond1_preproc.fastq"
+                        }
+                    },
+                    {
+                        "input": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_SE\/trtms\/cond1\/S8_cond1.fastq"
+                        },
+                        "output": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_SE\/preproc\/trtms\/cond1\/S8_cond1_preproc.fastq"
+                        }
+                    },
+                    {
+                        "input": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_SE\/trtms\/cond1\/S9_cond1.fastq"
+                        },
+                        "output": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_SE\/preproc\/trtms\/cond1\/S9_cond1_preproc.fastq"
+                        }
+                    }
+                ]
+            },
+            {
+                "condition": "cond2",
+                "samples": [
+                    {
+                        "input": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_SE\/trtms\/cond2\/S10_cond2.fastq"
+                        },
+                        "output": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_SE\/preproc\/trtms\/cond2\/S10_cond2_preproc.fastq"
+                        }
+                    },
+                    {
+                        "input": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_SE\/trtms\/cond2\/S11_cond2.fastq"
+                        },
+                        "output": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_SE\/preproc\/trtms\/cond2\/S11_cond2_preproc.fastq"
+                        }
+                    },
+                    {
+                        "input": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_SE\/trtms\/cond2\/S12_cond2.fastq"
+                        },
+                        "output": {
+                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_SE\/preproc\/trtms\/cond2\/S12_cond2_preproc.fastq"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -1,10 +1,7 @@
-//
-// Created by Richard Albin Schaefer on 1/25/24.
-//
-
 #ifndef SEQRICKSHAW_HPP
 #define SEQRICKSHAW_HPP
 
+// Standard
 #include <iostream>
 #include <tuple>
 #include <cstddef>
@@ -14,15 +11,14 @@
 #include <thread>
 #include <chrono>
 #include <map>
-
 #include<omp.h>
 
-// boost
+// Boost
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-// seqan
+// SeqAn
 #include <seqan3/io/sequence_file/all.hpp>
 #include <seqan3/core/debug_stream.hpp>
 #include <seqan3/utility/views/chunk.hpp>
@@ -30,6 +26,7 @@
 #include <seqan3/alphabet/nucleotide/dna5.hpp>
 #include <seqan3/io/views/async_input_buffer.hpp>
 
+// Class
 #include "StateTransition.hpp"
 #include "Preproc.hpp"
 #include "Utility.hpp"
@@ -40,9 +37,11 @@ namespace pt = boost::property_tree;
 
 class SeqRickshaw {
     public:
+        // constructor/destructor
         SeqRickshaw(po::variables_map params);
         ~SeqRickshaw();
 
+        // control routines
         void start(pt::ptree sample);
         void distribute(dtp::SubPathsMap reads); // process the reads
         void processing(dtp::PathVector subreads);

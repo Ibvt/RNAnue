@@ -1,10 +1,7 @@
-//
-// Created by Richard Albin Schaefer on 1/22/24.
-//
-
 #ifndef RNANUE_CLOSING_HPP
 #define RNANUE_CLOSING_HPP
 
+// Standard
 #include <vector>
 
 class Closing {

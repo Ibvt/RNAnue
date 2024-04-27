@@ -17,16 +17,25 @@ find_package(OpenMP)
 ###### Boost ######
 set(Boost_DEBUG ON)
 find_package(Boost 1.56.0 REQUIRED COMPONENTS
-        program_options filesystem)
+        program_options filesystem unit_test_framework)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
 file(GLOB SOURCES "src/*.cpp")
-
 add_executable(RNAnue ${SOURCES})
 target_include_directories(RNAnue PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(RNAnue seqan3::seqan3)
 target_link_libraries(RNAnue Boost::program_options Boost::filesystem)
-
 cmake_print_properties(TARGETS RNAnue PROPERTIES TARGET_INCLUDE_DIRECTORIES)
+
+###### Tests ######
+file(GLOB TEST_SOURCES "test/*.cpp")
+file(GLOB SOURCES "src/*.cpp")
+list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
+
+add_executable(RNAnue_tests ${TEST_SOURCES} ${SOURCES})
+target_include_directories(RNAnue_tests PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(RNAnue_tests seqan3::seqan3)
+target_link_libraries(RNAnue_tests Boost::program_options Boost::filesystem Boost::unit_test_framework)
+

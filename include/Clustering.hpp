@@ -1,22 +1,19 @@
 #ifndef RNANUE_CLUSTERING_HPP
 #define RNANUE_CLUSTERING_HPP
 
-
+// Standard
 #include <algorithm>
-
 #include <omp.h>
 
-// boost
+// Boost
 #include <boost/program_options.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/filesystem.hpp>
 
-
+// SeqAn3
 #include <seqan3/core/debug_stream.hpp>
 
-// probably deprecated in 3.3.0
-//#include <seqan3/utility/views/chunk.hpp>
-
+// Class
 #include "Utility.hpp"
 
 namespace po = boost::program_options;

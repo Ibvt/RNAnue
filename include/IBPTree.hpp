@@ -15,7 +15,7 @@
 #include "DataTypes.hpp"
 
 namespace po = boost::program_options;
-using RootNodes = std::vector<std::pair<std::string, Node*>>;
+using RootNodes = std::map<std::string, Node*>;
 
 class IBPTree {
     public:
