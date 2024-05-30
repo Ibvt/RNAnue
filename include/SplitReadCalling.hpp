@@ -10,8 +10,16 @@
 #include <boost/filesystem.hpp>
 #include <boost/property_tree/ptree.hpp>
 
+// Vienna
+#include <ViennaRNA/fold.h>
+
+// SeqAn3
+#include <seqan3/io/sam_file/all.hpp>
+#include <seqan3/core/debug_stream.hpp>
+
 // Class
 #include "IBPTree.hpp"
+#include "Stats.hpp"
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -22,12 +30,13 @@ class SplitReadCalling {
         SplitReadCalling(po::variables_map params);
         ~SplitReadCalling();
 
-        void start(pt::ptree sample);
+        void start(pt::ptree sample, pt::ptree condition);
         void iterate(std::string& matched, std::string& splits, std::string& multsplits);
 
     private:
         po::variables_map params;
         IBPTree features;
+        Stats stats;
 };
 
 #endif //RNANUE_DETECT_HPP

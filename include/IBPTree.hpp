@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <queue>
 
 // Boost
 #include <boost/program_options.hpp>
@@ -26,10 +27,20 @@ class IBPTree {
         // constructs the IBPTree (either from annotations/clusters or both)
         void construct();
         void iterateFeatures(std::string featureFile);
-        void insert(std::string chrom, const Interval& interval);
+        void iterateClusters(std::string clusterFile);
 
-        std::map<std::string, std::string> getAttributes(const std::string& attributes);
-        std::string getTag(std::map<std::string, std::string>& attributes, const std::string& key);
+        // tree operations
+        Node* getRoot(IntervalData& data);
+        void insert(IntervalData& data);
+        void insertIter(Node* node, IntervalData& data);
+        void splitNode(Node* node, int index);
+
+        std::map<std::string, std::string> getAttributes(std::string& attributes);
+        std::string getTag(std::map<std::string, std::string> attributes, const std::vector<std::string>& keys);
+
+        // add tree operations
+        void printTree();
+        void traverse(Node* parent, Node* child, int link, std::ostream& oss) const;
 
     private:
         po::variables_map params;
