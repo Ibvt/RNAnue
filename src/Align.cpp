@@ -35,7 +35,7 @@ void Align::alignReads(std::string query, std::string mate, std::string matched)
     std::cout << helper::getTime() << "Start Alignment\n";
     std::string align = "segemehl.x";
     align += " -S "; // split mode
-    align += " -b "; // output in bam format
+    align += " -b "; // output in bam format (and sorted)
     align += " -A " + std::to_string(params["accuracy"].as<int>());
     align += " -U " + std::to_string(params["minfragsco"].as<int>());
     align += " -W " + std::to_string(params["minsplicecov"].as<int>());

@@ -20,8 +20,8 @@ namespace dtp {
     using DNAVector = std::vector<seqan3::dna5>; // seqan3 also provides dna5_vector
     using DNASpan = std::span<seqan3::dna5>;
     using QualSpan = std::span<seqan3::phred42>;
-
     using QualVector = std::vector<seqan3::phred42>;
+    using CigarVector = std::vector<seqan3::cigar>;
 
     // FASTQ
     using FASTQFormat = seqan3::type_list<std::string, DNASpan, QualSpan>;
@@ -77,7 +77,7 @@ namespace dtp {
         int multSplitsCount;
         int nSurvivedCount;
     };
-    using StatsMap = std::map<std::string, std::vector<StatsFields>>;
+    using StatsMap = std::map<std::string, StatsFields>;
 }
 
 #endif //RNANUE_DATATYPES_HPP

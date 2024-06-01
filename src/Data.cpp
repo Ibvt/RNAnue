@@ -27,7 +27,11 @@ Data::Data(po::variables_map params) : params(params) {
     }
 }
 
-Data::~Data() {}
+Data::~Data() {
+    fs::path outDir = fs::path(params["outdir"].as<std::string>());
+    fs::path tmpDir = outDir / fs::path("tmp");
+    helper::deleteDir(tmpDir);
+}
 
 void Data::preprocDataPrep() {
     // retrieve paths that contain the reads
@@ -340,18 +344,15 @@ void Data::callInAndOut(Callable f) {
     for(unsigned i=0;i<groups.size();++i) {
         // create directory for groups (e.g., ctrls, trtms)
         outGroupDir = outSubcallDir / fs::path(groups[i]);
+        helper::createDir(outGroupDir, std::cout);
 
         conditions = subcall.get_child(groups[i]);
-        std::cout << conditions.data() << std::endl;
-
         BOOST_FOREACH(pt::ptree::value_type const &v, conditions.get_child("")) {
             pt::ptree condition = v.second;
 
             // create directory for condition (e.g., rpl_exp)
             outConditionDir = outGroupDir / fs::path(condition.get<std::string>("condition"));
             helper::createDir(outConditionDir, std::cout);
-
-            std::cout << condition.get<std::string>("condition") << std::endl;
 
             samples = condition.get_child("samples");
             // iterate over samples

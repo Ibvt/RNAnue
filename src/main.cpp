@@ -85,8 +85,12 @@ int main(int argc, char* argv[]) {
                  "minimum score of a spliced fragment")
                 ("minfraglen", po::value<int>()->default_value(20),
                  "minimum length of a spliced fragment")
+                ("minfragmatches", po::value<double>()->default_value(0.7),
+                        "minimum percentage matches of a spliced fragment")
                 ("minsplicecov", po::value<int>()->default_value(80),
-                "minimum coverage for spliced transcripts")
+                        "minimum coverage for spliced transcripts")
+                ("mapq", po::value<int>()->default_value(10),
+                        "minimum mapping quality")
                 ("exclclipping", po::value<std::bitset<1>>()->default_value(0),
                         "exclude soft clipping from the alignments")
                 ("unprd", po::value<std::bitset<1>>()->default_value(0),
