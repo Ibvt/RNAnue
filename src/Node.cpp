@@ -35,6 +35,7 @@ bool IntervalData::isSubset(int start, int end) {
     return (start >= this->interval.first && end <= this->interval.second);
 }
 
+
 // create new node
 Node::Node(int k) : order{k}, keys{}, children{}, next{nullptr}, parent{nullptr}, isLeaf{false} {}
 

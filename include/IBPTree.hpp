@@ -34,6 +34,10 @@ class IBPTree {
         void insert(IntervalData& data);
         void insertIter(Node* node, IntervalData& data);
         void splitNode(Node* node, int index);
+        std::vector<IntervalData*> search(std::string chrom, dtp::Interval interval);
+        void searchIter(Node* node, const dtp::Interval& interval, std::vector<IntervalData*> results);
+        bool isOverlapping(dtp::Interval intvl1, dtp::Interval intvl2);
+
 
         std::map<std::string, std::string> getAttributes(std::string& attributes);
         std::string getTag(std::map<std::string, std::string> attributes, const std::vector<std::string>& keys);

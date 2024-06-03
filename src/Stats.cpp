@@ -26,9 +26,14 @@ void Stats::setMultSplitsCount(std::string condition, int increment) {
         stats[condition].multSplitsCount += increment;
     }
 }
-void Stats::setNSurvivedCount(std::string condition, int nsurvivedcount) {
-    {
-        std::lock_guard<std::mutex> lock(statsMutex);
-        stats[condition].nSurvivedCount = nsurvivedcount;
+
+void Stats::writeStats(fs::path outdir) {
+    fs::path statsFile = outdir / "stats.tsv";
+    std::ofstream statsStream(statsFile);
+    statsStream << "Condition\tReads\tAligned\tSplits\tMultSplits\n";
+    for (const auto& [condition, stat] : stats) {
+        statsStream << condition << "\t" << stat.readsCount << "\t";
+        statsStream << stat.alignedCount << "\t" << stat.splitsCount << "\t";
+        statsStream << stat.multSplitsCount << "\n";
     }
 }

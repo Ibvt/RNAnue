@@ -4,9 +4,14 @@
 // Standard
 #include <iostream>
 
+// Boost
+#include <boost/program_options.hpp>
+
+namespace po = boost::program_options;
+
 class Analysis {
     public:
-        Analysis();
+        Analysis(po::variables_map params);
         ~Analysis();
 
         void start();

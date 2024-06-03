@@ -57,7 +57,6 @@ void Data::alignDataPrep() {
             * (ctrls -> "/Users/.../crtls")
             */
             GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
-
             getCondition(groups);
         }
     }

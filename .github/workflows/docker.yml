@@ -1,8 +1,8 @@
 name: docker-release
 on:
   push:
-    branches:
-      - "master"
+    tags:
+      - '*'
   pull_request:
     branches:
       - "master"
@@ -41,5 +41,5 @@ jobs:
           context: "{{defaultContext}}"
           platforms: linux/amd64, linux/arm64
           push: true
-          tags: cobirna/rnanue:${{ steps.extract_version.outputs.VERSION }}
+          tags: cobirna/rnanue:${{ steps.extract_version.outputs.VERSION }}, cobirna/rnanue:latest
 

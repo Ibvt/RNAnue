@@ -15,7 +15,7 @@ LABEL authors="Richard A. Schaefer"
 RUN apt-get -y update && apt-get -y upgrade
 RUN apt-get install -y curl build-essential cmake git pkg-config
 RUN apt-get install -y libbz2-dev zlib1g-dev libncurses5-dev liblzma-dev
-RUN apt-get install -y libboost-all-dev
+RUN apt-get install -y libboost-all-dev gdb
 
 # install htslib
 WORKDIR /
@@ -34,6 +34,8 @@ WORKDIR /segemehl-0.3.4
 RUN export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 RUN make all
 RUN cp segemehl.x /usr/local/bin
+
+# install ViennaRNA
 
 # retrieve RNAnue
 WORKDIR /

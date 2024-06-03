@@ -201,6 +201,50 @@ void IBPTree::splitNode(Node* parent, int index) {
     }
 }
 
+std::vector<IntervalData*> IBPTree::search(std::string chrom, dtp::Interval interval) {
+    Node* root = this->rootnodes[chrom]; // search for the root node
+    std::vector<IntervalData*> result;
+    searchIter(root, interval, result);
+}
+
+void IBPTree::searchIter(Node* node, const dtp::Interval& interval, std::vector<IntervalData*> results) {
+    if(node->isLeaf) {
+        Node* current = node;
+        for(auto& intvl : current->keys) {
+            if(isOverlapping(intvl.first, interval)) {
+                results.push_back(intvl.second);
+            }
+            if(!current->next || !isOverlapping(current->next->keys[0].first, interval)) {
+                break;
+            }
+            node = node->next;
+        }
+    } else {
+        int i = 0;
+        while(i < node->keys.size() &&
+                (interval.first > node->keys[i].first.first &&
+                        (interval.first > node->keys[i].first.second))){
+            i++;
+        }
+        if(node->children[i] != nullptr) {
+            searchIter(node->children[i], interval, results);
+        }
+    }
+}
+
+bool IBPTree::isOverlapping(dtp::Interval intvl1, dtp::Interval intvl2) {
+    if((intvl1.first <= intvl2.first && intvl1.second >= intvl2.second) ||
+       (intvl1.first >= intvl2.first && intvl1.second <= intvl2.second) ||
+       (intvl1.first <= intvl2.first && intvl1.second > intvl2.first) ||
+       (intvl1.first > intvl2.first && intvl1.first < intvl2.second)) {
+        return true;
+    }
+}
+
+
+
+
+
 // get attribute from the attributes fields
 std::string IBPTree::getTag(std::map<std::string, std::string> attributes, const std::vector<std::string>& keys) {
     std::string element = "";
@@ -249,57 +293,3 @@ void IBPTree::traverse(Node* parent, Node* child, int link, std::ostream& ofs) c
         traverse(child, child->children[i], i, ofs);
     }
 }
-
-/*
-// Function to search for intervals overlapping with the given interval
-std::vector<Interval> IBPTree::search(const Interval& interval) {
-    std::vector<Interval> result;
-    if (root != nullptr)
-        searchHelper(root, interval, result);
-    return result;
-}
-
-// Helper function for searching intervals
-void IBPTree::searchHelper(Node* node, const Interval& interval, std::vector<Interval>& result) {
-    if (node->isLeaf()) {
-        LeafNode* leaf = dynamic_cast<LeafNode*>(node);
-        for (const Interval& key : leaf->keys) {
-            if (interval.low <= key.high && interval.high >= key.low)
-                result.push_back(key);
-        }
-    } else {
-        InternalNode* internal = dynamic_cast<InternalNode*>(node);
-        int i = 0;
-        while (i < internal->keys.size() && interval.low > internal->keys[i])
-            i++;
-        searchHelper(internal->children[i], interval, result);
-    }
-}
-
-
-
-*/
-/*
-if(root->getLeaf()) { // root is a leaf node
-    root->addInterval(data);
-    if(root->getKeys().size() > this->order-1) {
-        splitNode(root);
-    }
-} else {
-    dtp::Interval interval = std::make_pair(5300,5400);
-    Node* child = traverse(interval, root);
-    if(child == nullptr) {
-        std::cout << "nullptr" << std::endl;
-    } else {
-        std::cout << "new Child: " << child->keysToString() << std::endl;
-    }
-
-*/
-
-
-
-
-/*
-std::cout << "Child: " << child->keysToString() << std::endl;
- */
-

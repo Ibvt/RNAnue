@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
                  "minimum score of a spliced fragment")
                 ("minfraglen", po::value<int>()->default_value(20),
                  "minimum length of a spliced fragment")
-                ("minfragmatches", po::value<double>()->default_value(0.7),
+                ("minfragmatches", po::value<double>()->default_value(0.5),
                         "minimum percentage matches of a spliced fragment")
                 ("minsplicecov", po::value<int>()->default_value(80),
                         "minimum coverage for spliced transcripts")

@@ -49,6 +49,7 @@ void Align::alignReads(std::string query, std::string mate, std::string matched)
         align += " -p " + mate;
     }
     align += " -o " + matched;
+    std::cout << align << "\n";
     const char* alignCallChar = align.c_str();
     int result = system(alignCallChar);
     if(result != 0) {

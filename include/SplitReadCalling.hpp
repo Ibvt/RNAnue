@@ -38,7 +38,7 @@ using types = seqan3::type_list<
         std::optional<int32_t>,
         std::optional<uint8_t>,
         dtp::CigarVector,
-        dtp::DNAVector,
+        dtp::DNASpan,
         seqan3::sam_tag_dictionary>;
 
 using fields = seqan3::fields<
@@ -50,6 +50,19 @@ using fields = seqan3::fields<
         seqan3::field::cigar,
         seqan3::field::seq,
         seqan3::field::tags>;
+
+using types2 = seqan3::type_list<
+        std::vector<seqan3::dna5>,
+        std::string,
+        std::vector<seqan3::cigar>>;
+using fields2 = seqan3::fields<
+        seqan3::field::seq,
+        seqan3::field::id,
+        seqan3::field::cigar>;
+using sam_record_type = seqan3::sam_record<types2, fields2>;
+
+
+
 
 // define tags
 using seqan3::operator""_tag;
@@ -63,7 +76,7 @@ template <> struct seqan3::sam_tag_type<"XN"_tag> { using type = int32_t; };
 
 
 
-using SAMrecord = seqan3::record<types, fields>;
+using SAMrecord = seqan3::sam_record<types, fields>;
 using namespace seqan3::literals;
 using seqan3::get;
 
@@ -103,7 +116,9 @@ class SplitReadCalling {
         template <typename T>
         void process(std::vector<T>& readrecords, auto& singleOut, auto& splitsOut, auto& multsplitsOut,
                      auto& singleOutMutex, auto& splitsOutMutex, auto& multsplitsOutMutex);
-        bool filter(auto& sequence, uint32_t cigarmatch);
+        void decide(std::map<int, std::vector<SAMrecord>>& putative, auto& splitsOut, auto& multsplitsOut,
+                    auto& splitsOutMutex, auto& multsplitsOutMutex);
+        bool filter(auto& sequence, uint32_t cigarmatch, std::string chrom, dtp::Interval interval);
         void storeSegments(auto& splitrecord, std::optional<int32_t>& refOffset, dtp::CigarVector& cigar,
                            dtp::DNAVector& seq, seqan3::sam_tag_dictionary &tags, std::vector<SAMrecord>& curated);
 
@@ -113,6 +128,7 @@ class SplitReadCalling {
         //Stats stats;
         std::shared_ptr<Stats> stats;
         std::string condition; // stores the current condition
+        std::deque<std::string> refIds; // stores the reference ids
 };
 
 #endif //RNANUE_DETECT_HPP

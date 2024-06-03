@@ -19,7 +19,6 @@ ThreadPool::ThreadPool(size_t num_threads) : stop(false) {
     }
 }
 
-
 ThreadPool::~ThreadPool() {
     {
         std::unique_lock<std::mutex> lock(queue_mutex);
@@ -47,13 +46,14 @@ auto ThreadPool::enqueue(F&& f, Args&&... args) -> std::future<typename std::inv
 SplitReadCalling::SplitReadCalling(po::variables_map params) {
     this->params = params;
     // create IBPTree (if splicing need to be considered)
-    if(params["splicing"].as<std::bitset<1>>() ==  std::bitset<1>("1")) {
+    if(params["splicing"].as<std::bitset<1>>() == std::bitset<1>("1")) {
         // order of the IBPTree
         int k = 7; // can be later extracted from config file
         // create IBPT
         this->features = IBPTree(params, k);
     }
     this->condition = ""; // stores the current condition
+    this->refIds = std::deque<std::string>(); // stores the reference ids
 
     // initialize stats
     this->stats = std::make_shared<Stats>();
@@ -61,7 +61,12 @@ SplitReadCalling::SplitReadCalling(po::variables_map params) {
     const char* seq = "GGGAAAUCC";
 }
 
-SplitReadCalling::~SplitReadCalling() {}
+SplitReadCalling::~SplitReadCalling() {
+    if(params["stats"].as<std::bitset<1>>() == std::bitset<1>("1")) {
+        fs::path outdir = fs::path(params["outdir"].as<std::string>());
+        stats->writeStats(outdir);
+    }
+}
 
 void SplitReadCalling::iterate(std::string& matched, std::string& single, std::string &splits, std::string &multsplits) {
     ThreadPool pool(params["threads"].as<int>()); // initialize thread pool
@@ -71,10 +76,11 @@ void SplitReadCalling::iterate(std::string& matched, std::string& single, std::s
     for(auto &info : fin.header().ref_id_info) {
         ref_lengths.push_back(std::get<0>(info));
     }
-    std::deque<std::string> ref_ids = fin.header().ref_ids();
-    seqan3::sam_file_output singleOut{single, ref_ids, ref_lengths}; // initialize output file
-    seqan3::sam_file_output splitsOut{splits, ref_ids, ref_lengths}; // initialize output file
-    seqan3::sam_file_output multsplitsOut{multsplits, ref_ids, ref_lengths}; // initialize output file
+    this->refIds = fin.header().ref_ids();
+
+    seqan3::sam_file_output singleOut{single, this->refIds, ref_lengths}; // initialize output file
+    seqan3::sam_file_output splitsOut{splits, this->refIds, ref_lengths}; // initialize output file
+    seqan3::sam_file_output multsplitsOut{multsplits, this->refIds, ref_lengths}; // initialize output file
 
     // create mutex objects for output - had to be done here as class variables cause errors w/ std::bind
     std::mutex singleOutMutex;
@@ -145,7 +151,7 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut, aut
 
     // stores the putative splits/segments
     std::vector<SAMrecord> curated;
-    std::map<int, std::vector<SAMrecord>> segments;
+    std::map<int, std::vector<SAMrecord>> putative{};
 
     for(auto& rec : readrecords) {
         qname = rec.id();
@@ -153,6 +159,7 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut, aut
         ref_id = rec.reference_id();
         ref_offset = rec.reference_position();
         mapq = rec.mapping_quality();
+        seq = rec.sequence();
 
         // CIGAR string
         cigar = rec.cigar_sequence();
@@ -164,16 +171,17 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut, aut
         auto xjtag = tags.get<"XJ"_tag>();
         auto xhtag = tags.get<"XH"_tag>();
 
-        seqan3::debug_stream << "QNAME: " << qname << "\n";
-        seqan3::debug_stream << "FLAG: " << flag << "\n";
-
-        if(xjtag < 2) { continue; } // ignore reads with less than 2 splits
+        if(xjtag < 2 ) { // ignore reads with less than 2 splits (or no splits at all)
+            {
+                std::lock_guard<std::mutex> lock(singleOutMutex);
+                singleOut.push_back(rec);
+            }
+            continue;
+        }
         startPosRead = 1; // initialize start/end of read
         endPosRead = 0;
         startPosSplit = xxtag;
         endPosSplit = xytag;
-
-        seqan3::debug_stream << cigar << std::endl;
 
         cigarMatch = 0; // reset matches count in cigar
         // check the cigar string for splits
@@ -190,15 +198,11 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut, aut
                 newTags.get<"XY"_tag>() = endPosSplit;
                 newTags.get<"XN"_tag>() = splitId;
 
-                // filter segments
-                if(filter(subSeq, cigarMatch)) {
+                // filter & store the segments
+                dtp::Interval intvl = {ref_offset.value(), ref_offset.value() + endPosRead};
+                if(filter(subSeq, cigarMatch, this->refIds[ref_id.value()], intvl)) {
                     storeSegments(rec, ref_offset, cigarSplit, seq, tags, curated);
                 }
-
-
-
-
-
                 // settings to prepare for the next split
                 startPosSplit = endPosSplit+1;
                 startPosRead = endPosRead+1;
@@ -232,49 +236,102 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut, aut
         newTags.get<"XY"_tag>() = endPosSplit;
         newTags.get<"XN"_tag>() = splitId;
 
-        // filter segements
+        // filter and store the segments
+        dtp::Interval intvl = {ref_offset.value(), ref_offset.value() + endPosRead};
+        if(filter(subSeq, cigarMatch, this->refIds[ref_id.value()], intvl)) {
+            storeSegments(rec, ref_offset, cigarSplit, seq, tags, curated);
+        }
+        if(segNum == xjtag) {
+            putative.insert(std::make_pair(splitId, curated));
+            curated.clear();
+            segNum = 0;
+            ++splitId;
+        }
+    }
+    decide(putative, splitsOut, multsplitsOut, splitsOutMutex, multsplitsOutMutex);
+}
 
-        if(segNum) {
+void SplitReadCalling::decide(std::map<int, std::vector<SAMrecord>>& putative, auto& splitsOut, auto& multsplitsOut,
+            auto& splitsOutMutex, auto& multsplitsOutMutex) {
+    std::vector<SAMrecord> p1, p2;
+    seqan3::sam_tag_dictionary p1Tags, p2Tags;
+    std::pair<double, double> scores;
+    std::string p1QNAME, p2QNAME;
 
+    if(putative.size() > 0) {
+        for(auto& [splitId, records] : putative) {
+            if(records.size() > 1) { // splits contain more than one segment
+                for(unsigned i=0;i<records.size();++i) {
+                    for(unsigned j=i+1;j<records.size();++j) {
+                        p1Tags = records[i].tags();
+                        p2Tags = records[j].tags();
+
+                        auto p1Start = p1Tags.get<"XX"_tag>();
+                        auto p1End = p1Tags.get<"XY"_tag>();
+                        auto p2Start = p2Tags.get<"XX"_tag>();
+                        auto p2End = p2Tags.get<"XY"_tag>();
+
+                        // prevent overlap between read position -> same segment of read
+                        if(p1.empty() && p2.empty()) {
+                            TracebackResult initCmpl = complementarity(seqan3::get<seqan3::field::seq>(splits[i]), seqan3::get<seqan3::field::seq>(splits[j]));
+                            double initHyb = hybridize(seqan3::get<seqan3::field::seq>(splits[i]), seqan3::get<seqan3::field::seq>(splits[j]));
+                            if(!initCmpl.a.empty()) { // split read survived complementarity & sitelenratio cutoff
+                                if(initHyb <= params["nrgmax"].as<double>()) {
+                                    filters = std::make_pair(initCmpl.cmpl, initHyb);
+                                    addComplementarityToSamRecord(splits[i], splits[j], initCmpl);
+                                    addHybEnergyToSamRecord(splits[i], splits[j], initHyb);
+                                    splitSegments.push_back(std::make_pair(splits[i],splits[j]));
+                                }
+                            }
+                        } else {
+                            TracebackResult cmpl = complementarity(seqan3::get<seqan3::field::seq>(splits[i]), seqan3::get<seqan3::field::seq>(splits[j]));
+                            double hyb = hybridize(seqan3::get<seqan3::field::seq>(splits[i]), seqan3::get<seqan3::field::seq>(splits[j]));
+
+                            if(!cmpl.a.empty()) { // check that there is data for complementarity / passed cutoffs
+                                if(cmpl.cmpl > filters.first) { // complementarity is higher
+                                    splitSegments.clear();
+                                    filters = std::make_pair(cmpl.cmpl, hyb);
+                                    addComplementarityToSamRecord(splits[i], splits[j], cmpl);
+                                    addHybEnergyToSamRecord(splits[i], splits[j], hyb);
+                                    splitSegments.push_back(std::make_pair(splits[i],splits[j]));
+                                } else{
+                                    if(cmpl.cmpl == filters.first) {
+                                        if(hyb > filters.second) {
+                                            splitSegments.clear();
+                                            filters = std::make_pair(cmpl.cmpl, hyb);
+                                            addComplementarityToSamRecord(splits[i], splits[j], cmpl);
+                                            addHybEnergyToSamRecord(splits[i], splits[j], hyb);
+                                            splitSegments.push_back(std::make_pair(splits[i],splits[j]));
+                                        }
+                                    } else {
+                                        if(hyb == filters.second) { // same cmpl & hyb -> ambigious read!
+                                            addComplementarityToSamRecord(splits[i], splits[j], cmpl);
+                                            addHybEnergyToSamRecord(splits[i], splits[j], hyb);
+                                            splitSegments.push_back(std::make_pair(splits[i],splits[j]));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
-
-        /*
-        std::string recid = rec.id();
-        dtp::DNAVector recseq = rec.sequence();
-        dtp::CigarVector reccigar = rec.cigar_sequence();
-
-        SAMRec outrec{recid, recseq, reccigar};*/
-
-
-
-
-
-        // single output
-        /*
-        {
-            std::lock_guard<std::mutex> lock(singleOutMutex);
-            singleOut.push_back(outrec);
-        }*/
-        /*
-        // splits output
-        {
-            std::lock_guard<std::mutex> lock(splitsOutMutex);
-            splitsOut.push_back(outrec);
-        }
-        // multsplits output
-        {
-            std::lock_guard<std::mutex> lock(multsplitsOutMutex);
-            multsplitsOut.push_back(outrec);
-        }*/
     }
 }
 
-bool SplitReadCalling::filter(auto& sequence, uint32_t cigarmatch) {
-    // filter segments
+bool SplitReadCalling::filter(auto& sequence, uint32_t cigarmatch, std::string chrom, dtp::Interval intvl) {
+    //seqan3::debug_stream << sequence << std::endl;
     if(sequence.size() < params["minlen"].as<int>()) { return false; }
     double matchrate = static_cast<double>(cigarmatch) / static_cast<double>(sequence.size());
     if(matchrate < params["minfragmatches"].as<double>()) { return false; }
+    if(params["splicing"].as<std::bitset<1>>() == std::bitset<1>("1")) {
+        std::cout << "check for interval :" << intvl.first << " " << intvl.second << std::endl;
+        // check if the segment is spliced
+        //std::vector<IntervalData*> ovlps = features.search(chrom, intvl);
+        //std::cout << "overlap " << ovlps.size() << std::endl;
+    }
     return true;
 }
 
@@ -282,20 +339,12 @@ void SplitReadCalling::storeSegments(auto& splitrecord, std::optional<int32_t>& 
                                      dtp::CigarVector& cigar, dtp::DNAVector& seq,
                                      seqan3::sam_tag_dictionary& tags, std::vector<SAMrecord>& curated) {
     SAMrecord segment{}; // create new SAM Record
-
-    using types = seqan3::type_list<std::vector<seqan3::dna5>, std::string, std::vector<seqan3::cigar>>;
-    using fields = seqan3::fields<seqan3::field::seq, seqan3::field::id, seqan3::field::cigar>;
-    using sam_record_type = seqan3::sam_record<types, fields>;
-
-
-    // write the following to the file
-    // r001 0   *   0   0   4M2I2M2D    *   0   0   ACGTACGT    *
-    sam_record_type record{};
-    record.id() = "r001";
-    record.sequence() = "ACGTACGT"_dna5;
-
-    seqan3::debug_stream << splitrecord.id() << std::endl;
-
+    segment.id() = splitrecord.id();
+    seqan3::sam_flag flag{0};
+    if(static_cast<bool>(splitrecord.flag() & seqan3::sam_flag::on_reverse_strand)) {
+        flag |= seqan3::sam_flag::on_reverse_strand;
+    }
+    segment.reference_id() = splitrecord.reference_id();
 }
 
 

@@ -39,6 +39,7 @@ class IntervalData {
         // operations
         void addJunction(std::string junction);
         bool isSubset(int start, int end);
+        bool isOverlapping(dtp::Interval intvl1, dtp::Interval intvl2);
         void printNode();
 
     private:
