@@ -1,19 +1,15 @@
-//
-// Created by Richard Albin Schaefer on 1/23/24.
-//
-
+// Standard
 #include <iostream>
 #include <bitset>
 
+// Class
 #include "Base.hpp"
 
-Base::Base(po::variables_map params) : params(params), data(params) {
+Base::Base(po::variables_map params) : params(params), paramsVal(params), data(params) {
     std::string subcall = params["subcall"].as<std::string>();
 
     // preprocessing
     if(subcall == "preproc") {
-//        std::cout << helper::getTime() << "Start preprocessing" << std::endl;
-
         // preproc has not been actively switch on - 'preproc' parameter - but preproc has been called (subcall)
         if(params["preproc"].as<std::bitset<1>>() != std::bitset<1>("1")) {
             std::cout << helper::getTime() << " 'preproc' has not been set correctly - check parameters" << std::endl;
@@ -36,6 +32,12 @@ Base::Base(po::variables_map params) : params(params), data(params) {
                         //data.analysis();
                     } else {
                         if(subcall == "complete") {
+                            data.preproc();
+                            data.detect();
+                            data.align();
+
+
+
                             //std::cout << "complete analysis" << std::endl;
                             /*
                             data.preproc();

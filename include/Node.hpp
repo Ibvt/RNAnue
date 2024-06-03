@@ -1,28 +1,46 @@
 #ifndef RNANUE_NODE_HPP
 #define RNANUE_NODE_HPP
 
+// Standard
 #include <iostream>
 #include <vector>
 #include <array>
 #include <bitset>
 
-class Interval {
+// Class
+#include "DataTypes.hpp"
+
+class IntervalData {
     public:
-        Interval(std::string chrom, char strand, std::string id, std::string name,
-                 std::string biotype, int lower, int upper);
-        ~Interval();
+        IntervalData(std::string chrom, char strand, std::string id, std::string name,
+                 std::string biotype, dtp::Interval interval);
+        ~IntervalData();
+
+        // operator overloading
+        bool operator>(const dtp::Interval& other) const;
+        bool operator<(const dtp::Interval& other) const;
 
         // getter & setter
-        int getLower() const;
-        void setId(std::string id);
-        std::string getId() const;
         std::string getChrom() const;
-        void setJunction(std::pair<int,int> junction);
+        void setChrom(std::string chrom);
+        char getStrand() const;
+        void setStrand(char strand);
+        std::string getId() const;
+        void setId(std::string id);
+        std::string getName() const;
+        void setName(std::string name);
+        std::string getBiotype() const;
+        void setBiotype(std::string biotype);
+        dtp::Interval getInterval();
+        void setInterval(dtp::Interval interval);
+        std::string getJunctions() const;
+        void setJunctions(std::string junctions);
 
         // operations
-        std::string getAttribute(std::string key);
+        void addJunction(std::string junction);
         bool isSubset(int start, int end);
-        void narrow(int lower, int upper);
+        bool isOverlapping(dtp::Interval intvl1, dtp::Interval intvl2);
+        void printNode();
 
     private:
         std::string chrom;
@@ -30,21 +48,31 @@ class Interval {
         std::string id;
         std::string name;
         std::string biotype;
-        int lower;
-        int upper;
-        std::vector<std::pair<int,int>> junctions;
+        dtp::Interval interval;
+        std::string junctions;
 };
 
 class Node {
     public:
-        Node(int order);
-        void addInterval(Interval& interval);
-
-    private:
+        // class variables
         int order;
-        std::vector<int> keys;
+        std::vector<std::pair<dtp::Interval, IntervalData*>> keys;
         std::vector<Node*> children;
-        std::bitset<1> leaf;
+        Node* next; // link to the next node
+        Node* parent; // link to the parent node
+        bool isLeaf;
+
+        // constructor
+        Node(int order);
+
+        // operations
+        void addInterval(IntervalData& data);
+        void addKey(dtp::Interval interval, int index);
+        dtp::Interval calcNewKey();
+        void addChild(Node* child);
+        Node* getChild(int index);
+        std::string keysToString();
+
 };
 
 #endif //RNANUE_NODE_HPP

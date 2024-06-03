@@ -1,24 +1,24 @@
-//
-// Created by Richard Albin Schaefer on 1/24/24.
-//
-
 #ifndef RNANUE_DATA_HPP
 #define RNANUE_DATA_HPP
 
+// Standard
 #include <typeinfo>
 #include <deque>
 
+// Boost
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
 
+// SeqAn3
 #include "Utility.hpp"
 #include "SeqRickshaw.hpp"
 #include "SplitReadCalling.hpp"
 #include "Align.hpp"
 
+// namespaces
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 namespace pt = boost::property_tree;

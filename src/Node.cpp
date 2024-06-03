@@ -1,58 +1,78 @@
 #include "Node.hpp"
 
-Interval::Interval(std::string chrom, char strand, std::string id, std::string name,
-                   std::string biotype, int lower, int upper) :
-    chrom(chrom), strand(strand), id(""), name(""), biotype(biotype), lower(-1), upper(-1)  {}
-
-Interval::~Interval() {}
-
-void Interval::narrow(int lower, int upper) {
-    this->lower = lower;
-    this->upper = upper;
+IntervalData::IntervalData(std::string chrom, char strand, std::string id, std::string name,
+                   std::string biotype, dtp::Interval interval) :
+    chrom(chrom), strand(strand), id(id), name(name), biotype(biotype), interval(interval) {
 }
+IntervalData::~IntervalData() {}
+bool IntervalData::operator>(const dtp::Interval& other) const { return this->interval.first > other.first; }
+bool IntervalData::operator<(const dtp::Interval& other) const { return this->interval.first < other.first; }
 
 // getter & setter
-int Interval::getLower() const {
-    return lower;
+std::string IntervalData::getChrom() const { return chrom; }
+void IntervalData::setChrom(std::string chrom) { this->chrom = chrom; }
+char IntervalData::getStrand() const { return strand; }
+void IntervalData::setStrand(char strand) { this->strand = strand; }
+std::string IntervalData::getName() const { return name; }
+void IntervalData::setName(std::string name) { this->name = name; }
+std::string IntervalData::getBiotype() const { return biotype; }
+void IntervalData::setBiotype(std::string biotype) { this->biotype = biotype; }
+dtp::Interval IntervalData::getInterval() { return interval; }
+void IntervalData::setInterval(dtp::Interval interval) { this->interval = interval; }
+std::string IntervalData::getJunctions() const { return junctions; }
+void IntervalData::setJunctions(std::string junctions) { this->junctions = junctions; }
+
+// operations
+void IntervalData::addJunction(std::string junction) { this->junctions += junction; }
+//bool IntervalData::isSubset(int start, int end) { return (start >= this->lower && end >= this->upper); }
+void IntervalData::printNode() {
+    std::cout << "----------\nChrom: " << this->chrom << "\nStrand: " << this->strand;
+    std::cout << "\nBnds: [" << this->interval.first << "," << this->interval.second << "]";
+    std::cout << "\nID: " << this->id << "\nName: " << this->name << "\nBiotype: " << this->biotype;
+    std::cout << "\nJunctions: " << this->junctions << "\n----------";
+}
+bool IntervalData::isSubset(int start, int end) {
+    return (start >= this->interval.first && end <= this->interval.second);
 }
 
-void Interval::setId(std::string id) {
-    this->id = id;
-}
-std::string Interval::getId() const {
-    return id;
-}
-
-std::string Interval::getChrom() const {
-    return chrom;
-}
-
-void Interval::setJunction(std::pair<int,int> junction) {
-    junctions.push_back(junction);
-}
-
-
-bool Interval::isSubset(int start, int end) {
-    return (start >= this->lower && end >= this->upper);
-}
 
 // create new node
-Node::Node(int order) : order(order), keys(), children() {}
+Node::Node(int k) : order{k}, keys{}, children{}, next{nullptr}, parent{nullptr}, isLeaf{false} {}
 
-void Node::addInterval(Interval& interval) {
-    // check if the node is a leaf
-    if(leaf == std::bitset<1>("1")) {
-        // check if there is space in the node
-        if(keys.size() < order) {
-
-        }
-
-    }
-
-    // check if there is still space in the node
-    if(keys.size() < order) { // node is not full
-
-
-    }
+// operations
+void Node::addInterval(IntervalData& data) {
+    // add Interval to the node (by comparing the interval) - should be sorted operator > in IntervalData
+    int i = 0;
+    while(i < keys.size() && data > keys[i].first) { i++; }
+    this->keys.insert(this->keys.begin() + i, {data.getInterval(), &data});
 }
 
+void Node::addKey(dtp::Interval interval, int index) {
+    this->keys.insert(this->keys.begin() + index, {interval, nullptr});
+}
+
+dtp::Interval Node::calcNewKey() {
+    dtp::Interval intvl = {std::string::npos, 0};
+    for(int i = 0; i < keys.size(); i++) {
+        if(keys[i].first.first < intvl.first) { intvl.first = keys[i].first.first; }
+        if(keys[i].first.second > intvl.second) { intvl.second = keys[i].first.second; }
+    }
+    return intvl;
+}
+
+void Node::addChild(Node* child) {
+    this->children.push_back(child);
+}
+
+std::string Node::keysToString() {
+    std::string out = "";
+    for(int i = 0; i < keys.size(); i++) {
+        if(i == 0) { out += "|";}
+        out += "[" + std::to_string(keys[i].first.first) + "," + std::to_string(keys[i].first.second) + "]|";
+    }
+    return out;
+}
+
+Node* Node::getChild(int index) {
+    return this->children[index];
+}

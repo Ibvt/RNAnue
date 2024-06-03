@@ -1,17 +1,15 @@
-//
-// Created by Richard Albin Schaefer on 1/30/24.
-//
-
 #ifndef RNANUE_STATETRANSITION_HPP
 #define RNANUE_STATETRANSITION_HPP
 
+// Standard
 #include <iostream>
 #include <vector>
 
-// seqan3
+// SeqAn3
 #include <seqan3/io/sequence_file/all.hpp>
 #include <seqan3/core/debug_stream.hpp>
 
+// Class
 #include "Utility.hpp"
 #include "DataTypes.hpp"
 

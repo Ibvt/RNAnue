@@ -1,11 +1,6 @@
-//
-// Created by Richard Albin Schaefer on 1/24/24.
-//
-
 #include "Data.hpp"
 
 Data::Data(po::variables_map params) : params(params) {
-    // get
     std::string subcall = params["subcall"].as<std::string>();
     fs::path outDir = fs::path(params["outdir"].as<std::string>());
 
@@ -26,11 +21,17 @@ Data::Data(po::variables_map params) : params(params) {
     }
 
     if(subcall == "detect") {
+        fs::path outIBTree = outDir / fs::path("IBPTree");
+        helper::createDir(outIBTree, std::cout);
         detectDataPrep();
     }
 }
 
-Data::~Data() {}
+Data::~Data() {
+    fs::path outDir = fs::path(params["outdir"].as<std::string>());
+    fs::path tmpDir = outDir / fs::path("tmp");
+    helper::deleteDir(tmpDir);
+}
 
 void Data::preprocDataPrep() {
     // retrieve paths that contain the reads
@@ -56,7 +57,6 @@ void Data::alignDataPrep() {
             * (ctrls -> "/Users/.../crtls")
             */
             GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
-
             getCondition(groups);
         }
     }
@@ -316,6 +316,7 @@ pt::ptree Data::getDetectOutputData(pt::ptree& input, fs::path& conditionOutDir)
     // replace input path with output path (results/...)
     fs::path inMatched = fs::path(input.get<std::string>("input.matched"));
     std::string outMatched = helper::replacePath(conditionOutDir, inMatched).string();
+    output.put("single", helper::addSuffix(outMatched, "_single", {"_matched"}));
     output.put("splits", helper::addSuffix(outMatched, "_splits", {"_matched"}));
     output.put("multsplits", helper::addSuffix(outMatched, "_multsplits", {"_matched"}));
 
@@ -330,10 +331,6 @@ void Data::callInAndOut(Callable f) {
     std::string subcallStr = params["subcall"].as<std::string>();
     fs::path outSubcallDir = outDir / fs::path(subcallStr);
 
-    // create output directory (and subdirectory for subcall)
-//    createDirectory(outDir, std::cout); // create output
- //   createDirectory(outSubcallDir, std::cout); //  create subcall
-
     pt::ptree subcall = dataStructure.get_child(subcallStr);
     std::deque<std::string> groups = {"trtms"};
     if(subcall.size() > 1) {
@@ -346,11 +343,7 @@ void Data::callInAndOut(Callable f) {
     for(unsigned i=0;i<groups.size();++i) {
         // create directory for groups (e.g., ctrls, trtms)
         outGroupDir = outSubcallDir / fs::path(groups[i]);
-
-        // don't create subfolders for clustering && analysis
-        //if(params["subcall"].as<std::string>() != "clustering") {
         helper::createDir(outGroupDir, std::cout);
-        //}
 
         conditions = subcall.get_child(groups[i]);
         BOOST_FOREACH(pt::ptree::value_type const &v, conditions.get_child("")) {
@@ -364,11 +357,7 @@ void Data::callInAndOut(Callable f) {
             // iterate over samples
             BOOST_FOREACH(pt::ptree::value_type const &w, samples.get_child("")) {
                 pt::ptree sample = w.second;
-
-                // call start function
-                f(sample);
-                //
-                // f(path, group  samplea
+                f(sample, condition);
             }
         }
     }
@@ -390,10 +379,6 @@ void Data::align() {
 void Data::detect() {
     std::cout << helper::getTime() << "Start the Split Read Calling\n";
     SplitReadCalling src(params);
+    callInAndOut(std::bind(&SplitReadCalling::start, src, std::placeholders::_1, std::placeholders::_2));
 }
-
-
-
-
-
 

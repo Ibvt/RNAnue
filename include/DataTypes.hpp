@@ -4,6 +4,13 @@
 // boost
 #include <boost/filesystem.hpp>
 
+// seqan3
+#include <seqan3/alphabet/nucleotide/dna5.hpp>
+#include <seqan3/alphabet/quality/phred42.hpp>
+#include <seqan3/io/sequence_file/input.hpp>
+#include <seqan3/io/sequence_file/output.hpp>
+
+
 namespace fs = boost::filesystem;
 
 namespace dtp {
@@ -13,8 +20,8 @@ namespace dtp {
     using DNAVector = std::vector<seqan3::dna5>; // seqan3 also provides dna5_vector
     using DNASpan = std::span<seqan3::dna5>;
     using QualSpan = std::span<seqan3::phred42>;
-
     using QualVector = std::vector<seqan3::phred42>;
+    using CigarVector = std::vector<seqan3::cigar>;
 
     // FASTQ
     using FASTQFormat = seqan3::type_list<std::string, DNASpan, QualSpan>;
@@ -46,7 +53,31 @@ namespace dtp {
         FeatureFields() : seqid(""), source(""), type(""), start(-1), end(-1), score(""),
             strand(' '), phase(' '), attributes("") {}
     };
-}
 
+    struct Feature {
+        int start;
+        int end;
+        char strand;
+        std::string id;
+        std::string name;
+        std::string biotype;
+        Feature() : start(-1), end(-1) {}
+        Feature(int start, int end, char strand, std::string id, std::string name, std::string biotype) :
+            start(start), end(end), strand(strand), id(id), name(name), biotype(biotype) {}
+    };
+
+    // IBPTree
+    using Interval = std::pair<size_t,size_t>;
+
+    // Stats
+    struct StatsFields {
+        int readsCount;
+        int alignedCount;
+        int splitsCount;
+        int multSplitsCount;
+        int nSurvivedCount;
+    };
+    using StatsMap = std::map<std::string, StatsFields>;
+}
 
 #endif //RNANUE_DATATYPES_HPP
