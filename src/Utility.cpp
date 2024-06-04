@@ -160,6 +160,14 @@ void helper::concatFiles(fs::path target, std::vector<fs::path> files) {
     }
 }
 
+bool helper::withinRange(int a, int b, int range) {
+    if(std::abs(a-b) <= range || std::abs(b-a) <= range) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 std::string helper::getTime() {
     // Get the current time and date
     auto now = std::chrono::system_clock::now();

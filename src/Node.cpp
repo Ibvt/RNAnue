@@ -19,17 +19,21 @@ std::string IntervalData::getBiotype() const { return biotype; }
 void IntervalData::setBiotype(std::string biotype) { this->biotype = biotype; }
 dtp::Interval IntervalData::getInterval() { return interval; }
 void IntervalData::setInterval(dtp::Interval interval) { this->interval = interval; }
-std::string IntervalData::getJunctions() const { return junctions; }
-void IntervalData::setJunctions(std::string junctions) { this->junctions = junctions; }
+std::vector<std::pair<int,int>> IntervalData::getJunctions() const { return junctions; }
+void IntervalData::setJunctions(std::vector<std::pair<int,int>> junctions) { this->junctions = junctions; }
 
 // operations
-void IntervalData::addJunction(std::string junction) { this->junctions += junction; }
-//bool IntervalData::isSubset(int start, int end) { return (start >= this->lower && end >= this->upper); }
+void IntervalData::addJunction(std::pair<int,int> junction) {
+    this->junctions.push_back(junction);
+}
 void IntervalData::printNode() {
     std::cout << "----------\nChrom: " << this->chrom << "\nStrand: " << this->strand;
     std::cout << "\nBnds: [" << this->interval.first << "," << this->interval.second << "]";
     std::cout << "\nID: " << this->id << "\nName: " << this->name << "\nBiotype: " << this->biotype;
-    std::cout << "\nJunctions: " << this->junctions << "\n----------";
+    for(auto& j : this->junctions) {
+        std::cout << "\nJunctions: " << j.first << " " << j.second;
+    }
+    std::cout << "\n----------\n";
 }
 bool IntervalData::isSubset(int start, int end) {
     return (start >= this->interval.first && end <= this->interval.second);

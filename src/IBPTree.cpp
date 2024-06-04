@@ -86,8 +86,7 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
                     if(intvl != nullptr) {
                         // just make sure that its part of the gene/transcript
                         if(intvl->isSubset(fields.start, fields.end)) {
-                            junction = std::to_string(fields.start) + "-" + std::to_string(fields.end);
-                            intvl->addJunction(junction);
+                            intvl->addJunction(std::make_pair(fields.start, fields.end));
                         }
                     }
                 }
@@ -205,19 +204,25 @@ std::vector<IntervalData*> IBPTree::search(std::string chrom, dtp::Interval inte
     Node* root = this->rootnodes[chrom]; // search for the root node
     std::vector<IntervalData*> result;
     searchIter(root, interval, result);
+
+    std::sort(result.begin(), result.end());
+    auto last = std::unique(result.begin(), result.end());
+    result.erase(last, result.end());
+    return result;
 }
 
-void IBPTree::searchIter(Node* node, const dtp::Interval& interval, std::vector<IntervalData*> results) {
+void IBPTree::searchIter(Node* node, const dtp::Interval& interval, std::vector<IntervalData*>& results) {
     if(node->isLeaf) {
-        Node* current = node;
-        for(auto& intvl : current->keys) {
-            if(isOverlapping(intvl.first, interval)) {
-                results.push_back(intvl.second);
+        for(int i=0; i<node->keys.size();++i) {
+            if(isOverlapping(interval, node->keys[i].first)) {
+                results.push_back(node->keys[i].second);
             }
-            if(!current->next || !isOverlapping(current->next->keys[0].first, interval)) {
-                break;
+        }
+
+        if(node->next != nullptr) {
+            if(isOverlapping(interval, node->next->keys[0].first)) {
+                searchIter(node->next, interval, results);
             }
-            node = node->next;
         }
     } else {
         int i = 0;
@@ -233,17 +238,14 @@ void IBPTree::searchIter(Node* node, const dtp::Interval& interval, std::vector<
 }
 
 bool IBPTree::isOverlapping(dtp::Interval intvl1, dtp::Interval intvl2) {
-    if((intvl1.first <= intvl2.first && intvl1.second >= intvl2.second) ||
-       (intvl1.first >= intvl2.first && intvl1.second <= intvl2.second) ||
-       (intvl1.first <= intvl2.first && intvl1.second > intvl2.first) ||
-       (intvl1.first > intvl2.first && intvl1.first < intvl2.second)) {
+    dtp::Interval intvl = {std::max(intvl1.first, intvl2.first),
+                           std::min(intvl1.second, intvl2.second)};
+    if(intvl.first <= intvl.second) {
         return true;
+    } else {
+        return false;
     }
 }
-
-
-
-
 
 // get attribute from the attributes fields
 std::string IBPTree::getTag(std::map<std::string, std::string> attributes, const std::vector<std::string>& keys) {

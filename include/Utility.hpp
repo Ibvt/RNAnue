@@ -38,6 +38,9 @@ namespace helper {
     std::vector<fs::path> listFiles(fs::path path);
     void concatFiles(fs::path target, std::vector<fs::path> files);
 
+    // operations
+    bool withinRange(int a, int b, int range);
+
 
     std::string getTime(); // reports the current time
 }
