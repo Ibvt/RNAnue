@@ -86,7 +86,8 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
                     if(intvl != nullptr) {
                         // just make sure that its part of the gene/transcript
                         if(intvl->isSubset(fields.start, fields.end)) {
-                            intvl->addJunction(std::make_pair(fields.start, fields.end));
+                            std::string name = getTag(attr, std::vector<std::string>{"Parent"});
+                            intvl->addJunction(name, std::make_pair(fields.start, fields.end));
                         }
                     }
                 }
@@ -101,11 +102,11 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
 }
 
 void IBPTree::iterateClusters(std::string clusterFile) {
-    /*
+
     // iterate over clusters
     std::ifstream clusters(clusterFile);
     if(!clusters) {
-        std::cout << helper::getTime() << " Cluster file " << clusters << " could not be opened!\n";
+        std::cout << helper::getTime() << " Cluster file " << clusterFile << " could not be opened!\n";
         EXIT_FAILURE;
     }
 
@@ -132,8 +133,8 @@ void IBPTree::iterateClusters(std::string clusterFile) {
         counts = std::make_pair(std::stoi(tokens[7]), std::stoi(tokens[8]));
         size = std::make_pair(std::stoi(tokens[9]), std::stoi(tokens[10]));
 
-        insert(tokens[0], Interval(start, end, strand, counts, size));
-    }*/
+        //insert(tokens[0], Interval(start, end, strand, counts, size));
+    }
 }
 
 Node* IBPTree::getRoot(IntervalData& data) {

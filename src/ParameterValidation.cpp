@@ -44,11 +44,12 @@ void ParameterValidation::validateDirs(std::string param) {
             // check if the output directory already exists
             if (fs::exists(params[param].as<std::string>())) {
                 // if outdir already exists - check for overwrite flag
+                /*
                 if (!params.count("overwrite")) {
                     std::cout << helper::getTime() << "Specified output directory (--outdir ";
                     std::cout << params["outdir"].as<std::string>() << ") already exists\n";
                     std::cout << helper::getTime() << "Please provide a new directory or use the --overwrite flag\n";
-                }
+                }*/
             } else {
                 // check if the input directory exists
                 if (!fs::exists(params[param].as<std::string>())) {

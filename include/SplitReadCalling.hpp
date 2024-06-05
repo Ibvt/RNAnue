@@ -5,10 +5,14 @@
 #include <iostream>
 #include <bitset>
 #include <stdlib.h>
+#include <stdio.h>
 #include <thread>
 #include <mutex>
 #include <future>
 #include <vector>
+#include <iostream>
+#include <sstream>
+#include <regex>
 
 // Boost
 #include <boost/program_options.hpp>
@@ -19,9 +23,6 @@
 #include <htslib/sam.h>
 #include <htslib/hts.h>
 
-// Vienna
-//#include <ViennaRNA/fold.h>
-
 // SeqAn3
 #include <seqan3/io/sam_file/all.hpp>
 #include <seqan3/core/debug_stream.hpp>
@@ -30,6 +31,9 @@
 // Class
 #include "IBPTree.hpp"
 #include "Stats.hpp"
+#include "FilterScores.hpp"
+#include "ScoringMatrix.hpp"
+#include "Traceback.hpp"
 
 using types = seqan3::type_list<
         std::string,
@@ -39,6 +43,7 @@ using types = seqan3::type_list<
         std::optional<uint8_t>,
         dtp::CigarVector,
         dtp::DNASpan,
+        dtp::QualSpan,
         seqan3::sam_tag_dictionary>;
 
 using fields = seqan3::fields<
@@ -49,20 +54,8 @@ using fields = seqan3::fields<
         seqan3::field::mapq,
         seqan3::field::cigar,
         seqan3::field::seq,
+        seqan3::field::qual,
         seqan3::field::tags>;
-
-using types2 = seqan3::type_list<
-        std::vector<seqan3::dna5>,
-        std::string,
-        std::vector<seqan3::cigar>>;
-using fields2 = seqan3::fields<
-        seqan3::field::seq,
-        seqan3::field::id,
-        seqan3::field::cigar>;
-using sam_record_type = seqan3::sam_record<types2, fields2>;
-
-
-
 
 // define tags
 using seqan3::operator""_tag;
@@ -71,9 +64,12 @@ template <> struct seqan3::sam_tag_type<"XX"_tag> { using type = int32_t; }; // 
 template <> struct seqan3::sam_tag_type<"XY"_tag> { using type = int32_t; }; // end of split
 template <> struct seqan3::sam_tag_type<"XJ"_tag> { using type = int32_t; }; // number of splits (whole read)
 template <> struct seqan3::sam_tag_type<"XN"_tag> { using type = int32_t; };
-
-// cigar
-
+template <> struct seqan3::sam_tag_type<"XM"_tag> { using type = int32_t; }; // number of matches (complementarity)
+template <> struct seqan3::sam_tag_type<"XL"_tag> { using type = int32_t; }; // length of alignment
+template <> struct seqan3::sam_tag_type<"XC"_tag> { using type = float; }; // complementarity
+template <> struct seqan3::sam_tag_type<"XR"_tag> { using type = float; }; // sitelenratio
+template <> struct seqan3::sam_tag_type<"XA"_tag> { using type = std::string; }; // alignment
+template <> struct seqan3::sam_tag_type<"XS"_tag> { using type = int32_t; }; // quality
 
 
 using SAMrecord = seqan3::sam_record<types, fields>;
@@ -110,17 +106,31 @@ class SplitReadCalling {
         SplitReadCalling(po::variables_map params);
         ~SplitReadCalling();
 
+        // main function
         void start(pt::ptree sample, pt::ptree condition);
-        void sort(const std::string& inputFile, const std::string& outputFile);
+        void sort(const std::string& inputFile, const std::string& outputFile); // sort BAM file
+
+
         void iterate(std::string& matched, std::string& single, std::string& splits, std::string& multsplits);
         template <typename T>
         void process(std::vector<T>& readrecords, auto& singleOut, auto& splitsOut, auto& multsplitsOut,
                      auto& singleOutMutex, auto& splitsOutMutex, auto& multsplitsOutMutex);
         void decide(std::map<int, std::vector<SAMrecord>>& putative, auto& splitsOut, auto& multsplitsOut,
                     auto& splitsOutMutex, auto& multsplitsOutMutex);
-        bool filter(auto& sequence, uint32_t cigarmatch, std::string chrom, dtp::Interval interval);
-        void storeSegments(auto& splitrecord, std::optional<int32_t>& refOffset, dtp::CigarVector& cigar,
-                           dtp::DNAVector& seq, seqan3::sam_tag_dictionary &tags, std::vector<SAMrecord>& curated);
+        bool filter(auto& sequence, uint32_t cigarmatch);
+        bool matchSpliceSites(dtp::Interval& spliceSites, std::optional<uint32_t> refId);
+        void storeSegments(auto& splitrecord, dtp::DNASpan& seq, dtp::QualSpan& qual,
+                           dtp::CigarVector& cigar, seqan3::sam_tag_dictionary& tags,
+                           std::vector<SAMrecord>& curated);
+
+        // filters
+        TracebackResult complementarity(dtp::DNASpan &seq1, dtp::DNASpan &seq2);
+        double hybridization(dtp::DNASpan &seq1, dtp::DNASpan& seq2);
+
+        // output
+        void addComplementarityToSamRecord(SAMrecord &rec1, SAMrecord &rec2, TracebackResult &res);
+
+
 
     private:
         po::variables_map params;
@@ -129,6 +139,7 @@ class SplitReadCalling {
         std::shared_ptr<Stats> stats;
         std::string condition; // stores the current condition
         std::deque<std::string> refIds; // stores the reference ids
+        FilterScores filterScores;
 };
 
 #endif //RNANUE_DETECT_HPP

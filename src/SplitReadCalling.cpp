@@ -48,7 +48,7 @@ SplitReadCalling::SplitReadCalling(po::variables_map params) {
     // create IBPTree (if splicing need to be considered)
     if(params["splicing"].as<std::bitset<1>>() == std::bitset<1>("1")) {
         // order of the IBPTree
-        int k = 7; // can be later extracted from config file
+        int k = 3; // can be later extracted from config file
         // create IBPT
         this->features = IBPTree(params, k);
     }
@@ -57,6 +57,9 @@ SplitReadCalling::SplitReadCalling(po::variables_map params) {
 
     // initialize stats
     this->stats = std::make_shared<Stats>();
+
+    // initialize filtering
+    this->filterScores = FilterScores();
 
     const char* seq = "GGGAAAUCC";
 }
@@ -151,6 +154,9 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut,
     uint32_t startPosRead, endPosRead; // absolute position in read/alignment (e.g., 1 to end)
     uint32_t startPosSplit, endPosSplit; // position in split read (e.g., XX:i to XY:i / 14 to 20)
 
+    dtp::DNASpan subSeq;
+    dtp::QualSpan subQual;
+
     std::pair<uint32_t, uint32_t> junction; // splice junction
 
     // stores the putative splits/segments
@@ -195,17 +201,19 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut,
             cigarOp = get<seqan3::cigar::operation>(cig);
 
             if(cigarOp == 'N'_cigar_operation) {
-                auto subSeq = seq | seqan3::views::slice(startPosRead - 1, endPosRead);
-
                 dtp::Interval spliceSite = {ref_offset.value() + endPosRead, ref_offset.value() + cigarSize + endPosRead};
-                if(!matchSpliceSites(spliceSite, ref_id)) {
+                if(!matchSpliceSites(spliceSite, ref_id)) { // if it does not match the splice site
                     // store split
                     seqan3::sam_tag_dictionary newTags{};
                     newTags.get<"XX"_tag>() = startPosSplit;
                     newTags.get<"XY"_tag>() = endPosSplit;
                     newTags.get<"XN"_tag>() = splitId;
 
-                    storeSegments(rec, cigarSplit, newTags, curated);
+                    subSeq = seq | seqan3::views::slice(startPosRead - 1, endPosRead);
+                    subQual = rec.base_qualities() | seqan3::views::slice(startPosRead - 1, endPosRead);
+                    if(filter(subSeq, cigarMatch)) {
+                        storeSegments(rec, subSeq, subQual, cigarSplit, newTags, curated);
+                    }
 
                     // settings to prepare for the next split
                     startPosSplit = endPosSplit+1;
@@ -213,6 +221,8 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut,
                     cigarSplit.clear(); // new split - new CIGAR
                     ref_offset.value() += cigarSize + endPosRead + 1; // adjust left-most mapping position
                     splitId++; // increase split ID
+                } else { // matches the splice junction
+                    xjtag--; // decrease the number of splits (basically merge the splits)
                 }
             } else {
                 if(cigarOp == 'S'_cigar_operation &&
@@ -228,7 +238,7 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut,
                     if(cigarOp != 'D'_cigar_operation) {
                         endPosRead += cigarSize;
                         endPosSplit += cigarSize;
-                        if(cigarOp != '='_cigar_operation) { cigarMatch += cigarSize; }
+                        if(cigarOp == '='_cigar_operation) { cigarMatch += cigarSize; }
                     }
                     cigarSplit.push_back(cig);
                 }
@@ -241,23 +251,24 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut,
         newTags.get<"XY"_tag>() = endPosSplit;
         newTags.get<"XN"_tag>() = splitId;
 
-        storeSegments(rec, cigarSplit, newTags, curated);
-
-        if(segNum == xjtag) {
-            putative.insert(std::make_pair(splitId, curated));
-            curated.clear();
-            segNum = 0;
-            ++splitId;
+        subSeq = seq | seqan3::views::slice(startPosRead - 1, endPosRead);
+        subQual = rec.base_qualities() | seqan3::views::slice(startPosRead - 1, endPosRead);
+        if(filter(subSeq, cigarMatch)) {
+            storeSegments(rec, subSeq, subQual, cigarSplit, newTags, curated);
         }
+        putative.insert(std::make_pair(splitId, curated));
+        curated.clear();
+        segNum = 0;
+        ++splitId;
     }
-    //decide(putative, splitsOut, multsplitsOut, splitsOutMutex, multsplitsOutMutex);
+    decide(putative, splitsOut, multsplitsOut, splitsOutMutex, multsplitsOutMutex);
 }
 
 void SplitReadCalling::decide(std::map<int, std::vector<SAMrecord>>& putative, auto& splitsOut, auto& multsplitsOut,
             auto& splitsOutMutex, auto& multsplitsOutMutex) {
     std::vector<SAMrecord> p1, p2;
     seqan3::sam_tag_dictionary p1Tags, p2Tags;
-    std::pair<double, double> scores;
+    std::pair<double, double> filters;
     std::string p1QNAME, p2QNAME;
 
     if(putative.size() > 0) {
@@ -274,9 +285,26 @@ void SplitReadCalling::decide(std::map<int, std::vector<SAMrecord>>& putative, a
                         auto p2End = p2Tags.get<"XY"_tag>();
 
                         // prevent overlap between read position -> same segment of read
-                        if((p1Start >= p1Start && p2Start <= p1End) ||
-                            (p1Start >= p2Start && p1Start <= p2End)) {
+                        if((p1Start >= p1Start && p2Start <= p1End) || (p1Start >= p2Start && p1Start <= p2End)) {
                             continue;
+                        }
+
+                        // determine complementarity/hybridization
+                        if(p1.empty() && p2.empty()) {
+                            TracebackResult initCmpl = complementarity(records[i].sequence(), records[j].sequence());
+                            double initHyb = hybridization(records[i].sequence(), records[j].sequence());
+                            if(!initCmpl.a.empty()) { // split read survived complementarity/sitelenratio cutoff
+                                if(initHyb <= params["nrgmax"].as<double>()) {
+                                    filters = std::make_pair(initCmpl.cmpl, initHyb);
+                                    //addComplementarityToSamRecord(records[i], records[j], initCmpl);
+                                    //addHybEnergyToSamRecord(records[i], records[j], initHyb);
+                                    //splitSegments.push_back(std::make_pair(splits[i],splits[j]));
+                                }
+                            }
+                        } else {
+//                            TracebackResult cmpl = complementarity(records[i].sequence(), records[j].sequence());
+ //                           double hyb = hybridize(seqan3::get<seqan3::field::seq>(splits[i]), seqan3::get<seqan3::field::seq>(splits[j]));
+
                         }
                     }
                 }
@@ -286,37 +314,25 @@ void SplitReadCalling::decide(std::map<int, std::vector<SAMrecord>>& putative, a
 }
 
 bool SplitReadCalling::filter(auto& sequence, uint32_t cigarmatch) {
-    //seqan3::debug_stream << sequence << std::endl;
     if(sequence.size() < params["minlen"].as<int>()) { return false; }
-    double matchrate = static_cast<double>(cigarmatch) / static_cast<double>(sequence.size());
-    if(matchrate < params["minfragmatches"].as<double>()) { return false; }
-
-
-
     /*
-    if(params["splicing"].as<std::bitset<1>>() == std::bitset<1>("1")) {
-        // check if the segment is spliced
-        std::vector<IntervalData*> ovlps = features.search(chrom, intvl);
-        for(auto& feat : ovlps) {
-            // determine splicing junction
-        }
-        //std::cout << "overlap " << ovlps.size() << std::endl;
-    }*/
+    double matchrate = static_cast<double>(cigarmatch) / static_cast<double>(sequence.size());
+    std::cout << matchrate << std::endl;
+    if(matchrate < params["minfragmatches"].as<double>()) { return false; }*/
     return true;
 }
 
 bool SplitReadCalling::matchSpliceSites(dtp::Interval& spliceSites, std::optional<uint32_t> refId) {
     if(params["splicing"].as<std::bitset<1>>() == std::bitset<1>("1")) {
-        std::cout << "Splice: " << spliceSites.first << " " << spliceSites.second << std::endl;
         std::vector<IntervalData*> ovlps = features.search(this->refIds[refId.value()], spliceSites);
-        for(int i=0;i<ovlps.size();++i) {
-            std::vector<std::pair<int,int>> junctions = ovlps[i]->getJunctions();
-            for(int j=0;j<junctions.size();++j) {
-                int refSpliceStart = junctions[j].second;
-                int refSpliceEnd = junctions[j+1].first;
-                if(helper::withinRange(spliceSites.first, refSpliceEnd, 5) &&
-                helper::withinRange(spliceSites.second, refSpliceStart, 5)) {
-                    return true;
+        for(int i=0;i<ovlps.size();++i) { // iterate over all overlapping intervals
+            dtp::SpliceJunctions junctions = ovlps[i]->getJunctions();
+            for(auto& [name, junc] : junctions) {
+                for(int j=1;j<junc.size()-1;++j) {
+                    if(helper::withinRange(spliceSites.first, junc[j-1].second, 5) &&
+                    helper::withinRange(spliceSites.second, junc[j].first, 5)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -325,21 +341,25 @@ bool SplitReadCalling::matchSpliceSites(dtp::Interval& spliceSites, std::optiona
     }
 }
 
-void SplitReadCalling::storeSegments(auto& splitrecord, dtp::CigarVector& cigar, seqan3::sam_tag_dictionary& tags,
-                   std::vector<SAMrecord>& curated) {
+void SplitReadCalling::storeSegments(auto& splitrecord, dtp::DNASpan& seq, dtp::QualSpan& qual,
+                                     dtp::CigarVector& cigar, seqan3::sam_tag_dictionary& tags,
+                                     std::vector<SAMrecord>& curated) {
+
     SAMrecord segment{}; // create new SAM Record
     segment.id() = splitrecord.id();
     seqan3::sam_flag flag{0};
     if(static_cast<bool>(splitrecord.flag() & seqan3::sam_flag::on_reverse_strand)) {
         flag |= seqan3::sam_flag::on_reverse_strand;
     }
+    segment.flag() = flag;
     segment.reference_id() = splitrecord.reference_id();
     segment.cigar_sequence() = cigar;
-
-
+    segment.sequence() = seq;
+    segment.base_qualities() = qual;
+    segment.mapping_quality() = splitrecord.mapping_quality();
+    segment.tags() = tags;
+    curated.push_back(segment);
 }
-
-
 
 void SplitReadCalling::sort(const std::string& inputFile, const std::string& outputFile) {
     const char *input = inputFile.c_str();
@@ -422,5 +442,106 @@ void SplitReadCalling::start(pt::ptree sample, pt::ptree condition) {
     sort(matched, sortedBamFileStr);
     iterate(sortedBamFileStr, single, splits, multsplits);
 }
+
+TracebackResult SplitReadCalling::complementarity(dtp::DNASpan& seq1, dtp::DNASpan& seq2) {
+    std::string seq1_str;
+    std::string seq2_str;
+
+    if(seq1.size() == 0 || seq2.size() == 0) { return {"","",0,0,0,-1.0,0.0}; }
+    for(unsigned z=seq1.size();z-- > 0;) { seq1_str += seq1[z].to_char(); } // rna1 (reverse)
+    for(unsigned y=0;y<seq2.size();++y) { seq2_str += seq2[y].to_char(); } // rna2
+
+    ScoringMatrix matrix = createScoringMatrix(seq1_str.c_str(),seq2_str.c_str(), 1, -1, 2);
+    std::vector<TracebackResult> res = traceback(matrix, seq1_str.c_str(),seq2_str.c_str());
+
+    int idx = -1;
+    int cmpl = -1;
+    // filter (multiple) alignments
+    if(res.size() > 1) {
+        for(unsigned i=0;i<res.size();++i) {
+            // check if sitelenratio & complementarity exceed cutoffs
+            if(params["sitelenratio"].as<double>() <= res[i].ratio &&
+               params["cmplmin"].as<double>() <= res[i].cmpl) {
+                if(res[i].cmpl > cmpl) {
+                    idx = i;
+                }
+            }
+        }
+    }
+
+//    printMatrix(matrix); // print matrix
+    freeMatrix(&matrix);
+    if(idx != -1) {
+        return res[idx];
+    } else {
+        return {"","",0,0,0,0.0,0.0};
+    }
+}
+
+double SplitReadCalling::hybridization(std::span<seqan3::dna5> &seq1, std::span<seqan3::dna5> &seq2) {
+    std::string rna1str, rna2str = "";
+    for(unsigned i=0;i<seq1.size();++i) { rna1str += seq1[i].to_char(); } // convert to string
+    for(unsigned i=0;i<seq2.size();++i) { rna2str += seq2[i].to_char(); }
+    std::string hyb = "echo '" + rna1str + "&" + rna2str + "' | RNAcofold"; // call
+
+    FILE* pipe = popen(hyb.c_str(), "r");
+    if (!pipe) {
+        std::cerr << "Error opening pipe" << std::endl;
+        return 1;
+    }
+    char buffer[1024];
+    std::string result;
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+        result += buffer;
+    }
+    pclose(pipe);
+
+    std::stringstream ss(result);
+    std::vector<std::string> tokens;
+    std::string tmp;
+    while(getline(ss,tmp,'\n')) {
+        tokens.push_back(tmp);
+    }
+
+    std::string dotbracket = tokens[1].substr(0,tokens[1].find(' '));
+    std::regex regexp("-?[[:digit:]]{1,2}\\.[[:digit:]]{1,2}");
+    std::smatch matches;
+
+    std::regex_search(tokens[1], matches, regexp);
+    return stod(matches[0]);
+}
+
+void SplitReadCalling::addComplementarityToSamRecord(SAMrecord &rec1, SAMrecord &rec2, TracebackResult &res) {
+    // number of matches in alignment
+    rec1.tags().get<"XM"_tag>() = res.matches;
+    rec2.tags().get<"XM"_tag>() = res.matches;
+
+    // length of alignment
+    rec1.tags().get<"XL"_tag>() = res.length;
+    rec2.tags().get<"XL"_tag>() = res.length;
+
+    // complementarity
+    rec1.tags().get<"XC"_tag>() = (float)res.cmpl;
+    rec2.tags().get<"XC"_tag>() = (float)res.cmpl;
+
+    // sitelenratio
+    rec1.tags().get<"XR"_tag>() = (float)res.ratio;
+    rec2.tags().get<"XR"_tag>() = (float)res.ratio;
+
+    // alignments
+    rec1.tags().get<"XA"_tag>() = res.a;
+    rec2.tags().get<"XA"_tag>() = res.b;
+
+    // score
+    rec1.tags().get<"XS"_tag>() = res.score;
+    rec2.tags().get<"XS"_tag>() = res.score;
+}
+
+
+
+
+
+
+
 
 

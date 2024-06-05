@@ -6,6 +6,7 @@
 #include <fstream>
 #include <vector>
 #include <queue>
+#include <string>
 
 // Boost
 #include <boost/program_options.hpp>
@@ -35,7 +36,7 @@ class IBPTree {
         void insertIter(Node* node, IntervalData& data);
         void splitNode(Node* node, int index);
         std::vector<IntervalData*> search(std::string chrom, dtp::Interval interval);
-        void searchIter(Node* node, const dtp::Interval& interval, std::vector<IntervalData*> results);
+        void searchIter(Node* node, const dtp::Interval& interval, std::vector<IntervalData*>& results);
         bool isOverlapping(dtp::Interval intvl1, dtp::Interval intvl2);
 
 

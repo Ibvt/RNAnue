@@ -15,6 +15,9 @@ class Analysis {
         ~Analysis();
 
         void start();
+
+    private:
+        po::variables_map params;
 };
 
 #endif //RNANUE_ANALYSIS_HPP

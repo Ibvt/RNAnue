@@ -2,6 +2,12 @@
 
 //
 Analysis::Analysis(po::variables_map _params) : params(_params) {
+
+
+
+
+
+    /*
     std::string line;
     std::ifstream anno;
 
@@ -49,9 +55,10 @@ Analysis::Analysis(po::variables_map _params) : params(_params) {
             tokens.push_back(token);
         }
         frequency.insert(std::pair<std::string,int>(tokens[0],std::stoi(tokens[1])));
-    }
+    }*/
 }
 
+/*
 //
 void Analysis::createCountTable() {
     std::map<std::tuple<std::string,std::string,std::string,std::string>,std::vector<std::tuple<int,std::vector<float>,std::vector<float>>>> counts;
@@ -389,6 +396,6 @@ void Analysis::start(pt::ptree sample) {
     }
 
     outInts.close();
-}
+}*/
 
 

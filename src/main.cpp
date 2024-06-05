@@ -85,8 +85,6 @@ int main(int argc, char* argv[]) {
                  "minimum score of a spliced fragment")
                 ("minfraglen", po::value<int>()->default_value(20),
                  "minimum length of a spliced fragment")
-                ("minfragmatches", po::value<double>()->default_value(0.5),
-                        "minimum percentage matches of a spliced fragment")
                 ("minsplicecov", po::value<int>()->default_value(80),
                         "minimum coverage for spliced transcripts")
                 ("mapq", po::value<int>()->default_value(10),
@@ -204,6 +202,6 @@ int main(int argc, char* argv[]) {
         Base base(params);
 
     } catch(po::error& e) {
-        std::cout << "Please provide a correct function call\n";
+        std::cerr << "ERROR: " << e.what() << "\n";
     }
 }

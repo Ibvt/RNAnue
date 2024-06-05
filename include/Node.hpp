@@ -33,11 +33,11 @@ class IntervalData {
         void setBiotype(std::string biotype);
         dtp::Interval getInterval();
         void setInterval(dtp::Interval interval);
-        std::vector<std::pair<int,int>> getJunctions() const;
-        void setJunctions(std::vector<std::pair<int,int>> junctions);
+        dtp::SpliceJunctions getJunctions() const;
+        void setJunctions(dtp::SpliceJunctions junctions);
 
         // operations
-        void addJunction(std::pair<int,int> junction);
+        void addJunction(std::string name, std::pair<size_t,size_t> junction);
         bool isSubset(int start, int end);
         bool isOverlapping(dtp::Interval intvl1, dtp::Interval intvl2);
         void printNode();
@@ -49,7 +49,7 @@ class IntervalData {
         std::string name;
         std::string biotype;
         dtp::Interval interval;
-        std::vector<std::pair<int,int>> junctions;
+        dtp::SpliceJunctions junctions;
 };
 
 class Node {

@@ -78,6 +78,7 @@ namespace dtp {
         int nSurvivedCount;
     };
     using StatsMap = std::map<std::string, StatsFields>;
+    using SpliceJunctions = std::map<std::string, std::vector<std::pair<size_t,size_t>>>;
 }
 
 #endif //RNANUE_DATATYPES_HPP
