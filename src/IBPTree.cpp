@@ -102,38 +102,41 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
 }
 
 void IBPTree::iterateClusters(std::string clusterFile) {
-
     // iterate over clusters
     std::ifstream clusters(clusterFile);
     if(!clusters) {
         std::cout << helper::getTime() << " Cluster file " << clusterFile << " could not be opened!\n";
         EXIT_FAILURE;
     }
-
-    std::pair<int, int> start = std::make_pair(0, 0);
-    std::pair<int, int> end = std::make_pair(0, 0);
+    std::string name = "";
+    std::pair<std::string, std::string> chroms = std::make_pair("", "");
+    std::pair<int, int> start = std::make_pair(0,0);
+    std::pair<int, int> end = std::make_pair(0,0);
     std::pair<char, char> strand = std::make_pair(' ', ' ');
-    std::pair<int, int> counts = std::make_pair(0, 0);
-    std::pair<int, int> size = std::make_pair(0, 0);
+    std::pair<int, int> counts = std::make_pair(0,0);
+    std::pair<int, int> size = std::make_pair(0,0);
 
     std::string line;
+    if(getline(clusters, line)) {} // ignore the first line (header)
     while(getline(clusters, line)) {
         std::string token;
         std::vector<std::string> tokens;
         std::istringstream ss(line);
 
         // split the input string
-        while(getline(ss, token, '\t')) {
-            tokens.push_back(token);
-        }
+        while(getline(ss, token, '\t')) { tokens.push_back(token); }
+        name = tokens[0];
+        chroms = std::make_pair(tokens[1], tokens[5]);
+        start = std::make_pair(std::stoi(tokens[3]), std::stoi(tokens[7]));
+        end = std::make_pair(std::stoi(tokens[4]), std::stoi(tokens[8]));
+        strand = std::make_pair(tokens[2][0], tokens[6][0]);
 
-        start = std::make_pair(std::stoi(tokens[1]), std::stoi(tokens[2]));
-        end = std::make_pair(std::stoi(tokens[3]), std::stoi(tokens[4]));
-        strand = std::make_pair(tokens[5][0], tokens[6][0]);
-        counts = std::make_pair(std::stoi(tokens[7]), std::stoi(tokens[8]));
-        size = std::make_pair(std::stoi(tokens[9]), std::stoi(tokens[10]));
-
-        //insert(tokens[0], Interval(start, end, strand, counts, size));
+        IntervalData* intvl1 = new IntervalData(chroms.first, strand.first, name, "", "",
+                                                std::make_pair(start.first, end.first));
+        IntervalData* intvl2 = new IntervalData(chroms.second, strand.second, name, "", "",
+                                                std::make_pair(start.second, end.second));
+        insert(*intvl1);
+        insert(*intvl2);
     }
 }
 

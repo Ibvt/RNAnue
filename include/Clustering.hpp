@@ -12,6 +12,8 @@
 
 // SeqAn3
 #include <seqan3/core/debug_stream.hpp>
+#include <seqan3/io/sam_file/all.hpp>
+#include <seqan3/utility/views/chunk.hpp>
 
 // Class
 #include "Utility.hpp"
@@ -49,7 +51,6 @@ private:
 
 public:
     Clustering(po::variables_map params);
-    Clustering();
 
     void iterate(std::string splits);
     void overlaps(std::vector<Cluster> &clusterlist);

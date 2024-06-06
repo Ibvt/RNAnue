@@ -15,8 +15,10 @@
 // SeqAn3
 #include "Utility.hpp"
 #include "SeqRickshaw.hpp"
-#include "SplitReadCalling.hpp"
 #include "Align.hpp"
+#include "SplitReadCalling.hpp"
+#include "Clustering.hpp"
+#include "Analysis.hpp"
 
 // namespaces
 namespace po = boost::program_options;
@@ -43,6 +45,7 @@ class Data{
         pt::ptree getPreprocOutputData(pt::ptree& input, fs::path& conditionOutDir);
         pt::ptree getAlignOutputData(pt::ptree& input, fs::path& conditionOutDir);
         pt::ptree getDetectOutputData(pt::ptree& input, fs::path& conditionOutDir);
+        pt::ptree getAnalysisOutputData(pt::ptree& input, fs::path& conditionOutDir);
 
         //
         int getNumberElements(PathVector& vec);
@@ -52,6 +55,8 @@ class Data{
         void preprocDataPrep();
         void alignDataPrep();
         void detectDataPrep();
+        void clusteringDataPrep();
+        void analysisDataPrep();
 
         //
         template <typename Callable>
@@ -61,6 +66,8 @@ class Data{
         void preproc();
         void align();
         void detect();
+        void clustering();
+        void analysis();
 
     private:
         po::variables_map params;

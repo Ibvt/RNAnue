@@ -24,29 +24,22 @@ Base::Base(po::variables_map params) : params(params), paramsVal(params), data(p
                 data.detect();
             } else {
                 if(subcall == "clustering") {
-                    //std::cout << "cluster the split reads" << '\n';
-                    //data.clustering();
+                    data.clustering();
                 } else{
                     if(subcall == "analysis") {
-                        //std::cout << "analysis" << std::endl;
-                        //data.analysis();
+                        data.analysis();
                     } else {
                         if(subcall == "complete") {
                             data.preproc();
                             data.detect();
                             data.align();
-
-
-
-                            //std::cout << "complete analysis" << std::endl;
-                            /*
-                            data.preproc();
-                            data.align();
-                            data.splitReadCalling();
-                            data.analysis();*/
+                            if(params["clust"].as<std::bitset<1>>() == std::bitset<1>("1")) {
+                                data.clustering();
+                            }
+                            data.analysis();
                         } else {
-                            //std::cout << "subcall: " << _params["subcall"].as<std::string>() << " invalid!" << std::endl;
-                            //exit(EXIT_FAILURE);
+                            std::cout << "subcall: " << params["subcall"].as<std::string>() << " invalid!" << std::endl;
+                            exit(EXIT_FAILURE);
                         }
                     }
                 }

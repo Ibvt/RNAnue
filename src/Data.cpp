@@ -12,19 +12,15 @@ Data::Data(po::variables_map params) : params(params) {
     helper::createDir(outDir / fs::path("tmp"), std::cout);
 
     // preprocessing
-    if(subcall == "preproc") {
-        preprocDataPrep();
-    }
-
-    if(subcall == "align") {
-      alignDataPrep();
-    }
-
+    if(subcall == "preproc") { preprocDataPrep(); }
+    if(subcall == "align") { alignDataPrep(); }
     if(subcall == "detect") {
         fs::path outIBTree = outDir / fs::path("IBPTree");
         helper::createDir(outIBTree, std::cout);
         detectDataPrep();
     }
+    if(subcall == "clustering") { clusteringDataPrep();}
+    if(subcall == "analysis") { analysisDataPrep(); }
 }
 
 Data::~Data() {
@@ -65,6 +61,22 @@ void Data::alignDataPrep() {
 void Data::detectDataPrep() {
     fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "align/ctrls";
     fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "align/trtms";
+
+    GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
+    getCondition(groups);
+}
+
+void Data::clusteringDataPrep() {
+fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
+    fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "detect/trtms";
+
+    GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
+    getCondition(groups);
+}
+
+void Data::analysisDataPrep() {
+    fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
+    fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "detect/trtms";
 
     GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
     getCondition(groups);
@@ -198,15 +210,15 @@ int Data::getNumberElements(PathVector& vec) {
         // for now only consider preproc_matched
         // TODO: additional files when unmerged/unfiltered reads are used (paired-end)
     }
+    if(subcall == "clustering") { numberElements = 3; }
+    if(subcall == "analysis") { numberElements = 3; }
     return numberElements;
 }
 
 std::vector<std::string> Data::getSampleKeys() {
     std::string subcall = params["subcall"].as<std::string>();
     std::vector<std::string> sampleKeys;
-    if(subcall == "preproc") {
-        sampleKeys = {"forward", "reverse"};
-    }
+    if(subcall == "preproc") { sampleKeys = {"forward", "reverse"}; }
 
     if(subcall == "align") {
         if(params["readtype"].as<std::string>() == "SE") {
@@ -218,10 +230,9 @@ std::vector<std::string> Data::getSampleKeys() {
         }
     }
 
-    if(subcall == "detect") {
-        sampleKeys = {"matched"};
-    }
-
+    if(subcall == "detect") { sampleKeys = {"matched"}; }
+    if(subcall == "clustering") { sampleKeys = {"multsplits", "single", "splits"}; }
+    if(subcall == "analysis") { sampleKeys = {"multsplits", "single", "splits"}; }
     return sampleKeys;
 }
 
@@ -229,18 +240,10 @@ pt::ptree Data::getOutputData(pt::ptree& input, fs::path& conditionOutDir) {
     std::string subcall = params["subcall"].as<std::string>();
 
     pt::ptree output;
-    if(subcall == "preproc") {
-        output = getPreprocOutputData(input, conditionOutDir);
-    }
-
-    if(subcall == "align") {
-        output = getAlignOutputData(input, conditionOutDir);
-    }
-
-    if(subcall == "detect") {
-        output = getDetectOutputData(input, conditionOutDir);
-    }
-
+    if(subcall == "preproc") { output = getPreprocOutputData(input, conditionOutDir); }
+    if(subcall == "align") { output = getAlignOutputData(input, conditionOutDir); }
+    if(subcall == "detect") { output = getDetectOutputData(input, conditionOutDir); }
+    if(subcall == "analysis") { output = getAnalysisOutputData(input, conditionOutDir); }
     return output;
 }
 
@@ -319,7 +322,16 @@ pt::ptree Data::getDetectOutputData(pt::ptree& input, fs::path& conditionOutDir)
     output.put("single", helper::addSuffix(outMatched, "_single", {"_matched"}));
     output.put("splits", helper::addSuffix(outMatched, "_splits", {"_matched"}));
     output.put("multsplits", helper::addSuffix(outMatched, "_multsplits", {"_matched"}));
+    return output;
+}
 
+pt::ptree Data::getAnalysisOutputData(pt::ptree& input, fs::path& conditionOutDir) {
+    pt::ptree output;
+
+    // replace input path with output path (results/...)
+    fs::path inSplits = fs::path(input.get<std::string>("input.splits"));
+    std::string outSplits = helper::replacePath(conditionOutDir, inSplits.replace_extension(".txt")).string();
+    output.put("interactions", helper::addSuffix(outSplits, "_interactions", {"_splits"}));
     return output;
 }
 
@@ -343,15 +355,20 @@ void Data::callInAndOut(Callable f) {
     for(unsigned i=0;i<groups.size();++i) {
         // create directory for groups (e.g., ctrls, trtms)
         outGroupDir = outSubcallDir / fs::path(groups[i]);
-        helper::createDir(outGroupDir, std::cout);
+        if(params["subcall"].as<std::string>() != "clustering") {
+            // create directory for groups (e.g., ctrls, trtms)
+            helper::createDir(outGroupDir, std::cout); // not needed for clustering
+        }
 
         conditions = subcall.get_child(groups[i]);
         BOOST_FOREACH(pt::ptree::value_type const &v, conditions.get_child("")) {
             pt::ptree condition = v.second;
 
             // create directory for condition (e.g., rpl_exp)
-            outConditionDir = outGroupDir / fs::path(condition.get<std::string>("condition"));
-            helper::createDir(outConditionDir, std::cout);
+            if(params["subcall"].as<std::string>() != "clustering") {
+                outConditionDir = outGroupDir / fs::path(condition.get<std::string>("condition"));
+                helper::createDir(outConditionDir, std::cout);
+            }
 
             samples = condition.get_child("samples");
             // iterate over samples
@@ -380,5 +397,18 @@ void Data::detect() {
     std::cout << helper::getTime() << "Start the Split Read Calling\n";
     SplitReadCalling src(params);
     callInAndOut(std::bind(&SplitReadCalling::start, src, std::placeholders::_1, std::placeholders::_2));
+}
+
+void Data::clustering() {
+    std::cout << helper::getTime() << "Start the Clustering\n";
+    Clustering clu(params);
+    callInAndOut(std::bind(&Clustering::start, &clu, std::placeholders::_1));
+    clu.sumup();
+}
+
+void Data::analysis() {
+    std::cout << helper::getTime() << "Start the Analysis\n";
+    Analysis ana(params);
+    callInAndOut(std::bind(&Analysis::start, ana, std::placeholders::_1));
 }
 

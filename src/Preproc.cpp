@@ -9,13 +9,9 @@ Preproc::Preproc(po::variables_map& params, StateTransition& adpt5Tables, StateT
     quality = params["quality"].as<int>();
     minlen = params["minlen"].as<int>();
     minovlps = params["minovlps"].as<int>();
-
 }
 
-Preproc::~Preproc() {
-    std::cout << helper::getTime() << "Preprocessing finished.\n";
-}
-
+Preproc::~Preproc() {}
 
 // handling for single-end reads
 void Preproc::processing(fs::path& in, fs::path& out) {
@@ -47,11 +43,21 @@ void Preproc::processing(fs::path& in, fs::path& out) {
             dtp::QualSpan trimmedQual = qual | seqan3::views::slice(bnds.first, bnds.second);
             dtp::FASTQRecord trimmedRecord{seqid, trimmedSeq, trimmedQual};
 
+
+
+            std::cout << "bnds: " << bnds.first << " " << bnds.second << std::endl;
+            std::cout << "Size of orig sequence: " << std::ranges::size(seq) << std::endl;
+            std::cout << "Size of orig qual: " << std::ranges::size(seq) << std::endl;
+
+            std::cout << "Size of sequence: " << std::ranges::size(trimmedSeq) << std::endl;
+            std::cout << "Size of qual: " << std::ranges::size(trimmedQual) << std::endl;
+            assert(std::ranges::size(trimmedSeq) == std::ranges::size(trimmedQual));
+
+
             if(calcAvgPhred(trimmedQual) >= quality && trimmedSeq.size() >= minlen) {
                 outMutex.lock();
                 fout.push_back(trimmedRecord);
                 outMutex.unlock();
-
             }
         }
     };
@@ -206,7 +212,7 @@ std::size_t Preproc::boyermoore(dtp::DNAVector& read, dtp::StateTransitionTable&
     int mismatch = patlen * params["mmrate"].as<double>();
 
     // storing transition (shift, nextState and readPos)
-    int align, state = 0;
+    int align = 0, state = 0;
     int readPos = patlen-1;
     int shift = 0;
     int match = 0;
