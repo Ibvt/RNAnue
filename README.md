@@ -9,8 +9,8 @@ RNAnue is a comprehensive analysis to detect RNA-RNA interactions from Direct-Du
 ### Dependencies
 RNAnue has the following dependencies, whereas the brackets indicate the version RNAnue has 
 been build and tested on. Make sure the requirements are satified by your system. cmake is able
-to detect the Boost libraries system-wide. However Seqan3 is expected to be located in the current 
-folder of RNAnue as specified in the CMakeLists.txt. egemehl and the Vienna binaries need to be
+to detect the Boost libraries system-wide. However, Seqan3 is expected to be located in the current 
+folder of RNAnue as specified in the CMakeLists.txt. Segemehl and the Vienna binaries need to be
 located in $PATH.
 
 * [Boost C++ Libraries](https://www.boost.org/) (v1.7.2)
@@ -24,10 +24,8 @@ RNAnue is build using CMake. At first, clone the repository and change into the 
 git clone https://github.com/Ibvt/RNAnue.git
 cd RNAnue 
 ```
-In the next step, retrieve the SeqAn library and place it in the root folder of RNAnue
-```
-
-CMake is a cross-platform Makefile generator. For that, we provide the [CMakeLists](./source/CMakeLists.txt) 
+In the next step, retrieve the SeqAn library and place it in the root folder of RNAnue. CMake is a 
+cross-platform Makefile generator. For that, we provide the [CMakeLists](./source/CMakeLists.txt) 
 to simplify the build process. In particular, it utilizes the instructions given in the CMakeLists.
 It is recommended to create a "out-of-source build". For that, create a build folder (e.g., ./bin)
 and cmake into the root directory.
@@ -62,6 +60,7 @@ with arbitrary conditions (e.g., treatment, cell lines,...) that in turn contain
 It is to be noted that the `--trtms` needs to be specified. However, `--ctrls` may be not set (optional).
 
 ## Parameters
+
 RNAnue accepts parameter settings both from the commandline and through a configuration file.
 For the latter, we provide a template configuration file ([params.cfg](./build/params.cfg)) that
 allows to set the parameters in a more convenient fashion. This means that the call of RNAnue 
@@ -84,21 +83,23 @@ custom format that includes the IDs of the clusters, its length, size and genomi
 
 RNAnue reports the detected splits in .SAM format (RNAnue `detect`). In this file, pairs of rows represent the
 split reads, consisting of the individual segments, e.g
+
 ```
 A00551:29:H73LYDSXX:1:1101:7274:10645	16	gi|170079663|ref|NC_010473.1|	3520484	22	1X51=	*	0	0	AGGGGTCTTTCCGTCTTGCCGCGGGTACACTGCATCTTCACAGCGAGTTCAA	*	XA:Z:TTTCTGG	XC:f:0.714286	XE:f:-15.6	XL:i:7	XM:i:5	XN:i:0	XR:f:0.0735294	XS:i:5	XX:i:1	XY:i:52
 A00551:29:H73LYDSXX:1:1101:7274:10645	16	gi|170079663|ref|NC_010473.1|	3520662	22	11=5S	*	0	0	TTCGATCAAGAAGAAC	*	XA:Z:GAAGAAC	XC:f:0.714286	XE:f:-15.6	XL:i:7	XM:i:5	XN:i:0	XR:f:0.0735294	XS:i:5	XX:i:53	XY:i:68
-
 ```
+
 In the following the tags are listed that are reported in the detected split reads. Please note that in the upper 
-segment the alignment is in reverse as done in the calculation of the complemtarity to represent the 3'-5' and 5'-3' 
+segment the alignment is in reverse as done in the calculation of the complemtarity to represent the 3-5 and 5-3 
 duplex.
 
 | tag | description |
 | --- | ----------- |
 | XC:f | complementarity |
 | XL:f | length of alignment |
-| XR:f | site length ratio |
+| XS:i | alignment score |
 | XM:i | matches in alignment |
+| XR:f | site length ratio |
 | XA:Z | alignment of sequence | 
 | XE:f | hybridization energy |
 
@@ -157,7 +158,7 @@ transcript interaction. The fields are defined as follows:
 | mfe_struc | Minimum free energy (MFE) structure of interaction in dot-bracket notation |
 
 The main result of an RNAnue analysis are transcript interactions. 
-They are stored in  the file  `allints.txt` in the same directory. 
+They are stored in  the file `allints.txt` in the same directory. 
 Its entries are structured as described in the following where 
 columns with prefix <sample> are given for each sample specified in 
 the analysis (within the same file).

@@ -3,6 +3,8 @@
 
 // Standard
 #include <iostream>
+#include <map>
+#include <vector>
 
 // Boost
 #include <boost/program_options.hpp>
@@ -24,9 +26,11 @@ class Analysis {
         ~Analysis();
 
         void start(pt::ptree sample);
+        void iterate(std::string& single, std::string& splits);
     private:
         po::variables_map params;
         IBPTree features;
+        std::map<std::pair<std::string, std::string>, double> pdf;
 };
 
 #endif //RNANUE_ANALYSIS_HPP

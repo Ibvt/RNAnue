@@ -70,6 +70,15 @@ void helper::renameFiles(fs::path dir, std::string extension) {
     }
 }
 
+std::string helper::removeNonPrintable(const std::string str) {
+    std::string newStr;
+    std::copy_if(str.begin(), str.end(), std::back_inserter(newStr), [](unsigned char c) {
+        return std::isprint(c);
+    });
+    return newStr;
+}
+
+
 dtp::PathVector helper::genOutPath(dtp::PathVector inPathVec, std::string dir) {
     dtp::PathVector outPathVec;
     fs::path outPath = inPathVec[0].parent_path().parent_path() / fs::path(dir);
@@ -241,6 +250,16 @@ void seqIO::printQualSpan(dtp::QualSpan span, std::ostream& ofs) {
         ofs << seqan3::to_char(s);
     }
     ofs << "\n";
+}
+
+std::string seqIO::removeNonATGC(std::string seq) {
+    std::string newSeq;
+    for(auto& s : seq) {
+        if(s == 'A' || s == 'T' || s == 'G' || s == 'C') {
+            newSeq += s;
+        }
+    }
+    return newSeq;
 }
 
 

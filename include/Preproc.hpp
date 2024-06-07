@@ -47,7 +47,6 @@ class Preproc {
         std::size_t nibble(dtp::QualVector& qual, std::pair<std::size_t,std::size_t>& bnds); // window trimming
 
         // merging
-
         void merging(std::string& fwdSeqid, auto& fwdSeq, auto& fwdQual, std::string& revSeqid, auto& revSeq,
                      auto& revQual, auto& outFwd, auto& outR1only, auto& outR2only, auto& outR1unmrg, auto& outR2unmrg);
         std::pair<dtp::DNAVector, dtp::QualVector> mergeReads(dtp::DNASpan& fwdSeq, dtp::QualSpan& fwdQual,
@@ -58,11 +57,13 @@ class Preproc {
         bool filterReads(auto& qual);
         double calcAvgPhred(auto& qual); // calculate the average phred score
 
+        // helper functions
+        std::string fastqToString(dtp::FASTQRecord& rec);
+
     private:
         po::variables_map params;
         StateTransition adpt5Tables;
         StateTransition adpt3Tables;
-
         int wsize;
         int quality;
         int minlen;

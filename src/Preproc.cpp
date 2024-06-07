@@ -19,9 +19,11 @@ void Preproc::processing(fs::path& in, fs::path& out) {
 
     std::mutex inMutex, outMutex; //
     seqan3::sequence_file_input fin{in.string()};
-    seqan3::sequence_file_output fout{out.string()};
+    std::ofstream fout(out.string());
+    //seqan3::sequence_file_output fout{out.string()}; // causes segfault/assertion error
 
     std::pair<std::size_t, std::size_t> bnds;
+    int readcount = 0;
 
     auto reads = fin | seqan3::views::async_input_buffer(100);
     auto worker = [&]()
@@ -32,6 +34,10 @@ void Preproc::processing(fs::path& in, fs::path& out) {
             std::string seqid = record.id();
             dtp::DNAVector seq = record.sequence();
             dtp::QualVector qual = record.base_qualities();
+            if(readcount != 0 && readcount % 100000 == 0) {
+                std::cout << helper::getTime() << readcount << " reads processed \n";
+            }
+            readcount++;
             inMutex.unlock();
 
             bnds = trimReads(seq); //
@@ -44,20 +50,21 @@ void Preproc::processing(fs::path& in, fs::path& out) {
             dtp::FASTQRecord trimmedRecord{seqid, trimmedSeq, trimmedQual};
 
 
-
+            /*
             std::cout << "bnds: " << bnds.first << " " << bnds.second << std::endl;
             std::cout << "Size of orig sequence: " << std::ranges::size(seq) << std::endl;
             std::cout << "Size of orig qual: " << std::ranges::size(seq) << std::endl;
-
             std::cout << "Size of sequence: " << std::ranges::size(trimmedSeq) << std::endl;
             std::cout << "Size of qual: " << std::ranges::size(trimmedQual) << std::endl;
             assert(std::ranges::size(trimmedSeq) == std::ranges::size(trimmedQual));
-
+             */
 
             if(calcAvgPhred(trimmedQual) >= quality && trimmedSeq.size() >= minlen) {
-                outMutex.lock();
-                fout.push_back(trimmedRecord);
-                outMutex.unlock();
+                //outMutex.lock();
+                std::lock_guard<std::mutex> lock(outMutex);
+                fout << fastqToString(trimmedRecord) << "\n";
+                //fout.push_back(trimmedRecord); // causes segfault/assertion error
+                //outMutex.unlock();
             }
         }
     };
@@ -66,6 +73,9 @@ void Preproc::processing(fs::path& in, fs::path& out) {
     for(unsigned i=0;i<params["threads"].as<int>();++i) {
         threadObjects.push_back(std::async(std::launch::async, worker));
     }
+
+    // close files
+    fout.close();
 }
 
 // handling for paired-end reads
@@ -79,15 +89,23 @@ void Preproc::processing(fs::path& inFwd, fs::path& outFwd, fs::path& inRev, fs:
     std::cout << helper::getTime() << "forward: " << inFwd << "\n";
     std::cout << helper::getTime() << "reverse: " << inRev << "\n";
 
+    std::ofstream outFwdSeq(outFwd.string());
+    std::ofstream outR1onlySeq(outR1only.string());
+    std::ofstream outR2onlySeq(outR2only.string());
+    std::ofstream outR1unmrgSeq(outR1unmerged.string());
+    std::ofstream outR2unmrgSeq(outR2unmerged.string());
+
+    /* causes issues on multicore / assertions error
     seqan3::sequence_file_output outFwdSeq{outFwd.string()};
     seqan3::sequence_file_output outR1onlySeq{outR1only.string()};
     seqan3::sequence_file_output outR2onlySeq{outR2only.string()};
     seqan3::sequence_file_output outR1unmrgSeq{outR1unmerged.string()};
-    seqan3::sequence_file_output outR2unmrgSeq{outR2unmerged.string()};
+    seqan3::sequence_file_output outR2unmrgSeq{outR2unmerged.string()};*/
 
     std::mutex inMutex, outMutex;
     std::pair<std::size_t, std::size_t> bndsFwd, bndsRev;
 
+    int readcount = 0;
     auto inFwdSeqBuf = inFwdSeq | seqan3::views::async_input_buffer(100);
     auto inRevSeqBuf = inRevSeq | seqan3::views::async_input_buffer(100);
     auto worker = [&]() {
@@ -95,9 +113,11 @@ void Preproc::processing(fs::path& inFwd, fs::path& outFwd, fs::path& inRev, fs:
             std::string seqidFwd, seqidRev;
             dtp::DNAVector seqFwd, seqRev;
             dtp::QualVector qualFwd, qualRev;
-
             {
                 std::lock_guard lock(inMutex);
+                if(readcount != 0 && readcount % 100000 == 0) {
+                    std::cout << helper::getTime() << "Processed reads: " << (readcount++) << "\n";
+                }
                 seqidFwd = fwd.id();
                 seqidRev = rev.id();
                 seqFwd = fwd.sequence();
@@ -136,23 +156,24 @@ void Preproc::processing(fs::path& inFwd, fs::path& outFwd, fs::path& inRev, fs:
                     {
                         std::lock_guard<std::mutex> lock(outMutex);
                         dtp::FASTQRecord outMerged{seqidFwd, merged.first, merged.second};
-                        outFwdSeq.push_back(outMerged);
+                        outFwdSeq << fastqToString(outMerged) << "\n";
                     }
                 } else { // reads could not have been merged
                     {
                         std::lock_guard<std::mutex> lock(outMutex);
                         dtp::FASTQRecord outR1unmrgObj{seqidFwd, trmSeqFwd, trmQualFwd};
                         dtp::FASTQRecord outR2unmrgObj{seqidRev, trmSeqRev, trmQualRev};
-                        outR1unmrgSeq.push_back(outR1unmrgObj);
-                        outR2unmrgSeq.push_back(outR2unmrgObj);
+                        outR1unmrgSeq << fastqToString(outR1unmrgObj) << "\n";
+                        outR2unmrgSeq << fastqToString(outR2unmrgObj) << "\n";
                     }
                 }
             } else {
                 if(fwdFilter && !revFilter) {
-                    outMutex.lock();
-                    dtp::FASTQRecord outR1onlyObj{seqidFwd, trmSeqFwd, trmQualFwd};
-                    outR1onlySeq.push_back(outR1onlyObj);
-                    outMutex.unlock();
+                    {
+                        std::lock_guard<std::mutex> lock(outMutex);
+                        dtp::FASTQRecord outR1onlyObj{seqidFwd, trmSeqFwd, trmQualFwd};
+                        outR1onlySeq << fastqToString(outR1onlyObj) << "\n";
+                    }
                 } else {
                     if (!fwdFilter && revFilter) { // R2 only
                         // reverse complement the sequence and quality
@@ -163,7 +184,7 @@ void Preproc::processing(fs::path& inFwd, fs::path& outFwd, fs::path& inRev, fs:
                         dtp::FASTQRecord outR2onlyObj{seqidFwd, revSeqRCVec, revQualRVec};
                         {
                             std::lock_guard<std::mutex> lock(outMutex);
-                            outR2onlySeq.push_back(outR2onlyObj);
+                            outR2onlySeq << fastqToString(outR2onlyObj) << "\n";
                         }
                     }
                 }
@@ -175,6 +196,13 @@ void Preproc::processing(fs::path& inFwd, fs::path& outFwd, fs::path& inRev, fs:
     for (unsigned i = 0; i < params["threads"].as<int>(); ++i) {
         threadObjects.push_back(std::async(std::launch::async, worker));
     }
+
+    // close
+    outFwdSeq.close();
+    outR1onlySeq.close();
+    outR2onlySeq.close();
+    outR1unmrgSeq.close();
+    outR2unmrgSeq.close();
 }
 
 
@@ -221,7 +249,7 @@ std::size_t Preproc::boyermoore(dtp::DNAVector& read, dtp::StateTransitionTable&
     std::mutex mutex;
 
     int mmCounter = 0;
-    while(align < read.size() - patlen) {
+    while(align < static_cast<int>(read.size()) - patlen) {
         seqan3::dna5 c = read[align + readPos];
         // make sure that the character can be found in the table
         if(table.find(std::make_pair(state, c)) == table.end()) {
@@ -384,4 +412,13 @@ double Preproc::calcAvgPhred(auto& qual) {
     auto phredSum = std::accumulate(phredScores.begin(), phredScores.end(), 0);\
     double phredAvg = phredSum / std::ranges::size(phredScores);
     return phredAvg;
+}
+
+std::string Preproc::fastqToString(dtp::FASTQRecord& rec) {
+    std::stringstream ss;
+    ss << "@" << std::get<0>(rec) << "\n";
+    for(auto& c : std::get<1>(rec)) { ss << c.to_char(); }
+    ss << "\n+\n";
+    for(auto& q : std::get<2>(rec)) { ss << q.to_char(); }
+    return ss.str();
 }

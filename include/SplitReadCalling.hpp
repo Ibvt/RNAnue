@@ -6,6 +6,7 @@
 #include <bitset>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <thread>
 #include <mutex>
 #include <future>
@@ -13,6 +14,7 @@
 #include <iostream>
 #include <sstream>
 #include <regex>
+#include <cstdlib>
 
 // Boost
 #include <boost/program_options.hpp>
@@ -40,7 +42,6 @@ using types = seqan3::type_list<
         seqan3::sam_flag,
         std::optional<int32_t>,
         std::optional<int32_t>,
-        std::optional<uint8_t>,
         dtp::CigarVector,
         dtp::DNASpan,
         dtp::QualSpan,
@@ -51,11 +52,11 @@ using fields = seqan3::fields<
         seqan3::field::flag,
         seqan3::field::ref_id,
         seqan3::field::ref_offset,
-        seqan3::field::mapq,
         seqan3::field::cigar,
         seqan3::field::seq,
         seqan3::field::qual,
         seqan3::field::tags>;
+using SAMrecord = seqan3::sam_record<types, fields>;
 
 // define tags
 using seqan3::operator""_tag;
@@ -70,36 +71,15 @@ template <> struct seqan3::sam_tag_type<"XC"_tag> { using type = float; }; // co
 template <> struct seqan3::sam_tag_type<"XR"_tag> { using type = float; }; // sitelenratio
 template <> struct seqan3::sam_tag_type<"XA"_tag> { using type = std::string; }; // alignment
 template <> struct seqan3::sam_tag_type<"XS"_tag> { using type = int32_t; }; // quality
+template <> struct seqan3::sam_tag_type<"XE"_tag> { using type = float; }; // end of split
 
 
-using SAMrecord = seqan3::sam_record<types, fields>;
 using namespace seqan3::literals;
 using seqan3::get;
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 namespace pt = boost::property_tree;
-
-class ThreadPool {
-public:
-    ThreadPool(size_t num_threads);
-    ~ThreadPool();
-
-    template<class F, class... Args>
-    auto enqueue(F&& f, Args&&... args) -> std::future<std::invoke_result_t<F, Args...>>;
-
-private:
-    // Worker threads
-    std::vector<std::thread> workers;
-    // Task queue
-    std::queue<std::function<void()>> tasks;
-
-    // Synchronization
-    std::mutex queue_mutex;
-    std::condition_variable condition;
-    bool stop;
-};
-
 
 class SplitReadCalling {
     public:
@@ -119,8 +99,8 @@ class SplitReadCalling {
                     auto& splitsOutMutex, auto& multsplitsOutMutex);
         bool filter(auto& sequence, uint32_t cigarmatch);
         bool matchSpliceSites(dtp::Interval& spliceSites, std::optional<uint32_t> refId);
-        void storeSegments(auto& splitrecord, dtp::DNASpan& seq, dtp::QualSpan& qual,
-                           dtp::CigarVector& cigar, seqan3::sam_tag_dictionary& tags,
+        void storeSegments(auto& splitrecord, std::optional<int32_t> refPos, dtp::DNASpan& seq,
+                           dtp::QualSpan& qual, dtp::CigarVector& cigar, seqan3::sam_tag_dictionary& tags,
                            std::vector<SAMrecord>& curated);
 
         // filters
@@ -129,7 +109,8 @@ class SplitReadCalling {
 
         // output
         void addComplementarityToSamRecord(SAMrecord &rec1, SAMrecord &rec2, TracebackResult &res);
-
+        void addHybEnergyToSamRecord(SAMrecord &rec1, SAMrecord &rec2, double &hyb);
+        void writeSAMrecordToBAM(auto& bamfile, std::vector<std::pair<SAMrecord, SAMrecord>>& records);
 
 
     private:

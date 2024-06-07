@@ -33,7 +33,7 @@ target_include_directories(RNAnue PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(RNAnue seqan3::seqan3)
 target_link_libraries(RNAnue Boost::program_options Boost::filesystem)
 target_link_libraries(RNAnue PkgConfig::HTSLIB)
-#target_link_libraries(RNAnue -L/usr/local/include -lRNA -flto)
+#target_link_libraries(RNAnue -L/usr/local/include/ -lRNA)
 
 cmake_print_properties(TARGETS RNAnue PROPERTIES TARGET_INCLUDE_DIRECTORIES)
 

@@ -2,10 +2,16 @@
 
 //
 Analysis::Analysis(po::variables_map _params) : params(_params) {
-
-
-
-
+    int k = 3; // can be later extracted from config file
+    // extract features (e.g., IBPTree)
+    this->features = IBPTree(params, k); // create IBPT w/ annotations
+    if(params["clust"].as<std::bitset<1>>() == std::bitset<1>("1")) {
+        std::cout << helper::getTime() << "Add clusters to IBPTree\n";
+        fs::path outDir = params["outdir"].as<std::string>();
+        fs::path clusterFile = outDir / fs::path("clustering") / fs::path("clusters.tab");
+        this->features.iterateClusters(clusterFile.string());
+    }
+    this->pdf = std::map<std::pair<std::string, std::string>, double>();
 
     /*
     std::string line;
@@ -57,6 +63,8 @@ Analysis::Analysis(po::variables_map _params) : params(_params) {
         frequency.insert(std::pair<std::string,int>(tokens[0],std::stoi(tokens[1])));
     }*/
 }
+
+Analysis::~Analysis() {}
 
 /*
 //
@@ -232,9 +240,19 @@ float Analysis::calc_pvalue(int x, int n, float p) {
     // assign p value
     float pval = 1.0 - cdf(binomial, x);
     return pval;
-}
+}*/
 
 void Analysis::start(pt::ptree sample) {
+    this->pdf.clear(); // reset pdf
+    // retrieve input and output files
+    pt::ptree input = sample.get_child("input");
+    std::string single = input.get<std::string>("single");
+    std::string splits = input.get<std::string>("splits");
+
+    iterate(single, splits);
+
+
+    /*
     // retrieve input and output files
     pt::ptree input = sample.get_child("input");
     std::string splits = input.get<std::string>("splits");
@@ -395,7 +413,7 @@ void Analysis::start(pt::ptree sample) {
         segCntMatch = 0;
     }
 
-    outInts.close();
-}*/
+    outInts.close();*/
+}
 
 

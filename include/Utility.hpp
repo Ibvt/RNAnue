@@ -38,8 +38,10 @@ namespace helper {
     std::vector<fs::path> listFiles(fs::path path);
     void concatFiles(fs::path target, std::vector<fs::path> files);
 
-    // operations
+    // general operations
     bool withinRange(int a, int b, int range);
+    std::string removeNonPrintable(const std::string str);
+
 
 
     std::string getTime(); // reports the current time
@@ -58,6 +60,9 @@ namespace seqIO {
     void printDNAVector(dtp::DNAVector seq, std::ostream& ofs); // prints a DNAVector to a stream (e.g., file)p
     void printDNASpan(dtp::DNASpan span, std::ostream& ofs);
     void printQualSpan(dtp::QualSpan span, std::ostream& ofs);
+
+    //
+    std::string removeNonATGC(std::string seq);
 
 }
 
