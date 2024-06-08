@@ -46,4 +46,5 @@ add_executable(RNAnue_tests ${TEST_SOURCES} ${SOURCES})
 target_include_directories(RNAnue_tests PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_link_libraries(RNAnue_tests seqan3::seqan3)
 target_link_libraries(RNAnue_tests Boost::program_options Boost::filesystem Boost::unit_test_framework)
+target_link_libraries(RNAnue_tests PkgConfig::HTSLIB)
 
