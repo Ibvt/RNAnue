@@ -13,55 +13,6 @@ Analysis::Analysis(po::variables_map _params) : params(_params) {
     }
     this->pdf = std::map<std::pair<std::string, std::string>, double>();
 
-    /*
-    std::string line;
-    std::ifstream anno;
-
-    anno.open(params["features"].as<std::string>());
-    // parse annotations
-    if(!anno.is_open()) {
-        perror("Error open");
-        exit(EXIT_FAILURE);
-    }
-    while(getline(anno, line)) {
-        if(line[0] == '#') { continue; }
-
-        std::vector<std::string> tokens;
-        std::istringstream iss(line);
-        std::string token;
-        while(std::getline(iss, token, '\t')) {
-            tokens.push_back(token);
-        }
-
-        // boundaries
-        std::pair<int,int> bnds = std::make_pair(std::stoi(tokens[3]),std::stoi(tokens[4]));
-        std::pair<std::pair<int,int>,std::string> con = std::make_pair(bnds,"strand="+tokens[6]+";"+tokens[8]);
-
-        std::size_t start_position;
-        if(features.count(tokens[0]) == 0) { // check of RefName is in map
-            if(start_position != std::string::npos) {
-                features.insert(std::pair<std::string, std::vector<std::pair<std::pair<int,int>,std::string>>>(tokens[0],{con}));
-            }
-        } else {
-            features[tokens[0]].push_back(con);
-        }
-    }
-
-    // read file
-    fs::path freqFile = fs::path(params["outdir"].as<std::string>()) / fs::path("frequency.txt");
-    std::ifstream freqHandle;
-    freqHandle.open(freqFile.string());
-
-    // iterate and store into frquency map
-    while(getline(freqHandle, line)) {
-        std::vector<std::string> tokens;
-        std::istringstream iss(line);
-        std::string token;
-        while(std::getline(iss, token, '\t')) {
-            tokens.push_back(token);
-        }
-        frequency.insert(std::pair<std::string,int>(tokens[0],std::stoi(tokens[1])));
-    }*/
 }
 
 Analysis::~Analysis() {}
@@ -69,9 +20,68 @@ Analysis::~Analysis() {}
 void Analysis::iterate(std::string &single, std::string &splits) {
 }
 
+void Analysis::start(pt::ptree sample) {
+    this->pdf.clear(); // reset pdf
+    // retrieve input and output files
+    pt::ptree input = sample.get_child("input");
+    std::string single = input.get<std::string>("single");
+    std::string splits = input.get<std::string>("splits");
+
+    //iterate(single, splits);
+}
 
 
 
+
+/*
+std::string line;
+std::ifstream anno;
+
+anno.open(params["features"].as<std::string>());
+// parse annotations
+if(!anno.is_open()) {
+    perror("Error open");
+    exit(EXIT_FAILURE);
+}
+while(getline(anno, line)) {
+    if(line[0] == '#') { continue; }
+
+    std::vector<std::string> tokens;
+    std::istringstream iss(line);
+    std::string token;
+    while(std::getline(iss, token, '\t')) {
+        tokens.push_back(token);
+    }
+
+    // boundaries
+    std::pair<int,int> bnds = std::make_pair(std::stoi(tokens[3]),std::stoi(tokens[4]));
+    std::pair<std::pair<int,int>,std::string> con = std::make_pair(bnds,"strand="+tokens[6]+";"+tokens[8]);
+
+    std::size_t start_position;
+    if(features.count(tokens[0]) == 0) { // check of RefName is in map
+        if(start_position != std::string::npos) {
+            features.insert(std::pair<std::string, std::vector<std::pair<std::pair<int,int>,std::string>>>(tokens[0],{con}));
+        }
+    } else {
+        features[tokens[0]].push_back(con);
+    }
+}
+
+// read file
+fs::path freqFile = fs::path(params["outdir"].as<std::string>()) / fs::path("frequency.txt");
+std::ifstream freqHandle;
+freqHandle.open(freqFile.string());
+
+// iterate and store into frquency map
+while(getline(freqHandle, line)) {
+    std::vector<std::string> tokens;
+    std::istringstream iss(line);
+    std::string token;
+    while(std::getline(iss, token, '\t')) {
+        tokens.push_back(token);
+    }
+    frequency.insert(std::pair<std::string,int>(tokens[0],std::stoi(tokens[1])));
+}*/
 
 
 
@@ -253,15 +263,6 @@ float Analysis::calc_pvalue(int x, int n, float p) {
     return pval;
 }*/
 
-void Analysis::start(pt::ptree sample) {
-    this->pdf.clear(); // reset pdf
-    // retrieve input and output files
-    pt::ptree input = sample.get_child("input");
-    std::string single = input.get<std::string>("single");
-    std::string splits = input.get<std::string>("splits");
-
-    iterate(single, splits);
-
 
     /*
     // retrieve input and output files
@@ -425,6 +426,5 @@ void Analysis::start(pt::ptree sample) {
     }
 
     outInts.close();*/
-}
 
 
