@@ -17,9 +17,6 @@ Analysis::Analysis(po::variables_map _params) : params(_params) {
 
 Analysis::~Analysis() {}
 
-void Analysis::iterate(std::string &single, std::string &splits) {
-}
-
 void Analysis::start(pt::ptree sample) {
     this->pdf.clear(); // reset pdf
     // retrieve input and output files
@@ -29,6 +26,12 @@ void Analysis::start(pt::ptree sample) {
 
     //iterate(single, splits);
 }
+
+void Analysis::process(std::string& single, std::string& splits) {
+
+}
+
+
 
 
 

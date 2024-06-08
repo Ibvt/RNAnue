@@ -60,6 +60,7 @@ class Node {
         std::vector<Node*> children;
         Node* next; // link to the next node
         Node* parent; // link to the parent node
+        std::vector<Node*> splits; // link to the corresponding split node
         bool isLeaf;
 
         // constructor

@@ -26,7 +26,7 @@ class Analysis {
         ~Analysis();
 
         void start(pt::ptree sample);
-        void iterate(std::string& single, std::string& splits);
+        void process(std::string& single, std::string& splits);
 
     private:
         po::variables_map params;

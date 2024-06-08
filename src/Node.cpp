@@ -46,7 +46,7 @@ bool IntervalData::isSubset(int start, int end) {
 
 
 // create new node
-Node::Node(int k) : order{k}, keys{}, children{}, next{nullptr}, parent{nullptr}, isLeaf{false} {}
+Node::Node(int k) : order{k}, keys{}, children{}, next{nullptr}, parent{nullptr}, splits{}, isLeaf{false} {}
 
 // operations
 void Node::addInterval(IntervalData& data) {
