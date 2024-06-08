@@ -67,7 +67,6 @@ Analysis::Analysis(po::variables_map _params) : params(_params) {
 Analysis::~Analysis() {}
 
 void Analysis::iterate(std::string &single, std::string &splits) {
-
 }
 
 
