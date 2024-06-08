@@ -27,6 +27,7 @@ class Analysis {
 
         void start(pt::ptree sample);
         void iterate(std::string& single, std::string& splits);
+
     private:
         po::variables_map params;
         IBPTree features;
