@@ -16,7 +16,7 @@ located in $PATH.
 * [Boost C++ Libraries](https://www.boost.org/) (v1.7.2)
 * [SeqAn](https://github.com/seqan/seqan3) (v3.3.0)
 * [Segemehl](http://www.bioinf.uni-leipzig.de/Software/segemehl/) (v0.3.4)
-* [Vienna Package](https://www.tbi.univie.ac.at/RNA/#binary_packages) (v2.4.17)
+* [Vienna Package](https://www.tbi.univie.ac.at/RNA/#binary_packages) (>= v2.4.17)
 
 ### CMake
 RNAnue is build using CMake. At first, clone the repository and change into the source directory.

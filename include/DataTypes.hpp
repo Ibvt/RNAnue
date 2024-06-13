@@ -79,6 +79,26 @@ namespace dtp {
     };
     using StatsMap = std::map<std::string, StatsFields>;
     using SpliceJunctions = std::map<std::string, std::vector<std::pair<size_t,size_t>>>;
+
+    // Analysis
+    using PdfMap = std::map<std::pair<std::string, std::string>, double>;
+    struct IntPartner {
+        std::string partner;
+        std::string orientation;
+        IntPartner() : partner(""), orientation("") {}
+        IntPartner(std::string partner, std::string orientation) : partner(partner), orientation(orientation) {}
+
+        bool operator<(const IntPartner& other) const {
+            if(partner < other.partner) {
+                return true;
+            } else if(partner == other.partner) {
+                return orientation < other.orientation;
+            } else {
+                return false;
+            }
+        }
+    };
+    using IntKey = std::vector<IntPartner>;
 }
 
 #endif //RNANUE_DATATYPES_HPP

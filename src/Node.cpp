@@ -1,9 +1,8 @@
 #include "Node.hpp"
 
 IntervalData::IntervalData(std::string chrom, char strand, std::string id, std::string name,
-                   std::string biotype, dtp::Interval interval) :
-    chrom(chrom), strand(strand), id(id), name(name), biotype(biotype), interval(interval) {
-}
+                   std::string biotype, dtp::Interval interval, IntervalData* split) :
+    chrom(chrom), strand(strand), id(id), name(name), biotype(biotype), interval(interval), split{split} {}
 IntervalData::~IntervalData() {}
 bool IntervalData::operator>(const dtp::Interval& other) const { return this->interval.first > other.first; }
 bool IntervalData::operator<(const dtp::Interval& other) const { return this->interval.first < other.first; }
@@ -13,6 +12,8 @@ std::string IntervalData::getChrom() const { return chrom; }
 void IntervalData::setChrom(std::string chrom) { this->chrom = chrom; }
 char IntervalData::getStrand() const { return strand; }
 void IntervalData::setStrand(char strand) { this->strand = strand; }
+std::string IntervalData::getId() const { return id; }
+void IntervalData::setId(std::string id) { this->id = id; }
 std::string IntervalData::getName() const { return name; }
 void IntervalData::setName(std::string name) { this->name = name; }
 std::string IntervalData::getBiotype() const { return biotype; }
@@ -21,6 +22,8 @@ dtp::Interval IntervalData::getInterval() { return interval; }
 void IntervalData::setInterval(dtp::Interval interval) { this->interval = interval; }
 dtp::SpliceJunctions IntervalData::getJunctions() const { return junctions; }
 void IntervalData::setJunctions(dtp::SpliceJunctions junctions) { this->junctions = junctions; }
+IntervalData* IntervalData::getSplit() const { return split; }
+void IntervalData::setSplit(IntervalData* split) { this->split = split; }
 
 // operations
 void IntervalData::addJunction(std::string name, std::pair<size_t,size_t> junction) {
@@ -44,9 +47,8 @@ bool IntervalData::isSubset(int start, int end) {
     return (start >= this->interval.first && end <= this->interval.second);
 }
 
-
 // create new node
-Node::Node(int k) : order{k}, keys{}, children{}, next{nullptr}, parent{nullptr}, splits{}, isLeaf{false} {}
+Node::Node(int k) : order{k}, keys{}, children{}, next{nullptr}, parent{nullptr}, isLeaf{false} {}
 
 // operations
 void Node::addInterval(IntervalData& data) {

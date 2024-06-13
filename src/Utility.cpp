@@ -189,6 +189,18 @@ std::string helper::getTime() {
     return time_string;
 }
 
+
+double stats::median(std::vector<double>& values){
+    std::sort(values.begin(), values.end());
+    size_t size = values.size();
+    if(size % 2 == 0) {
+        return (values[size / 2 - 1] + values[size / 2]) / 2;
+    } else {
+        return values[size / 2];
+    }
+}
+
+
 // ############ SEQIO ############
 bool seqIO::filterReads(auto& qual, int quality, int minlen) {
     // determine the length

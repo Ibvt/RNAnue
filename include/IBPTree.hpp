@@ -33,10 +33,12 @@ class IBPTree {
         // tree operations
         Node* getRoot(IntervalData& data);
         void insert(IntervalData& data);
+        void update(Node* node); // updates the keys in parent
         void insertIter(Node* node, IntervalData& data);
         void splitNode(Node* node, int index);
-        std::vector<IntervalData*> search(std::string chrom, dtp::Interval interval);
-        void searchIter(Node* node, const dtp::Interval& interval, std::vector<IntervalData*>& results);
+        std::vector<std::pair<Node*, IntervalData*>> search(std::string chrom, dtp::Interval interval);
+        void searchIter(Node* node, const dtp::Interval& interval,
+                        std::vector<std::pair<Node*,IntervalData*>>& results);
         bool isOverlapping(dtp::Interval intvl1, dtp::Interval intvl2);
 
 

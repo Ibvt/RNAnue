@@ -13,7 +13,7 @@
 class IntervalData {
     public:
         IntervalData(std::string chrom, char strand, std::string id, std::string name,
-                 std::string biotype, dtp::Interval interval);
+                 std::string biotype, dtp::Interval interval, IntervalData* split);
         ~IntervalData();
 
         // operator overloading
@@ -35,6 +35,8 @@ class IntervalData {
         void setInterval(dtp::Interval interval);
         dtp::SpliceJunctions getJunctions() const;
         void setJunctions(dtp::SpliceJunctions junctions);
+        IntervalData* getSplit() const;
+        void setSplit(IntervalData* split);
 
         // operations
         void addJunction(std::string name, std::pair<size_t,size_t> junction);
@@ -50,6 +52,7 @@ class IntervalData {
         std::string biotype;
         dtp::Interval interval;
         dtp::SpliceJunctions junctions;
+        IntervalData* split;
 };
 
 class Node {
@@ -60,7 +63,6 @@ class Node {
         std::vector<Node*> children;
         Node* next; // link to the next node
         Node* parent; // link to the parent node
-        std::vector<Node*> splits; // link to the corresponding split node
         bool isLeaf;
 
         // constructor

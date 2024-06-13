@@ -19,10 +19,7 @@ IBPTree::~IBPTree() {}
 // constructs the IBPTree (either from annotations/clusters or both)
 void IBPTree::construct() {
     std::string subcall = params["subcall"].as<std::string>();
-    // fill tree with annotation
-    if(subcall == "detect") { // in the case of detect only annotation is needed
-        iterateFeatures(params["features"].as<std::string>());
-    }
+    iterateFeatures(params["features"].as<std::string>());
 }
 
 void IBPTree::iterateFeatures(std::string featuresFile) {
@@ -77,7 +74,7 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
                 intvl = nullptr;
             }
             intvl = new IntervalData(fields.seqid, fields.strand, id, name, biotype,
-                                     std::make_pair(fields.start, fields.end));
+                                     std::make_pair(fields.start, fields.end), nullptr);
         } else {
             // only if the feature is an exon (needed for detect step)
             if(params["subcall"].as<std::string>() == "detect") {
@@ -102,12 +99,16 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
 }
 
 void IBPTree::iterateClusters(std::string clusterFile) {
-    // iterate over clusters
     std::ifstream clusters(clusterFile);
     if(!clusters) {
         std::cout << helper::getTime() << " Cluster file " << clusterFile << " could not be opened!\n";
         EXIT_FAILURE;
     }
+
+    IntervalData* firstSegment = nullptr;
+    IntervalData* secondSegment = nullptr;
+
+    // variables to buffer the current cluster
     std::string name = "";
     std::pair<std::string, std::string> chroms = std::make_pair("", "");
     std::pair<int, int> start = std::make_pair(0,0);
@@ -115,6 +116,10 @@ void IBPTree::iterateClusters(std::string clusterFile) {
     std::pair<char, char> strand = std::make_pair(' ', ' ');
     std::pair<int, int> counts = std::make_pair(0,0);
     std::pair<int, int> size = std::make_pair(0,0);
+    int nosplits = 0;
+
+    IntervalData* intvl1 = nullptr;
+    IntervalData* intvl2 = nullptr;
 
     std::string line;
     if(getline(clusters, line)) {} // ignore the first line (header)
@@ -130,13 +135,62 @@ void IBPTree::iterateClusters(std::string clusterFile) {
         start = std::make_pair(std::stoi(tokens[3]), std::stoi(tokens[7]));
         end = std::make_pair(std::stoi(tokens[4]), std::stoi(tokens[8]));
         strand = std::make_pair(tokens[2][0], tokens[6][0]);
+        nosplits = std::stoi(tokens[9]);
 
-        IntervalData* intvl1 = new IntervalData(chroms.first, strand.first, name, "", "",
-                                                std::make_pair(start.first, end.first));
-        IntervalData* intvl2 = new IntervalData(chroms.second, strand.second, name, "", "",
-                                                std::make_pair(start.second, end.second));
-        insert(*intvl1);
-        insert(*intvl2);
+        if(nosplits < 2) { continue; } // ignore clusters with less than 2 splits reads
+        std::vector<std::pair<Node*, IntervalData*>> fstOvlps = search(chroms.first,
+                                                                       {start.first, end.first});
+
+        if(fstOvlps.size() > 0) {
+            for(auto& res : fstOvlps) {
+                dtp::Interval tmpIntvl = res.second->getInterval();
+                if(start.first < tmpIntvl.first && strand.first == res.second->getStrand()) {
+                    res.second->setId(name + "/" + res.second->getId());
+                    res.second->setName(name + "/" + res.second->getName());
+                    res.second->setInterval({start.first, res.second->getInterval().second});
+                    update(res.first->parent);
+                }
+                if(end.first > tmpIntvl.second && strand.first == res.second->getStrand()) {
+                    res.second->setId(res.second->getId() + "/" + name);
+                    res.second->setName(res.second->getName() + "/" + name);
+                    res.second->setInterval({res.second->getInterval().first, end.first});
+                    update(res.first->parent);
+                }
+                intvl1 = res.second;
+            }
+        } else {
+            intvl1 = new IntervalData(chroms.second, strand.second, name, name, "cluster",
+                                                   std::make_pair(start.second, end.second), nullptr);
+            insert(*intvl1);
+        }
+
+        std::vector<std::pair<Node*, IntervalData*>> secOvlps = search(chroms.second,
+                                                                       {start.second, end.second});
+        if(secOvlps.size() > 0) {
+            for(auto& res : secOvlps) {
+                dtp::Interval tmpIntvl = res.second->getInterval();
+                if(start.second < tmpIntvl.first && strand.second == res.second->getStrand()) {
+                    res.second->setId(name + "/" + res.second->getId());
+                    res.second->setName(name + "/" + res.second->getName());
+                    res.second->setInterval({start.second, res.second->getInterval().second});
+                    update(res.first->parent);
+                }
+                if(end.second > tmpIntvl.second && strand.second == res.second->getStrand()) {
+                    res.second->setId(res.second->getId() + "/" + name);
+                    res.second->setName(res.second->getName() + "/" + name);
+                    res.second->setInterval({res.second->getInterval().first, end.second});
+                    update(res.first->parent);
+                }
+                intvl2 = res.second;
+            }
+        } else {
+            intvl2 = new IntervalData(chroms.second, strand.second, name, name, "cluster",
+                                      std::make_pair(start.second, end.second), nullptr);
+            insert(*intvl2);
+        }
+        intvl1->setSplit(intvl2);
+        intvl2->setSplit(intvl1);
+
     }
 }
 
@@ -204,9 +258,9 @@ void IBPTree::splitNode(Node* parent, int index) {
     }
 }
 
-std::vector<IntervalData*> IBPTree::search(std::string chrom, dtp::Interval interval) {
+std::vector<std::pair<Node*, IntervalData*>> IBPTree::search(std::string chrom, dtp::Interval interval) {
     Node* root = this->rootnodes[chrom]; // search for the root node
-    std::vector<IntervalData*> result;
+    std::vector<std::pair<Node*, IntervalData*>> result;
     searchIter(root, interval, result);
 
     std::sort(result.begin(), result.end());
@@ -215,11 +269,12 @@ std::vector<IntervalData*> IBPTree::search(std::string chrom, dtp::Interval inte
     return result;
 }
 
-void IBPTree::searchIter(Node* node, const dtp::Interval& interval, std::vector<IntervalData*>& results) {
+void IBPTree::searchIter(Node* node, const dtp::Interval& interval,
+                         std::vector<std::pair<Node*, IntervalData*>>& results) {
     if(node->isLeaf) {
         for(int i=0; i<node->keys.size();++i) {
             if(isOverlapping(interval, node->keys[i].first)) {
-                results.push_back(node->keys[i].second);
+                results.push_back(std::make_pair(node, node->keys[i].second));
             }
         }
 
@@ -238,6 +293,28 @@ void IBPTree::searchIter(Node* node, const dtp::Interval& interval, std::vector<
         if(node->children[i] != nullptr) {
             searchIter(node->children[i], interval, results);
         }
+    }
+}
+
+void IBPTree::update(Node* node) {
+    // update parent of node (until root is reached)
+    if(node == nullptr) {
+        return;
+    } else {
+        for(int i=0; i<node->keys.size(); ++i) {
+            dtp::Interval intvl = node->keys[i].first;
+            std::cout << node->children[i]->keys.size() << "\n";
+            for(int j=0; j<node->children[i]->keys.size(); ++j) {
+                if(node->children[i]->keys[j].first < intvl) {
+                    intvl.first = node->children[i]->keys[j].first.first;
+                }
+                if(node->children[i]->keys[j].first.second > intvl.second) {
+                    intvl.second = node->children[i]->keys[j].first.second;
+                }
+            }
+            node->keys[i].first = intvl;
+        }
+        update(node->parent);
     }
 }
 

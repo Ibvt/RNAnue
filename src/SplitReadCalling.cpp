@@ -334,9 +334,9 @@ bool SplitReadCalling::filter(auto& sequence, uint32_t cigarmatch) {
 
 bool SplitReadCalling::matchSpliceSites(dtp::Interval& spliceSites, std::optional<uint32_t> refId) {
     if(params["splicing"].as<std::bitset<1>>() == std::bitset<1>("1")) {
-        std::vector<IntervalData*> ovlps = features.search(this->refIds[refId.value()], spliceSites);
+        std::vector<std::pair<Node*,IntervalData*>> ovlps = features.search(this->refIds[refId.value()], spliceSites);
         for(int i=0;i<ovlps.size();++i) { // iterate over all overlapping intervals
-            dtp::SpliceJunctions junctions = ovlps[i]->getJunctions();
+            dtp::SpliceJunctions junctions = ovlps[i].second->getJunctions();
             for(auto& [name, junc] : junctions) {
                 for(int j=1;j<junc.size()-1;++j) {
                     if(helper::withinRange(spliceSites.first, junc[j-1].second, 5) &&

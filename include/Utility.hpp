@@ -41,10 +41,11 @@ namespace helper {
     // general operations
     bool withinRange(int a, int b, int range);
     std::string removeNonPrintable(const std::string str);
-
-
-
     std::string getTime(); // reports the current time
+}
+
+namespace stats {
+    double median(std::vector<double>& values);
 }
 
 // sequence input/output

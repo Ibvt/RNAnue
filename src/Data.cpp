@@ -409,6 +409,7 @@ void Data::clustering() {
 void Data::analysis() {
     std::cout << helper::getTime() << "Start the Analysis\n";
     Analysis ana(params);
-    callInAndOut(std::bind(&Analysis::start, ana, std::placeholders::_1));
+    callInAndOut(std::bind(&Analysis::start, &ana, std::placeholders::_1, std::placeholders::_2));
+    ana.writeAllInts();
 }
 

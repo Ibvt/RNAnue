@@ -24,13 +24,13 @@ namespace fs = boost::filesystem;
 
 struct Segment {
     std::string refid;
-    uint32_t flag;
+    seqan3::sam_flag flag;
     uint32_t start;
     uint32_t end;
 
-    Segment() : refid(""), flag(0), start(0), end(0) {};
-    Segment(std::string _refid, uint32_t _flag, unsigned int _start, unsigned int _end) :
-            refid(_refid), flag(_flag), start(_start), end(_end) {};
+    Segment() : refid(""), flag(seqan3::sam_flag{}), start(0), end(0) {};
+    Segment(std::string refid, seqan3::sam_flag flag, unsigned int start, unsigned int end) :
+            refid(refid), flag(flag), start(start), end(end) {};
 };
 
 struct Cluster {

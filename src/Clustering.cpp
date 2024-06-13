@@ -18,7 +18,7 @@ void Clustering::iterate(std::string splits) {
         for(auto& split : rec) { // push
             //seqan3::debug_stream << split << std::endl;
             std::optional<int32_t> refId = split.reference_id();
-            uint32_t flag{0}; // SAMFLAG
+            seqan3::sam_flag flag = split.flag(); // SAMFLAG
             uint32_t start = split.reference_position().value();
             uint32_t end = start + split.sequence().size()-1;
             Segment seg(ref_ids[refId.value()], flag, start, end);
@@ -77,7 +77,7 @@ void Clustering::sumup() {
         if(outputFile.is_open()) {
             outputFile << "cluster" << clustID++ << "\t";
             outputFile << result[i].elements[0].refid << "\t";
-            if(result[i].elements[0].flag == 0) {
+            if(!static_cast<bool>(result[i].elements[0].flag & seqan3::sam_flag::on_reverse_strand)) {
                 outputFile << "+" << "\t";
             } else {
                 outputFile << "-" << "\t";
@@ -86,7 +86,7 @@ void Clustering::sumup() {
             outputFile << result[i].elements[0].end << "\t";
 
             outputFile << result[i].elements[1].refid << "\t";
-            if(result[i].elements[1].flag == 0) {
+            if(!static_cast<bool>(result[i].elements[0].flag & seqan3::sam_flag::on_reverse_strand)) {
                 outputFile << "+" << "\t";
             } else {
                 outputFile << "-" << "\t";
