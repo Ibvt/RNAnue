@@ -1,6 +1,6 @@
 [![docker-release](https://github.com/Ibvt/RNAnue/actions/workflows/docker.yml/badge.svg)](https://github.com/Ibvt/RNAnue/actions/workflows/docker.yml)
 
-# RNAnue - 0.2.0
+# RNAnue - 0.2.1
 
 ## About
 RNAnue is a comprehensive analysis to detect RNA-RNA interactions from Direct-Duplex-Detection (DDD) data.
@@ -163,17 +163,17 @@ Its entries are structured as described in the following where
 columns with prefix <sample> are given for each sample specified in 
 the analysis (within the same file).
 
-| Field | Description |
-| ----- | ----------- |
-| fs_rna | Gene/Transcript name of the first interaction partner |
-| sec_rna | Gene/Transcript name of the second interaction partner |
-| fst_rna_ori | Orientation of the first interaction partner with respect to annotation (sense/antisense) |
-| sec_rna_ori | Orientation of the second interaction partner with respect to annotation (sense/antisense) |
-| <sample>_supp_reads | Number of (split)reads that support the interaction |
-| <sample>_ges | Global energy score (gcs) of the interaction |
-| <sample>_ghs | Global hybridisation score (ghs) of the interaction |
-| <sample>_pval | Statistical significance (p-value) of the interaction |
-| <library>_padj | Benjamini-Hochberg adjusted p-value among the samples |
+| Field                 | Description |
+|-----------------------| ----------- |
+| fst_rna               | Gene/Transcript name of the first interaction partner |
+| sec_rna               | Gene/Transcript name of the second interaction partner |
+| fst_rna_ori           | Orientation of the first interaction partner with respect to annotation (sense/antisense) |
+| sec_rna_ori           | Orientation of the second interaction partner with respect to annotation (sense/antisense) |
+| \<sample\>_supp_reads | Number of (split)reads that support the interaction |
+| \<sample\>_ges        | Global energy score (gcs) of the interaction |
+| \<sample\>_ghs        | Global hybridisation score (ghs) of the interaction |
+| \<sample\>_pval       | Statistical significance (p-value) of the interaction |
+| \<library\>_padj      | Benjamini-Hochberg adjusted p-value among the samples |
 
 If the option –outcnt is set to 1 RNAnue generates the count table `counts.txt` in the output directory. 
 It contains the counts of each interaction for each sample and  can be used for differential expression 
