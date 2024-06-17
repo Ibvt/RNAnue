@@ -396,7 +396,8 @@ void Data::align() {
 void Data::detect() {
     std::cout << helper::getTime() << "Start the Split Read Calling\n";
     SplitReadCalling src(params);
-    callInAndOut(std::bind(&SplitReadCalling::start, src, std::placeholders::_1, std::placeholders::_2));
+    callInAndOut(std::bind(&SplitReadCalling::start, &src, std::placeholders::_1, std::placeholders::_2));
+    src.writeStats();
 }
 
 void Data::clustering() {
@@ -410,6 +411,10 @@ void Data::analysis() {
     std::cout << helper::getTime() << "Start the Analysis\n";
     Analysis ana(params);
     callInAndOut(std::bind(&Analysis::start, &ana, std::placeholders::_1, std::placeholders::_2));
+    // write file output files
     ana.writeAllInts();
+    ana.writeAllIntsCounts();
+    ana.writeAllIntsJGF();
+    ana.writeStats();
 }
 

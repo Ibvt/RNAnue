@@ -1,6 +1,6 @@
 [![docker-release](https://github.com/Ibvt/RNAnue/actions/workflows/docker.yml/badge.svg)](https://github.com/Ibvt/RNAnue/actions/workflows/docker.yml)
 
-# RNAnue - 0.2.1
+# RNAnue - 0.2.2
 
 ## About
 RNAnue is a comprehensive analysis to detect RNA-RNA interactions from Direct-Duplex-Detection (DDD) data.
@@ -126,9 +126,8 @@ columns are defined in the following:
 
 ### Interaction table
 
-The `analysis` procedure generates `_interactions` files for each library in 
-which each line represents an annotated split read that is mapped to a 
-transcript interaction. The fields are defined as follows:
+The `analysis` procedure generates `_interactions` files for each library in which each line represents an annotated 
+split read that is mapped to a transcript interaction. The fields are defined as follows:
 
 | Field | Description |
 | ----- | ----------- |
@@ -157,11 +156,9 @@ transcript interaction. The fields are defined as follows:
 | mfe | Hybridisation energy of the interaction |
 | mfe_struc | Minimum free energy (MFE) structure of interaction in dot-bracket notation |
 
-The main result of an RNAnue analysis are transcript interactions. 
-They are stored in  the file `allints.txt` in the same directory. 
-Its entries are structured as described in the following where 
-columns with prefix <sample> are given for each sample specified in 
-the analysis (within the same file).
+The main result of an RNAnue analysis are transcript interactions. They are stored in  the file `allints.txt` in the 
+same directory. Its entries are structured as described in the following where columns with prefix <sample> are given 
+for each sample specified in the analysis (within the same file).
 
 | Field                 | Description |
 |-----------------------| ----------- |
@@ -182,10 +179,12 @@ in JSON graph format. Finally, –stats set to 1 creates a `stats.txt` file that
 each step of the analysis. 
 
 ### Docker
-In additon, we provide a ready-to-use Docker container that has RNAnue preconfigured.
-https://hub.docker.com/repository/docker/cobirna/rnanue
+In additon, we provide a ready-to-use [Docker container](https://hub.docker.com/repository/docker/cobirna/rnanue) that 
+has RNAnue preconfigured.
 
 ### Testing
+
+We provide a test dataset in the [test](./test/data/) folder that can be used to test the installation. 
 
 # Troubleshooting
 contact cobi@ibvt.uni-stuttgart.de or create an issue

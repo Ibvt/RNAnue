@@ -111,13 +111,14 @@ class SplitReadCalling {
         void addComplementarityToSamRecord(SAMrecord &rec1, SAMrecord &rec2, TracebackResult &res);
         void addHybEnergyToSamRecord(SAMrecord &rec1, SAMrecord &rec2, double &hyb);
         void writeSAMrecordToBAM(auto& bamfile, std::vector<std::pair<SAMrecord, SAMrecord>>& records);
+        void writeStats();
 
 
     private:
         po::variables_map params;
         IBPTree features;
-        //Stats stats;
         std::shared_ptr<Stats> stats;
+        int replPerCond; // number of replicates per condition
         std::string condition; // stores the current condition
         std::deque<std::string> refIds; // stores the reference ids
         FilterScores filterScores;

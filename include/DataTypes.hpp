@@ -75,9 +75,13 @@ namespace dtp {
         int alignedCount;
         int splitsCount;
         int multSplitsCount;
-        int nSurvivedCount;
+        int interactionsCount;
+        StatsFields() : readsCount(0), alignedCount(0), splitsCount(0), multSplitsCount(0), interactionsCount(0) {}
+        StatsFields(int readsCount, int alignedCount, int splitsCount, int multSplitsCount) :
+            readsCount(readsCount), alignedCount(alignedCount), splitsCount(splitsCount),
+            multSplitsCount(multSplitsCount), interactionsCount(0) {} // constructor for analysis class
     };
-    using StatsMap = std::map<std::string, StatsFields>;
+    using StatsMap = std::map<std::string, std::vector<StatsFields>>;
     using SpliceJunctions = std::map<std::string, std::vector<std::pair<size_t,size_t>>>;
 
     // Analysis

@@ -18,6 +18,7 @@ namespace fs = boost::filesystem;
 class Stats {
     public:
         Stats();
+        Stats(std::string statsFile);
 
         // Move constructor / no needed because its unique
         Stats(Stats&& other) noexcept : stats(other.stats) {}
@@ -36,13 +37,16 @@ class Stats {
         Stats& operator=(const Stats&) = delete;
 
         // getter & setter
-        void setReadsCount(std::string condition, int increment);
-        void setAlignedCount(std::string condition, int increment);
-        void setSplitsCount(std::string condition, int increment);
-        void setMultSplitsCount(std::string condition, int increment);
+        void setReadsCount(std::string condition, int repl, int increment);
+        void setAlignedCount(std::string condition, int repl, int increment);
+        void setSplitsCount(std::string condition, int repl, int increment);
+        void setMultSplitsCount(std::string condition, int repl, int increment);
+        void setInteractionsCount(std::string condition, int repl, int increment);
+
+        void reserveStats(std::string condition, int repl); // creates new entry for replicate
 
         // write stats back to file
-        void writeStats(fs::path outdir);
+        void writeStats(fs::path outdir, std::string subcall);
 
     private:
         dtp::StatsMap stats;

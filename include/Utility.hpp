@@ -5,6 +5,8 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
+#include <random>
+
 
 // Boost
 #include <boost/filesystem.hpp>
@@ -42,10 +44,13 @@ namespace helper {
     bool withinRange(int a, int b, int range);
     std::string removeNonPrintable(const std::string str);
     std::string getTime(); // reports the current time
+
+    std::vector<int> lastOccFlag(std::vector<std::string>& vec);
 }
 
 namespace stats {
     double median(std::vector<double>& values);
+    double randNum(double min, double max);
 }
 
 // sequence input/output

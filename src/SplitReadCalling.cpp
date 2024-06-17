@@ -14,17 +14,13 @@ SplitReadCalling::SplitReadCalling(po::variables_map params) {
 
     // initialize stats
     this->stats = std::make_shared<Stats>();
+    this->replPerCond = -1; // number of replicates per condition
 
     // initialize filtering
     this->filterScores = FilterScores();
 }
 
-SplitReadCalling::~SplitReadCalling() {
-    if(params["stats"].as<std::bitset<1>>() == std::bitset<1>("1")) {
-        fs::path outdir = fs::path(params["outdir"].as<std::string>());
-        stats->writeStats(outdir);
-    }
-}
+SplitReadCalling::~SplitReadCalling() {}
 
 void SplitReadCalling::iterate(std::string& matched, std::string& single, std::string &splits, std::string &multsplits) {
     seqan3::sam_file_input inBam{matched}; // initialize input file
@@ -68,7 +64,7 @@ void SplitReadCalling::iterate(std::string& matched, std::string& single, std::s
 
                 QNAME = record.id();
                 if((currentQNAME != "") && (currentQNAME != QNAME)) {
-                    this->stats->setReadsCount(this->condition, 1);
+                    this->stats->setReadsCount(this->condition, replPerCond, 1);
                     processRecords();
                     // prepare for next iteration
                     readrecords.push_back(record);
@@ -148,8 +144,9 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut,
             {
                 std::lock_guard<std::mutex> lock(singleOutMutex);
                 singleOut.push_back(rec);
+                this->stats->setAlignedCount(this->condition, replPerCond, 1);
             }
-            continue;
+            break;
         }
         startPosRead = 1; // initialize start/end of read
         endPosRead = 0;
@@ -306,14 +303,14 @@ void SplitReadCalling::decide(std::map<int, std::vector<SAMrecord>>& putative, a
         {
             std::lock_guard<std::mutex> lock(splitsOutMutex);
             writeSAMrecordToBAM(splitsOut, finalSplits);
-            this->stats->setSplitsCount(this->condition, 1);
+            this->stats->setSplitsCount(this->condition, replPerCond, 1);
         }
     } else { // multisplits detected
         if(finalSplits.size() > 1) {
             {
                 std::lock_guard<std::mutex> lock(multsplitsOutMutex);
                 writeSAMrecordToBAM(multsplitsOut, finalSplits);
-                this->stats->setMultSplitsCount(this->condition, 1);
+                this->stats->setMultSplitsCount(this->condition, replPerCond, 1);
             }
         }
     }
@@ -436,7 +433,11 @@ void SplitReadCalling::start(pt::ptree sample, pt::ptree condition) {
     pt::ptree input = sample.get_child("input");
     std::string matched = input.get<std::string>("matched");
 
+    if(this->condition != "" && this->condition != condition.get<std::string>("condition")) {
+        replPerCond = -1; // 'new' condition - reset replicates counter
+    }
     this->condition = condition.get<std::string>("condition"); // store current condition (e.g. rpl_37C)
+    this->stats->reserveStats(this->condition, ++replPerCond); // increase the number of replicates per condition
 
     // output
     pt::ptree output = sample.get_child("output");
@@ -551,6 +552,13 @@ void SplitReadCalling::addComplementarityToSamRecord(SAMrecord &rec1, SAMrecord 
 void SplitReadCalling::addHybEnergyToSamRecord(SAMrecord &rec1, SAMrecord &rec2, double &hyb) {
     rec1.tags().get<"XE"_tag>() = (float)hyb;
     rec2.tags().get<"XE"_tag>() = (float)hyb;
+}
+
+void SplitReadCalling::writeStats() {
+    if(params["stats"].as<std::bitset<1>>() == std::bitset<1>("1")) {
+        fs::path outdir = fs::path(params["outdir"].as<std::string>());
+        stats->writeStats(outdir, "detect");
+    }
 }
 
 

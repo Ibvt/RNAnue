@@ -1,7 +1,6 @@
 #include "Analysis.hpp"
 
-//
-Analysis::Analysis(po::variables_map _params) : params(_params), repcount{0}, readcount{0} {
+Analysis::Analysis(po::variables_map _params) : params(_params), condition{""}, repcount{0}, readcount{0} {
     int k = 3; // can be later extracted from config file
     // extract features (e.g., IBPTree)
     this->features = IBPTree(params, k); // create IBPT w/ annotations
@@ -15,6 +14,10 @@ Analysis::Analysis(po::variables_map _params) : params(_params), repcount{0}, re
     this->suppreads = std::map<dtp::IntKey, std::vector<double>>();
     this->complementarities = std::map<dtp::IntKey, std::vector<std::vector<double>>>();
     this->hybenergies = std::map<dtp::IntKey, std::vector<std::vector<double>>>();
+
+    // stats
+    fs::path outdir = fs::path(params["outdir"].as<std::string>());
+    this->stats = std::make_shared<Stats>((outdir / "stats.txt").string());
 }
 
 Analysis::~Analysis() {
@@ -33,15 +36,14 @@ void Analysis::start(pt::ptree sample, pt::ptree condition) {
     //
     this->freq = std::map<std::pair<std::string, std::string>, double>();
     this->condition = condition.get<std::string>("condition"); // store current condition
-
+    this->conditions.push_back(condition.get<std::string>("condition")); // store all conditions
     this->readcount = 0;
 
     processSingle(single);
     processSplits(splits, interactions);
 
     this->repcount++; // increase replicate count
-
-    normalize();
+    normalize(); // normalize the frequencies
 }
 
 void Analysis::processSingle(std::string& single) {
@@ -185,26 +187,34 @@ void Analysis::writeInteractionsHeader(std::ofstream& fout) {
     fout << "cmpl\tfst_seg_compl_aln\tsec_seg_cmpl_aln\tmfe\n";
 }
 
-void Analysis::writeAllIntsHeader(std::ofstream& fout) { fout << "fst_rna\tsec_rna\tfst_rna_ori\tsec_rna_ori";}
-void Analysis::addToAllIntsHeader(std::ofstream &fout, std::string key) { fout << "\t" << key; }
+void Analysis::writeAllIntsHeader(std::vector<int> condLastFlag, std::ofstream& fout) {
+    size_t repcounter = 1;
+    fout << "fst_rna\tsec_rna\tfst_rna_ori\tsec_rna_ori";
+    for(int i=0;i<repcount; ++i) {
+        std::ostringstream oss;
+        oss << std::setw(3) << std::setfill('0') << repcounter++;
+        fout << "\t" << conditions[i] + "_" + oss.str() + "_supp_reads";
+        fout << "\t" << conditions[i] + "_" + oss.str() + "_gcs";
+        fout << "\t" << conditions[i] + "_" + oss.str() + "_ghs";
+        fout << "\t" << conditions[i] + "_" + oss.str() + "_pval";
+        if(condLastFlag[i] == 1) {
+            fout << "\t" << conditions[i] + "_" + oss.str() + "_padj";
+            repcounter = 0;
+        }
+    }
+    fout << "\n";
+}
 
+// renormalize the frequencies (to 1)
 void Analysis::normalize() {
     // sum up all frequencies
     double sum = 0.0;
     for(auto& f : this->freq) {
         sum += f.second;
     }
-
-    // normalize
-    for(auto& f : this->freq) {
+    for(auto& f : this->freq) { // normalize the frequencies
         f.second = f.second/sum;
     }
-
-    // print
-    /*
-    for(auto& f : freq) {
-        std::cout << f.first.first << " " << f.first.second << " " << f.second << std::endl;
-    }*/
 }
 
 void Analysis::addToFreqMap(std::pair<std::string, std::string> key, double value) {
@@ -316,11 +326,14 @@ double Analysis::calcGHS(std::vector<double>& hybenergies) {
 }
 
 double Analysis::calcStat(dtp::IntKey key, int x) {
+    if(x < 5) {
+        return 1.0;
+    } // return 1.0 (these would indicate random events)
     std::pair<std::string, std::string> p1 = {key[0].orientation, key[0].partner};
     std::pair<std::string, std::string> p2 = {key[1].orientation, key[1].partner};
     double p;
     if(freq.find(p1) == freq.end() || freq.find(p2) == freq.end()) {
-        p = 0.0;
+        p = 0.0; // shouldn't be called (as
     } else {
         if(p1 == p2) {
             p = freq[p1]*freq[p2];
@@ -328,41 +341,219 @@ double Analysis::calcStat(dtp::IntKey key, int x) {
             p = 2*freq[p1]*freq[p2];
         }
     }
+    if(x == 1) { std::cout << "x=1: p= " << p << std::endl; }
     ma::binomial_distribution<double> binomial(this->readcount, p);
-    double pval = 1.0 - ma::cdf(binomial, x);
-    return pval;
+    double pval = 1.0 - ma::cdf(binomial, x); // add small episolon to avoid 0
+    return std::max(pval, stats::randNum(1e-10, 1e-8)); // make sure its never 0.0 (instead return small value)
+}
+
+double Analysis::calcAdjusted(std::vector<double>& values) {
+    std::sort(values.begin(), values.end()); // sort p-values
+    std::vector<int> ranks(values.size()); // store ranks
+    for(int i=0; i<values.size(); ++i) { ranks[i] = i+1; }
+    std::vector<double> adjusted(values.size()); // store adjusted p-values
+    for(int i=0; i<values.size(); ++i) {
+        adjusted[i] = std::min(1.0, (values[i] * values.size() / ranks[i]));
+    }
+    // combine the adjusted p-values (Fisher's method)
+    double testStatistics = -2 * std::accumulate(adjusted.begin(), adjusted.end(), 0.0, [](double a, double b) {
+        return a + std::log(b);
+    });
+    int df = 2 * adjusted.size();
+    ma::chi_squared dist(df);
+    double combined = 1.0 - ma::cdf(dist, testStatistics);
+    return std::max(combined, stats::randNum(1e-10, 1e-8)); // make sure its never 0.0 (instead return small value)
+}
+
+void Analysis::writeStats() {
+    if(params["stats"].as<std::bitset<1>>() == std::bitset<1>("1")) {
+        fs::path outdir = fs::path(params["outdir"].as<std::string>());
+        this->stats->writeStats(outdir, "analysis");
+        std::cout << helper::getTime() << "Stats written to file: " << outdir.string() << "/stats.txt\n";
+    }
 }
 
 void Analysis::writeAllInts() {
-    std::string outDirPath = params["outdir"].as<std::string>();
+    std::string outDirPath = params["outdir"].as<std::string>(); // prepare output file
     fs::path outDirDetectPath = fs::path(outDirPath) / fs::path("analysis");
     fs::path allIntsPath = fs::path(outDirDetectPath) / fs::path("allints.txt");
     std::ofstream fout(allIntsPath.string(), std::ios::out);
+
+    // determine the last of occurence of the respective condition (among all conditions)
+    std::vector<int> condLastFlag = helper::lastOccFlag(conditions); // needed for BH correction
+    std::vector<double> pvals = {}; // store the p-values for each condition
+
+    writeAllIntsHeader(condLastFlag, fout); // write header
 
     if(fout.is_open()) {
         for(auto& entry : suppreads) {
             fout << entry.first[0].partner << "\t" << entry.first[1].partner;
             fout << "\t" << entry.first[0].orientation << "\t" << entry.first[1].orientation;
+            int condcounter = -1, replcounter = -1; // counter that is used to determine the current condition/replicate
             for(int i=0;i<entry.second.size();++i) {
+                condcounter++; replcounter++;
+                this->stats->setInteractionsCount(conditions[condcounter], replcounter, 1);
+                if(condLastFlag[condcounter] == 1) { replcounter = -1;}
                 fout << "\t" << entry.second[i]; // counts
                 double gcs = calcGCS(complementarities[entry.first][i]); // complementarity score (GCS)
                 if(gcs != 0.0) { fout << "\t" << gcs; } else { fout << "\t."; }
-                double ghs = calcGHS(hybenergies[entry.first][i]); // Hybridization score (GHS)
+                double ghs = calcGHS(hybenergies[entry.first][i]); // hybridization score (GHS)
                 if(ghs != 1000.0) { fout << "\t" << ghs; } else { fout << "\t."; }
-                // statistical
-                // call with key(RNA1/2 and orient) and counts
+
+                // statistical - call w/ key (RNA1/2 and orient) and counts
                 double stat = calcStat(entry.first, entry.second[i]);
-                fout << "\t" << stat;
+                if(entry.second[i] == 0) { fout << "\t."; } else { fout << "\t" << stat; } // omit (=1) when counts (=0)
+                pvals.push_back(stat); // store p-values for each condition - needed for BH correction
+                if(condLastFlag[i] == 1) { // end of condition (replicates) - calculate adjusted p-value
+                    double adj = calcAdjusted(pvals);
+                    fout << "\t" << adj;
+                    pvals.clear(); // clear buffer
+                }
             }
             if(entry.second.size() < repcount) {
                 for(int i=entry.second.size();i<repcount;++i) {
                     fout << "\t0\t.\t.\t.";
+                    if(condLastFlag[i] == 1) {
+                        fout << "\t.";
+                        pvals.clear();
+                    }
                 }
             }
             fout << "\n";
         }
         fout.close();
         std::cout << helper::getTime() << "Interactions written to file: " << allIntsPath.string() << "\n";
+    }
+}
+
+void Analysis::writeAllIntsCounts() {
+    if(params["outcnt"].as<std::bitset<1>>() == std::bitset<1>("1")) { // print counts table
+        std::string outDirPath = params["outdir"].as<std::string>(); // prepare output file
+        fs::path outDirDetectPath = fs::path(outDirPath) / fs::path("analysis");
+        fs::path countsPath = fs::path(outDirDetectPath) / fs::path("counts.txt");
+        std::ofstream fout(countsPath.string(), std::ios::out);
+        fout << "id"; // write first part of header (id)
+
+        // read all interactions
+        fs::path allIntsFile = fs::path(outDirDetectPath) / fs::path("allints.txt");
+        std::ifstream fin(allIntsFile.string(), std::ios::in);
+
+        std::vector<int> countsIdx = {}; // stores of indices of the counts
+        std::string line;
+        if(fin.is_open()) {
+            if(std::getline(fin, line)) { // work on header
+                std::istringstream header(line);
+                std::string hdToken;
+                std::vector<std::string> hdTokens;
+                while(getline(header, hdToken, '\t')) { hdTokens.push_back(hdToken); }
+                for(int i=0; i<hdTokens.size(); ++i) { // extract the indices of the counts
+                    if(hdTokens[i].find("supp_reads") != std::string::npos) {
+                        countsIdx.push_back(i);
+                        // extract up to _supp_reads
+                        fout << "\t" << hdTokens[i].substr(0, hdTokens[i].find("_supp_reads"));
+                    }
+                }
+                fout << "\n";
+            }
+            while(std::getline(fin, line)) {
+                std::string token;
+                std::vector<std::string> tokens;
+                std::istringstream ss(line);
+                while(getline(ss, token, '\t')) { tokens.push_back(token); }
+                fout << tokens[0] + "_" + tokens[1] + "_" + tokens[2] + "_" + tokens[3];
+                for(int j=0; j<countsIdx.size(); ++j) {
+                    fout << "\t" << tokens[countsIdx[j]];
+                }
+                fout << "\n";
+            }
+            fin.close();
+            fout.close();
+        }
+        std::cout << helper::getTime() << "Counts table written to file: " << countsPath.string() << "\n";
+    }
+}
+
+void Analysis::writeAllIntsJGF() {
+    if(params["outjgf"].as<std::bitset<1>>() == std::bitset<1>("1")) {
+        std::string outDirPath = params["outdir"].as<std::string>(); // prepare output file
+        fs::path outDirDetectPath = fs::path(outDirPath) / fs::path("analysis");
+        fs::path countsPath = fs::path(outDirDetectPath) / fs::path("graph.json");
+        std::ofstream fout(countsPath.string(), std::ios::out);
+
+        fs::path allIntsFile = fs::path(outDirDetectPath) / fs::path("allints.txt"); // read all interactions
+        std::ifstream fin(allIntsFile.string(), std::ios::in);
+        std::string line;
+
+        pt::ptree nodes;
+        pt::ptree edges;
+
+        int counter = 0;
+        if(fin.is_open()) {
+            if(std::getline(fin, line)) {} // skip header
+            while(std::getline(fin, line)) {
+                std::string token;
+                std::vector<std::string> tokens;
+                std::istringstream ss(line);
+                while(getline(ss, token, '\t')) { tokens.push_back(token); }
+                std::pair<std::string, std::string> key = {tokens[0], tokens[1]};
+
+                // check if already in graph (if not add it)
+                std::string nodeId1 = "", nodeId2 = "";
+                for(auto& node : nodes) {
+                    // check if label (aka) id/name is already in nodes
+                    if(node.second.get_child("label").data() == tokens[0]) { // check if RNA1 is in nodes
+                        // also check orientation
+                        if(node.second.get_child("metadata").get_child("orientation").data() == tokens[2]) {
+                            nodeId1 = node.first;
+                        }
+                    }
+                    if(node.second.get_child("label").data() == tokens[1]) { // check if RNA1 is in nodes
+                        if(node.second.get_child("metadata").get_child("orientation").data() == tokens[3]) {
+                            nodeId2 = node.first;
+                        }
+                    }
+                }
+                if(nodeId1 == "") {
+                    pt::ptree rna1, rna1meta;
+                    rna1.put("label", tokens[0]);
+                    rna1meta.put("orientation", tokens[2]);
+                    rna1.add_child("metadata", rna1meta);
+                    nodeId1 = std::to_string(counter++);
+                    nodes.add_child(nodeId1, rna1);
+                }
+                if(nodeId2 == "") {
+                    pt::ptree rna2, rna2meta;
+                    rna2.put("label", tokens[1]);
+                    rna2meta.put("orientation", tokens[3]);
+                    rna2.add_child("metadata", rna2meta);
+                    nodeId2 = std::to_string(counter++);
+                    nodes.add_child(nodeId2, rna2);
+                }
+
+                // add edges
+                pt::ptree edge;
+                edge.put("source", nodeId1);
+                edge.put("target", nodeId2);
+                edge.put("relation", "basepairing");
+                edges.push_back(std::make_pair("", edge));
+            }
+        }
+
+        pt::ptree graph;
+        pt::ptree graphProperties;
+        graphProperties.put("directed", "false");
+
+        graph.push_back(std::make_pair("graph", graphProperties));
+        graph.push_back(std::make_pair("nodes", nodes));
+        graph.push_back(std::make_pair("edges", edges));
+
+        if(fout.is_open()) {
+            jp::write_json(fout, graph);
+            fout.close();
+        } else {
+            std::cerr << "Error: Could not open file: " << countsPath.string() << "\n";
+        }
+        std::cout << helper::getTime() << "JGF written to file: " << countsPath.string() << "\n";
     }
 }
 

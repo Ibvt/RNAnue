@@ -189,6 +189,21 @@ std::string helper::getTime() {
     return time_string;
 }
 
+/* Returns the last occurrence of (identical) strings in a vector
+ * e.g., {"A","A","B","B","C","C","C"} --> {0,1,0,1,0,0,1} */
+std::vector<int> helper::lastOccFlag(std::vector<std::string>& vec) {
+    std::unordered_map<std::string,int> lastOcc;
+    for(int i=0; i<vec.size(); ++i) { lastOcc[vec[i]] = i; }
+    std::vector<int> res(vec.size(), 0); // initialize with 0
+    for(int i=0; i<vec.size(); ++i) {
+        if(lastOcc[vec[i]] == i) {
+            res[i] = 1;
+        }
+    }
+    return res;
+}
+
+// ############ STATS ############
 
 double stats::median(std::vector<double>& values){
     std::sort(values.begin(), values.end());
@@ -198,6 +213,13 @@ double stats::median(std::vector<double>& values){
     } else {
         return values[size / 2];
     }
+}
+
+double stats::randNum(double min, double max) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(min, max);
+    return dis(gen);
 }
 
 
