@@ -67,13 +67,14 @@ void IBPTree::iterateFeatures(std::string featuresFile) {
         std::string id = getTag(attr, std::vector<std::string>{"ID"});
         std::string name = getTag(attr, std::vector<std::string>{"gene_name", "Name"});
         std::string biotype = getTag(attr, std::vector<std::string>{"gene_biotype", "gene_type"});
+        std::string product = getTag(attr, std::vector<std::string>{"product"});
 
         if(attr.find("Parent") == attr.end()) { // new gene/transcript indicated by missing 'Parent' attribute
             if(intvl != nullptr) { // there exists and interval object (add to tree)
                 insert(*intvl);
                 intvl = nullptr;
             }
-            intvl = new IntervalData(fields.seqid, fields.strand, id, name, biotype,
+            intvl = new IntervalData(fields.seqid, fields.strand, id, name, biotype, product,
                                      std::make_pair(fields.start, fields.end), nullptr);
         } else {
             // only if the feature is an exon (needed for detect step)
@@ -159,7 +160,7 @@ void IBPTree::iterateClusters(std::string clusterFile) {
                 intvl1 = res.second;
             }
         } else {
-            intvl1 = new IntervalData(chroms.second, strand.second, name, name, "cluster",
+            intvl1 = new IntervalData(chroms.second, strand.second, name, name, "cluster", ".",
                                                    std::make_pair(start.second, end.second), nullptr);
             insert(*intvl1);
         }
@@ -184,7 +185,7 @@ void IBPTree::iterateClusters(std::string clusterFile) {
                 intvl2 = res.second;
             }
         } else {
-            intvl2 = new IntervalData(chroms.second, strand.second, name, name, "cluster",
+            intvl2 = new IntervalData(chroms.second, strand.second, name, name, "cluster", ".",
                                       std::make_pair(start.second, end.second), nullptr);
             insert(*intvl2);
         }

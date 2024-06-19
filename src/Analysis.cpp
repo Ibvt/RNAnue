@@ -20,10 +20,10 @@ Analysis::Analysis(po::variables_map _params) : params(_params), condition{""}, 
     this->stats = std::make_shared<Stats>((outdir / "stats.txt").string());
 }
 
-Analysis::~Analysis() {
-}
+Analysis::~Analysis() {}
 
 void Analysis::start(pt::ptree sample, pt::ptree condition) {
+
     this->freq.clear(); // reset freq
     // retrieve input and output files
     pt::ptree input = sample.get_child("input");
@@ -98,6 +98,7 @@ void Analysis::processSplits(std::string& splits, std::string& output) {
     seqan3::sam_tag_dictionary tags;
     std::pair<float, float> filters; // complementarity and hybridization energy
     std::vector<std::string> aligns; // alignment of complementarity
+    std::string mfeStruc = ""; // minimum free energy structure
 
     // segment information (e.g., gene name, product, etc.) - keys are the as or ss
     std::map<std::string, std::vector<IntervalData*>> segmentInfo = {};
@@ -113,6 +114,7 @@ void Analysis::processSplits(std::string& splits, std::string& output) {
         // retrieve complementarity and energy
         tags = (*rec.begin()).tags();
         filters = std::make_pair(std::get<float>(tags["XC"_tag]), std::get<float>(tags["XE"_tag]));
+        mfeStruc = std::get<std::string>(tags["XD"_tag]);
 
         dtp::IntKey intKey = {}; // key to store the interaction (partner1, orientation1, partner2, orientation2)
 
@@ -141,24 +143,18 @@ void Analysis::processSplits(std::string& splits, std::string& output) {
                     if (strand == ovl.second->getStrand()) { orient = "sense"; } else { orient = "antisense"; }
                     segmentInfo[orient].push_back(ovl.second); // add to segmentInfo
                     addToFreqMap(std::make_pair(orient, ovl.second->getName()), 1.0/(double)ovlps.size()); // add to freq
-
-
-                    /*
-                    std::string info = ovl.second->getName() + "\t" + ovl.second->getBiotype() + "\t" +
-                                       ovl.second->getStrand() + "\t" + "." + "\t" + orient;
-                    segmentInfo[orient].push_back(info);*/
                 }
                 // check which one to select
                 if (segmentInfo["sense"].size() == 1) {
                     IntervalData* data = segmentInfo["sense"][0];
                     outLine += "\t" + data->getName() + "\t" + data->getBiotype() + "\t" + data->getStrand();
-                    outLine += "\t.\tsense";
+                    outLine += "\t" + data->getProduct() + "\tsense";
                     intKey.push_back(dtp::IntPartner(data->getName(),"sense"));
                 } else {
                     if (segmentInfo["antisense"].size() == 1) {
                         IntervalData* data = segmentInfo["antisense"][0];
                         outLine += "\t" + data->getName() + "\t" + data->getBiotype() + "\t" + data->getStrand();
-                        outLine += "\t.\tsense";
+                        outLine += "\t" + data->getProduct() + "\tsense";
                         intKey.push_back(dtp::IntPartner(data->getName(),"antisense"));
                     } else {
                         skip = 1; // skip if not unique
@@ -168,7 +164,8 @@ void Analysis::processSplits(std::string& splits, std::string& output) {
         }
         outLine += "\t" + std::to_string(filters.first); // complementarity
         outLine += "\t" + aligns[0] + "\t" + aligns[1]; // alignment
-        outLine += "\t" + std::to_string(filters.second) + "\n"; // energy
+        outLine += "\t" + std::to_string(filters.second);
+        outLine += "\t" + mfeStruc + "\n"; // energy
         if (skip == 0) {
             outInts << outLine;
             addToSuppReads(intKey[0], intKey[1]);
@@ -184,7 +181,7 @@ void Analysis::writeInteractionsHeader(std::ofstream& fout) {
     fout << "qname\tfst_seg_strd\tfst_seg_strt\tfst_seg_end\tfst_seg_ref\tfst_seg_name\tfirst_seg_bt\t";
     fout << "fst_seg_anno_strd\tfst_seg_prod\tfst_seg_ori\tsec_seg_strd\tsec_seg_strt\tsec_seg_end\t";
     fout << "sec_seg_ref\tsec_seg_name\tsec_seg_bt\tsec_seg_anno_strd\tsec_seg_prod\tsec_seg_ori\t";
-    fout << "cmpl\tfst_seg_compl_aln\tsec_seg_cmpl_aln\tmfe\n";
+    fout << "cmpl\tfst_seg_compl_aln\tsec_seg_cmpl_aln\tmfe\tmfe_struc\n";
 }
 
 void Analysis::writeAllIntsHeader(std::vector<int> condLastFlag, std::ofstream& fout) {

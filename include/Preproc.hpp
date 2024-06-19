@@ -57,9 +57,6 @@ class Preproc {
         bool filterReads(auto& qual);
         double calcAvgPhred(auto& qual); // calculate the average phred score
 
-        // helper functions
-        std::string fastqToString(dtp::FASTQRecord& rec);
-
     private:
         po::variables_map params;
         StateTransition adpt5Tables;

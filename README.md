@@ -102,6 +102,7 @@ duplex.
 | XR:f | site length ratio |
 | XA:Z | alignment of sequence | 
 | XE:f | hybridization energy |
+| XD:f | MFE structure in dot-bracket notation |
 
 ### Clustering results
 
@@ -181,6 +182,14 @@ each step of the analysis.
 ### Docker
 In additon, we provide a ready-to-use [Docker container](https://hub.docker.com/repository/docker/cobirna/rnanue) that 
 has RNAnue preconfigured.
+
+### Singularity
+
+The provided Docker container can also be used with Singularity.
+```
+singularity pull docker://cobirna/rnanue:latest
+singularity exec --bind /path/to/data:/data rnanue_latest.sif RNAnue <subcall> --config /data/params.cfg
+```
 
 ### Testing
 

@@ -143,7 +143,7 @@ void Clustering::overlaps(std::vector<Cluster> &clusterlist) {
                     // refid needs to match
                     if((clusterlist[i].elements[0].refid == clusterlist[j].elements[0].refid) &&
                        (clusterlist[i].elements[0].refid == clusterlist[j].elements[0].refid)) {
-                        // .. same with strand
+                        // same with strand
                         if((clusterlist[i].elements[0].flag == clusterlist[j].elements[0].flag) &&
                            (clusterlist[i].elements[1].flag == clusterlist[j].elements[1].flag)) {
                             Cluster ncl = clusterlist[j];
@@ -170,5 +170,7 @@ void Clustering::overlaps(std::vector<Cluster> &clusterlist) {
 void Clustering::start(pt::ptree sample) {
     pt::ptree input = sample.get_child("input");
     std::string splits = input.get<std::string>("splits");
+
+    std::cout << helper::getTime() << "Process sample: " << splits << "\n";
     iterate(splits);
 }

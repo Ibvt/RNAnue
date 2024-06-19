@@ -19,52 +19,35 @@ void Preproc::processing(fs::path& in, fs::path& out) {
 
     std::mutex inMutex, outMutex; //
     seqan3::sequence_file_input fin{in.string()};
-    std::ofstream fout(out.string());
-    //seqan3::sequence_file_output fout{out.string()}; // causes segfault/assertion error
+    seqan3::sequence_file_output fout{out.string()};
 
-    std::pair<std::size_t, std::size_t> bnds;
     int readcount = 0;
-
     auto reads = fin | seqan3::views::async_input_buffer(100);
     auto worker = [&]()
     {
         for (auto & record : reads)
         {
-            inMutex.lock();
+            if(readcount != 0 && readcount % 100000 == 0) {
+                std::cout << "\r" << helper::getTime() << readcount << " reads processed " << std::flush;
+            }
+            readcount++;
+
             std::string seqid = record.id();
             dtp::DNAVector seq = record.sequence();
             dtp::QualVector qual = record.base_qualities();
-            if(readcount != 0 && readcount % 100000 == 0) {
-                std::cout << helper::getTime() << readcount << " reads processed \n";
-            }
-            readcount++;
-            inMutex.unlock();
 
-            bnds = trimReads(seq); //
+            std::pair<size_t,size_t> bnds = trimReads(seq); //
             // perform window trimming on the data (if activated)
             if(params["wtrim"].as<std::bitset<1>>() == std::bitset<1>("1")) {
                 bnds.second = nibble(qual, bnds);
             }
-            dtp::DNASpan trimmedSeq = seq | seqan3::views::slice(bnds.first, bnds.second);
-            dtp::QualSpan trimmedQual = qual | seqan3::views::slice(bnds.first, bnds.second);
+
+            auto trimmedSeq = seq | seqan3::views::slice(bnds.first, bnds.second);
+            auto trimmedQual = qual | seqan3::views::slice(bnds.first, bnds.second);
             dtp::FASTQRecord trimmedRecord{seqid, trimmedSeq, trimmedQual};
-
-
-            /*
-            std::cout << "bnds: " << bnds.first << " " << bnds.second << std::endl;
-            std::cout << "Size of orig sequence: " << std::ranges::size(seq) << std::endl;
-            std::cout << "Size of orig qual: " << std::ranges::size(seq) << std::endl;
-            std::cout << "Size of sequence: " << std::ranges::size(trimmedSeq) << std::endl;
-            std::cout << "Size of qual: " << std::ranges::size(trimmedQual) << std::endl;
-            assert(std::ranges::size(trimmedSeq) == std::ranges::size(trimmedQual));
-             */
-
             if(calcAvgPhred(trimmedQual) >= quality && trimmedSeq.size() >= minlen) {
-                //outMutex.lock();
                 std::lock_guard<std::mutex> lock(outMutex);
-                fout << fastqToString(trimmedRecord) << "\n";
-                //fout.push_back(trimmedRecord); // causes segfault/assertion error
-                //outMutex.unlock();
+                fout.push_back(trimmedRecord);
             }
         }
     };
@@ -74,8 +57,11 @@ void Preproc::processing(fs::path& in, fs::path& out) {
         threadObjects.push_back(std::async(std::launch::async, worker));
     }
 
-    // close files
-    fout.close();
+    for(auto& thread : threadObjects) {
+        thread.get();
+    }
+
+    std::cout << "... Finished!\n";
 }
 
 // handling for paired-end reads
@@ -89,21 +75,13 @@ void Preproc::processing(fs::path& inFwd, fs::path& outFwd, fs::path& inRev, fs:
     std::cout << helper::getTime() << "forward: " << inFwd << "\n";
     std::cout << helper::getTime() << "reverse: " << inRev << "\n";
 
-    std::ofstream outFwdSeq(outFwd.string());
-    std::ofstream outR1onlySeq(outR1only.string());
-    std::ofstream outR2onlySeq(outR2only.string());
-    std::ofstream outR1unmrgSeq(outR1unmerged.string());
-    std::ofstream outR2unmrgSeq(outR2unmerged.string());
-
-    /* causes issues on multicore / assertions error
     seqan3::sequence_file_output outFwdSeq{outFwd.string()};
     seqan3::sequence_file_output outR1onlySeq{outR1only.string()};
     seqan3::sequence_file_output outR2onlySeq{outR2only.string()};
     seqan3::sequence_file_output outR1unmrgSeq{outR1unmerged.string()};
-    seqan3::sequence_file_output outR2unmrgSeq{outR2unmerged.string()};*/
+    seqan3::sequence_file_output outR2unmrgSeq{outR2unmerged.string()};
 
-    std::mutex inMutex, outMutex;
-    std::pair<std::size_t, std::size_t> bndsFwd, bndsRev;
+    std::mutex outMutex;
 
     int readcount = 0;
     auto inFwdSeqBuf = inFwdSeq | seqan3::views::async_input_buffer(100);
@@ -113,22 +91,21 @@ void Preproc::processing(fs::path& inFwd, fs::path& outFwd, fs::path& inRev, fs:
             std::string seqidFwd, seqidRev;
             dtp::DNAVector seqFwd, seqRev;
             dtp::QualVector qualFwd, qualRev;
-            {
-                std::lock_guard lock(inMutex);
-                if(readcount != 0 && readcount % 100000 == 0) {
-                    std::cout << helper::getTime() << "Processed reads: " << (readcount++) << "\n";
-                }
-                seqidFwd = fwd.id();
-                seqidRev = rev.id();
-                seqFwd = fwd.sequence();
-                seqRev = rev.sequence();
-                qualFwd = fwd.base_qualities();
-                qualRev = rev.base_qualities();
+
+            if(readcount != 0 && readcount % 100000 == 0) {
+                std::cout << "\r" << helper::getTime() << "Processed reads: " << readcount << std::flush;
             }
+            readcount++;
+            seqidFwd = fwd.id();
+            seqidRev = rev.id();
+            seqFwd = fwd.sequence();
+            seqRev = rev.sequence();
+            qualFwd = fwd.base_qualities();
+            qualRev = rev.base_qualities();
 
             // trimming
-            bndsFwd = trimReads(seqFwd);
-            bndsRev = trimReads(seqRev);
+            std::pair<size_t, size_t> bndsFwd = trimReads(seqFwd);
+            std::pair<size_t, size_t> bndsRev = trimReads(seqRev);
             if (params["wtrim"].as<std::bitset<1>>() == std::bitset<1>("1")) {
                 bndsFwd.second = nibble(qualFwd, bndsFwd);
                 bndsFwd.second = nibble(qualRev, bndsRev);
@@ -156,15 +133,15 @@ void Preproc::processing(fs::path& inFwd, fs::path& outFwd, fs::path& inRev, fs:
                     {
                         std::lock_guard<std::mutex> lock(outMutex);
                         dtp::FASTQRecord outMerged{seqidFwd, merged.first, merged.second};
-                        outFwdSeq << fastqToString(outMerged) << "\n";
+                        outFwdSeq.push_back(outMerged);
                     }
                 } else { // reads could not have been merged
                     {
                         std::lock_guard<std::mutex> lock(outMutex);
                         dtp::FASTQRecord outR1unmrgObj{seqidFwd, trmSeqFwd, trmQualFwd};
                         dtp::FASTQRecord outR2unmrgObj{seqidRev, trmSeqRev, trmQualRev};
-                        outR1unmrgSeq << fastqToString(outR1unmrgObj) << "\n";
-                        outR2unmrgSeq << fastqToString(outR2unmrgObj) << "\n";
+                        outR1unmrgSeq.push_back(outR1unmrgObj);
+                        outR2unmrgSeq.push_back(outR2unmrgObj);
                     }
                 }
             } else {
@@ -172,7 +149,7 @@ void Preproc::processing(fs::path& inFwd, fs::path& outFwd, fs::path& inRev, fs:
                     {
                         std::lock_guard<std::mutex> lock(outMutex);
                         dtp::FASTQRecord outR1onlyObj{seqidFwd, trmSeqFwd, trmQualFwd};
-                        outR1onlySeq << fastqToString(outR1onlyObj) << "\n";
+                        outR1onlySeq.push_back(outR1onlyObj);
                     }
                 } else {
                     if (!fwdFilter && revFilter) { // R2 only
@@ -184,12 +161,13 @@ void Preproc::processing(fs::path& inFwd, fs::path& outFwd, fs::path& inRev, fs:
                         dtp::FASTQRecord outR2onlyObj{seqidFwd, revSeqRCVec, revQualRVec};
                         {
                             std::lock_guard<std::mutex> lock(outMutex);
-                            outR2onlySeq << fastqToString(outR2onlyObj) << "\n";
+                            outR2onlySeq.push_back(outR2onlyObj);
                         }
                     }
                 }
             }
         }
+        std::cout << "...Finished!\n";
     };
 
     std::vector<std::future<void>> threadObjects;
@@ -197,14 +175,10 @@ void Preproc::processing(fs::path& inFwd, fs::path& outFwd, fs::path& inRev, fs:
         threadObjects.push_back(std::async(std::launch::async, worker));
     }
 
-    // close
-    outFwdSeq.close();
-    outR1onlySeq.close();
-    outR2onlySeq.close();
-    outR1unmrgSeq.close();
-    outR2unmrgSeq.close();
+    for(auto& thread : threadObjects) {
+        thread.get();
+    }
 }
-
 
 //
 std::pair<size_t, size_t> Preproc::trimReads(dtp::DNAVector& seq) {
@@ -412,13 +386,4 @@ double Preproc::calcAvgPhred(auto& qual) {
     auto phredSum = std::accumulate(phredScores.begin(), phredScores.end(), 0);\
     double phredAvg = phredSum / std::ranges::size(phredScores);
     return phredAvg;
-}
-
-std::string Preproc::fastqToString(dtp::FASTQRecord& rec) {
-    std::stringstream ss;
-    ss << "@" << std::get<0>(rec) << "\n";
-    for(auto& c : std::get<1>(rec)) { ss << c.to_char(); }
-    ss << "\n+\n";
-    for(auto& q : std::get<2>(rec)) { ss << q.to_char(); }
-    return ss.str();
 }

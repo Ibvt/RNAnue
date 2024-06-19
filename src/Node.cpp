@@ -1,8 +1,9 @@
 #include "Node.hpp"
 
 IntervalData::IntervalData(std::string chrom, char strand, std::string id, std::string name,
-                   std::string biotype, dtp::Interval interval, IntervalData* split) :
-    chrom(chrom), strand(strand), id(id), name(name), biotype(biotype), interval(interval), split{split} {}
+                   std::string biotype, std::string product, dtp::Interval interval, IntervalData* split) :
+    chrom(chrom), strand(strand), id(id), name(name), biotype(biotype), product(product),
+    interval(interval), split{split} {}
 IntervalData::~IntervalData() {}
 bool IntervalData::operator>(const dtp::Interval& other) const { return this->interval.first > other.first; }
 bool IntervalData::operator<(const dtp::Interval& other) const { return this->interval.first < other.first; }
@@ -18,6 +19,8 @@ std::string IntervalData::getName() const { return name; }
 void IntervalData::setName(std::string name) { this->name = name; }
 std::string IntervalData::getBiotype() const { return biotype; }
 void IntervalData::setBiotype(std::string biotype) { this->biotype = biotype; }
+std::string IntervalData::getProduct() const { return product; }
+void IntervalData::setProduct(std::string product) { this->product = product; }
 dtp::Interval IntervalData::getInterval() { return interval; }
 void IntervalData::setInterval(dtp::Interval interval) { this->interval = interval; }
 dtp::SpliceJunctions IntervalData::getJunctions() const { return junctions; }

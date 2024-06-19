@@ -9,6 +9,7 @@
 #include <seqan3/alphabet/quality/phred42.hpp>
 #include <seqan3/io/sequence_file/input.hpp>
 #include <seqan3/io/sequence_file/output.hpp>
+#include <seqan3/io/sam_file/all.hpp>
 
 
 namespace fs = boost::filesystem;
@@ -103,6 +104,13 @@ namespace dtp {
         }
     };
     using IntKey = std::vector<IntPartner>;
+
+    using BAMOut = seqan3::sam_file_output<seqan3::fields<seqan3::field::seq,
+            seqan3::field::id, seqan3::field::ref_id, seqan3::field::ref_offset,
+            seqan3::field::cigar, seqan3::field::mapq, seqan3::field::qual,
+            seqan3::field::flag, seqan3::field::mate, seqan3::field::tags,
+            seqan3::field::header_ptr>, seqan3::type_list<seqan3::format_sam, seqan3::format_bam>,
+            std::deque<std::__cxx11::basic_string<char>>>;
 }
 
 #endif //RNANUE_DATATYPES_HPP

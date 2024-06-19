@@ -15,6 +15,7 @@
 #include <sstream>
 #include <regex>
 #include <cstdlib>
+#include <condition_variable>
 
 // Boost
 #include <boost/program_options.hpp>
@@ -72,6 +73,7 @@ template <> struct seqan3::sam_tag_type<"XR"_tag> { using type = float; }; // si
 template <> struct seqan3::sam_tag_type<"XA"_tag> { using type = std::string; }; // alignment
 template <> struct seqan3::sam_tag_type<"XS"_tag> { using type = int32_t; }; // quality
 template <> struct seqan3::sam_tag_type<"XE"_tag> { using type = float; }; // end of split
+template <> struct seqan3::sam_tag_type<"XD"_tag> { using type = std::string; }; // MFE in dot-bracket notation
 
 
 using namespace seqan3::literals;
@@ -80,6 +82,27 @@ using seqan3::get;
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 namespace pt = boost::property_tree;
+
+template <typename T>
+class SafeQueue {
+    public:
+        // constructor
+        SafeQueue();
+        ~SafeQueue();
+
+        // operations
+        void push(T value);
+        bool pop(T& result);
+        void reset();
+        void setDone();
+
+    private:
+        std::queue<T> q;
+        std::mutex mtx;
+        std::condition_variable cv;
+        bool done = false;
+};
+
 
 class SplitReadCalling {
     public:
@@ -90,8 +113,10 @@ class SplitReadCalling {
         void start(pt::ptree sample, pt::ptree condition);
         void sort(const std::string& inputFile, const std::string& outputFile); // sort BAM file
 
+        void producer(seqan3::sam_file_input<>& inputfile);
+        void consumer(dtp::BAMOut& singleOut, dtp::BAMOut& splitsOut, dtp::BAMOut& multsplitsOut,
+                      std::mutex& singleOutMutex, std::mutex& splitsOutMutex, std::mutex& multsplitsOutMutex);
 
-        void iterate(std::string& matched, std::string& single, std::string& splits, std::string& multsplits);
         template <typename T>
         void process(std::vector<T>& readrecords, auto& singleOut, auto& splitsOut, auto& multsplitsOut,
                      auto& singleOutMutex, auto& splitsOutMutex, auto& multsplitsOutMutex);
@@ -105,11 +130,11 @@ class SplitReadCalling {
 
         // filters
         TracebackResult complementarity(dtp::DNASpan &seq1, dtp::DNASpan &seq2);
-        double hybridization(dtp::DNASpan &seq1, dtp::DNASpan& seq2);
+        std::pair<double,std::string> hybridization(dtp::DNASpan &seq1, dtp::DNASpan& seq2);
 
         // output
         void addComplementarityToSamRecord(SAMrecord &rec1, SAMrecord &rec2, TracebackResult &res);
-        void addHybEnergyToSamRecord(SAMrecord &rec1, SAMrecord &rec2, double &hyb);
+        void addHybEnergyToSamRecord(SAMrecord &rec1, SAMrecord &rec2, std::pair<double,std::string> &hyb);
         void writeSAMrecordToBAM(auto& bamfile, std::vector<std::pair<SAMrecord, SAMrecord>>& records);
         void writeStats();
 
@@ -120,8 +145,12 @@ class SplitReadCalling {
         std::shared_ptr<Stats> stats;
         int replPerCond; // number of replicates per condition
         std::string condition; // stores the current condition
-        std::deque<std::string> refIds; // stores the reference ids
-        FilterScores filterScores;
+
+        // refIds
+        std::deque<std::string> refIds;
+
+        // queue
+        SafeQueue<std::vector<typename seqan3::sam_file_input<>::record_type>> queue;
 };
 
 #endif //RNANUE_DETECT_HPP

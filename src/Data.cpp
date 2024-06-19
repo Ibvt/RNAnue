@@ -401,14 +401,14 @@ void Data::detect() {
 }
 
 void Data::clustering() {
-    std::cout << helper::getTime() << "Start the Clustering\n";
+    std::cout << helper::getTime() << "Start the Clustering of the Split Reads\n";
     Clustering clu(params);
     callInAndOut(std::bind(&Clustering::start, &clu, std::placeholders::_1));
     clu.sumup();
 }
 
 void Data::analysis() {
-    std::cout << helper::getTime() << "Start the Analysis\n";
+    std::cout << helper::getTime() << "Start the Analysis of the Split Reads\n";
     Analysis ana(params);
     callInAndOut(std::bind(&Analysis::start, &ana, std::placeholders::_1, std::placeholders::_2));
     // write file output files

@@ -19,7 +19,7 @@ void Align::buildIndex() {
         std::cout << helper::getTime() << "The reference index " << idx << " already exists\n";
     } else {
         // create index
-        std::cout << helper::getTime() << "Create index for " << ref << "\n";
+        std::cout << helper::getTime() << "Create reference index for " << ref << "\n";
         std::string idxCall = "segemehl.x -x " + idx.string() + " -d " + ref;
         const char* idxCallChar = idxCall.c_str();
         int result = system(idxCallChar);
@@ -32,7 +32,7 @@ void Align::buildIndex() {
 
 // aligns the reads to the reference genome
 void Align::alignReads(std::string query, std::string mate, std::string matched) {
-    std::cout << helper::getTime() << "Start Alignment\n";
+    std::cout << helper::getTime() << "Start Alignment on sample: " << query << "\n";
     std::string align = "segemehl.x";
     align += " -S "; // split mode
     align += " -b "; // output in bam format (and sorted)
@@ -49,7 +49,7 @@ void Align::alignReads(std::string query, std::string mate, std::string matched)
         align += " -p " + mate;
     }
     align += " -o " + matched;
-    std::cout << align << "\n";
+//    std::cout << align << "\n";
     const char* alignCallChar = align.c_str();
     int result = system(alignCallChar);
     if(result != 0) {

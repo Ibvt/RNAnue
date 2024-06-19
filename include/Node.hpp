@@ -13,7 +13,8 @@
 class IntervalData {
     public:
         IntervalData(std::string chrom, char strand, std::string id, std::string name,
-                 std::string biotype, dtp::Interval interval, IntervalData* split);
+                 std::string biotype, std::string product, dtp::Interval interval,
+                 IntervalData* split);
         ~IntervalData();
 
         // operator overloading
@@ -31,6 +32,8 @@ class IntervalData {
         void setName(std::string name);
         std::string getBiotype() const;
         void setBiotype(std::string biotype);
+        std::string getProduct() const;
+        void setProduct(std::string product);
         dtp::Interval getInterval();
         void setInterval(dtp::Interval interval);
         dtp::SpliceJunctions getJunctions() const;
@@ -50,6 +53,7 @@ class IntervalData {
         std::string id;
         std::string name;
         std::string biotype;
+        std::string product;
         dtp::Interval interval;
         dtp::SpliceJunctions junctions;
         IntervalData* split;

@@ -1,5 +1,43 @@
 #include "SplitReadCalling.hpp"
 
+template <typename T>
+SafeQueue<T>::SafeQueue() {}
+
+template <typename T>
+SafeQueue<T>::~SafeQueue() {}
+
+template <typename T>
+void SafeQueue<T>::push(T value) {
+    std::lock_guard<std::mutex> lock(mtx);
+    q.push(std::move(value));
+    cv.notify_one();
+}
+
+template <typename T>
+bool SafeQueue<T>::pop(T& result) {
+    std::unique_lock<std::mutex> lock(mtx);
+    cv.wait(lock, [this]() { return !q.empty() || done; });
+    if (q.empty()) return false;
+    result = std::move(q.front());
+    q.pop();
+    return true;
+}
+
+template <typename T>
+void SafeQueue<T>::reset() {
+    std::lock_guard<std::mutex> lock(mtx);
+    std::queue<T> empty;
+    std::swap(q, empty);
+    done = false;
+}
+
+template <typename T>
+void SafeQueue<T>::setDone() {
+    std::lock_guard<std::mutex> lock(mtx);
+    done = true;
+    cv.notify_all();
+}
+
 SplitReadCalling::SplitReadCalling(po::variables_map params) {
     this->params = params;
     // create IBPTree (if splicing need to be considered)
@@ -10,80 +48,114 @@ SplitReadCalling::SplitReadCalling(po::variables_map params) {
         this->features = IBPTree(params, k);
     }
     this->condition = ""; // stores the current condition
-    this->refIds = std::deque<std::string>(); // stores the reference ids
+    this->refIds = std::deque<std::string>(); // stores the reference IDs
 
     // initialize stats
     this->stats = std::make_shared<Stats>();
     this->replPerCond = -1; // number of replicates per condition
 
-    // initialize filtering
-    this->filterScores = FilterScores();
 }
 
 SplitReadCalling::~SplitReadCalling() {}
 
-void SplitReadCalling::iterate(std::string& matched, std::string& single, std::string &splits, std::string &multsplits) {
-    seqan3::sam_file_input inBam{matched}; // initialize input file
-    std::mutex inBamMutex; // mutex for input file
+void SplitReadCalling::start(pt::ptree sample, pt::ptree condition) {
+    // input
+    pt::ptree input = sample.get_child("input");
+    std::string matched = input.get<std::string>("matched");
 
-    std::vector<size_t> ref_lengths{}; // header
+    if(this->condition != "" && this->condition != condition.get<std::string>("condition")) {
+        replPerCond = -1; // 'new' condition - reset replicates counter
+    }
+    this->condition = condition.get<std::string>("condition"); // store current condition (e.g. rpl_37C)
+    this->stats->reserveStats(this->condition, ++replPerCond); // increase the number of replicates per condition
+
+    // output
+    pt::ptree output = sample.get_child("output");
+    std::string single = output.get<std::string>("single");
+    std::string splits = output.get<std::string>("splits");
+    std::string multsplits = output.get<std::string>("multsplits");
+
+    std::cout << helper::getTime() << "Split Read Calling on sample: " << matched << std::endl;
+
+    srand(time(NULL)); // seed the random number generator
+    int randNum = rand() % 1000;
+    std::string sortedBam = this->condition + "_" + std::to_string(randNum) + ".bam";
+    fs::path sortedBamFile = fs::path(params["outdir"].as<std::string>()) / fs::path("tmp") / fs::path(sortedBam);
+    std::string sortedBamFileStr = sortedBamFile.string();
+    sort(matched, sortedBamFileStr);
+
+    seqan3::sam_file_input inBam{sortedBamFileStr}; // initialize input file
+    std::vector<size_t> refLengths;
     for(auto &info : inBam.header().ref_id_info) {
-        ref_lengths.push_back(std::get<0>(info));
+        refLengths.push_back(std::get<0>(info));
     }
     this->refIds = inBam.header().ref_ids();
+    using recordType = typename decltype(inBam)::record_type;
 
-    seqan3::sam_file_output singleOut{single, this->refIds, ref_lengths}; // initialize output file
-    seqan3::sam_file_output splitsOut{splits,  this->refIds, ref_lengths}; // initialize output file
-    seqan3::sam_file_output multsplitsOut{multsplits, this->refIds, ref_lengths}; // initialize output file
+    // create output files
+    seqan3::sam_file_output singleOut{single, this->refIds, refLengths}; // initialize output file
+    seqan3::sam_file_output splitsOut{splits,  this->refIds, refLengths}; // initialize output file
+    seqan3::sam_file_output multsplitsOut{multsplits, this->refIds, refLengths}; // initialize output file
+    std::mutex singleOutMutex, splitsOutMutex, multsplitsOutMutex; // create mutex objects for output
 
-    // create mutex objects for output - had to be done here as class variables cause errors w/ std::bind
-    std::mutex singleOutMutex;
-    std::mutex splitsOutMutex;
-    std::mutex multsplitsOutMutex;
+    queue.reset(); // reset the queue
 
-    std::string QNAME = "";
-    std::string currentQNAME = "";
-
-    auto worker = [&]() {
-        using record_type = typename decltype(inBam)::record_type;
-        std::vector<record_type> readrecords;
-        auto processRecords = [&]() {
-            if(!readrecords.empty()) {
-                this->process(readrecords, singleOut, splitsOut, multsplitsOut,
-                              singleOutMutex, splitsOutMutex, multsplitsOutMutex);
-                readrecords.clear();
-            }
-        };
-        for(auto && record : inBam) {
-            {
-                std::lock_guard<std::mutex> lock(inBamMutex);
-                // ignore reads if unmapped and do not suffice length requirements
-                if(static_cast<bool>(record.flag() & seqan3::sam_flag::unmapped)) { continue; }
-                if(static_cast<int>(record.sequence().size()) <= params["minlen"].as<int>()) { continue; }
-                if(static_cast<int>(record.mapping_quality()) <= params["mapq"].as<int>()) { continue; }
-
-                QNAME = record.id();
-                if((currentQNAME != "") && (currentQNAME != QNAME)) {
-                    this->stats->setReadsCount(this->condition, replPerCond, 1);
-                    processRecords();
-                    // prepare for next iteration
-                    readrecords.push_back(record);
-                    currentQNAME = QNAME;
-                } else {
-                    readrecords.push_back(record);
-                    currentQNAME = QNAME;
-                }
-            }
-        }
-        processRecords();
-    };
-
-    std::vector<std::future<void>> threadObjects;
-    for (unsigned i = 0; i < 1; ++i) {
-        threadObjects.push_back(std::async(std::launch::async, worker));
+    std::vector<std::thread> consumers; // intialize the consumers
+    for(int i=0;i<params["threads"].as<int>();++i) {
+        consumers.emplace_back([this, &singleOut, &splitsOut, &multsplitsOut,
+                                &singleOutMutex, &splitsOutMutex, &multsplitsOutMutex] () {
+            this->consumer(singleOut, splitsOut, multsplitsOut, singleOutMutex, splitsOutMutex, multsplitsOutMutex);
+        });
     }
-    for (auto& thread : threadObjects) {
-        thread.get();
+
+    producer(inBam); // start the producer (and add the recordsreads to the queue)
+
+    for(auto& consumer : consumers) {
+        consumer.join();
+    }
+}
+
+void SplitReadCalling::producer(seqan3::sam_file_input<>& inputfile) {
+    using record_type = typename seqan3::sam_file_input<>::record_type;
+    std::vector<record_type> readRecords;
+    std::string QNAME = "", currentQNAME = "";
+    for(auto && record : inputfile) {
+        // ignore reads if unmapped and do not suffice length requirements
+        if(static_cast<bool>(record.flag() & seqan3::sam_flag::unmapped)) { continue; }
+        if(static_cast<int>(record.sequence().size()) <= params["minlen"].as<int>()) { continue; }
+        if(static_cast<int>(record.mapping_quality()) <= params["mapq"].as<int>()) { continue; }
+
+        // group reads by QNAME
+        QNAME = record.id();
+        if((currentQNAME != "") && (currentQNAME != QNAME)) {
+            this->stats->setReadsCount(this->condition, replPerCond, 1);
+            queue.push(readRecords);
+            readRecords.clear();
+        }
+        // prepare for the next iteration
+        readRecords.push_back(record);
+        currentQNAME = QNAME;
+    }
+    if(!readRecords.empty()) {
+        queue.push(readRecords);
+    }
+    queue.setDone();
+}
+
+void SplitReadCalling::consumer(dtp::BAMOut& singleOut, dtp::BAMOut& splitsOut, dtp::BAMOut& multsplitsOut,
+                                std::mutex& singleOutMutex, std::mutex& splitsOutMutex, std::mutex& multsplitsOutMutex) {
+    using recordType = typename seqan3::sam_file_input<>::record_type;
+    std::vector<recordType> readrecords;
+    while(true) {
+        if(!queue.pop(readrecords)) {
+            break;
+        }
+        try {
+            this->process(readrecords, singleOut, splitsOut, multsplitsOut,
+                          singleOutMutex, splitsOutMutex, multsplitsOutMutex);
+        } catch (const std::exception& e) {
+            std::cerr << helper::getTime() << "Error: " << e.what() << std::endl;
+        }
     }
 }
 
@@ -255,10 +327,10 @@ void SplitReadCalling::decide(std::map<int, std::vector<SAMrecord>>& putative, a
                         // determine complementarity/hybridization
                         if (p1.empty() && p2.empty()) {
                             TracebackResult initCmpl = complementarity(records[i].sequence(), records[j].sequence());
-                            double initHyb = hybridization(records[i].sequence(), records[j].sequence());
+                            std::pair<double,std::string> initHyb = hybridization(records[i].sequence(), records[j].sequence());
                             if (!initCmpl.a.empty()) { // split read survived complementarity/sitelenratio cutoff
-                                if (initHyb <= params["nrgmax"].as<double>()) {
-                                    filters = std::make_pair(initCmpl.cmpl, initHyb);
+                                if (initHyb.first <= params["nrgmax"].as<double>()) {
+                                    filters = std::make_pair(initCmpl.cmpl, initHyb.first);
                                     addComplementarityToSamRecord(records[i], records[j], initCmpl);
                                     addHybEnergyToSamRecord(records[i], records[j], initHyb);
                                     finalSplits.push_back(std::make_pair(records[i], records[j]));
@@ -266,25 +338,25 @@ void SplitReadCalling::decide(std::map<int, std::vector<SAMrecord>>& putative, a
                             }
                         } else {
                             TracebackResult cmpl = complementarity(records[i].sequence(), records[j].sequence());
-                            double hyb = hybridization(records[i].sequence(), records[j].sequence());
+                            std::pair<double,std::string> hyb = hybridization(records[i].sequence(), records[j].sequence());
                             if (!cmpl.a.empty()) { // split read survived complementarity/sitelenratio cutoff
                                 if (cmpl.cmpl > filters.first) { // complementarity is higher
                                     finalSplits.clear();
-                                    filters = std::make_pair(cmpl.cmpl, hyb);
+                                    filters = std::make_pair(cmpl.cmpl, hyb.first);
                                     addComplementarityToSamRecord(records[i], records[j], cmpl);
                                     addHybEnergyToSamRecord(records[i], records[j], hyb);
                                     finalSplits.push_back(std::make_pair(records[i], records[j]));
                                 } else {
                                     if (cmpl.cmpl == filters.first) {
-                                        if (hyb > filters.second) {
+                                        if (hyb.first > filters.second) {
                                             finalSplits.clear();
-                                            filters = std::make_pair(cmpl.cmpl, hyb);
+                                            filters = std::make_pair(cmpl.cmpl, hyb.first);
                                             addComplementarityToSamRecord(records[i], records[j], cmpl);
                                             addHybEnergyToSamRecord(records[i], records[j], hyb);
                                             finalSplits.push_back(std::make_pair(records[i], records[j]));
                                         }
                                     } else {
-                                        if (hyb == filters.second) { // same compl & hyb --> ambiguous
+                                        if (hyb.first == filters.second) { // same compl & hyb --> ambiguous
                                             addComplementarityToSamRecord(records[i], records[j], cmpl);
                                             addHybEnergyToSamRecord(records[i], records[j], hyb);
                                             finalSplits.push_back(std::make_pair(records[i], records[j]));
@@ -428,32 +500,6 @@ void SplitReadCalling::sort(const std::string& inputFile, const std::string& out
 }
 
 
-void SplitReadCalling::start(pt::ptree sample, pt::ptree condition) {
-    // input
-    pt::ptree input = sample.get_child("input");
-    std::string matched = input.get<std::string>("matched");
-
-    if(this->condition != "" && this->condition != condition.get<std::string>("condition")) {
-        replPerCond = -1; // 'new' condition - reset replicates counter
-    }
-    this->condition = condition.get<std::string>("condition"); // store current condition (e.g. rpl_37C)
-    this->stats->reserveStats(this->condition, ++replPerCond); // increase the number of replicates per condition
-
-    // output
-    pt::ptree output = sample.get_child("output");
-    std::string single = output.get<std::string>("single");
-    std::string splits = output.get<std::string>("splits");
-    std::string multsplits = output.get<std::string>("multsplits");
-
-    srand(time(NULL)); // seed the random number generator
-    int randNum = rand() % 1000;
-    std::string sortedBam = this->condition + "_" + std::to_string(randNum) + ".bam";
-    fs::path sortedBamFile = fs::path(params["outdir"].as<std::string>()) / fs::path("tmp") / fs::path(sortedBam);
-    std::string sortedBamFileStr = sortedBamFile.string();
-
-    sort(matched, sortedBamFileStr);
-    iterate(sortedBamFileStr, single, splits, multsplits);
-}
 
 TracebackResult SplitReadCalling::complementarity(dtp::DNASpan& seq1, dtp::DNASpan& seq2) {
     std::string seq1_str;
@@ -490,9 +536,9 @@ TracebackResult SplitReadCalling::complementarity(dtp::DNASpan& seq1, dtp::DNASp
     }
 }
 
-double SplitReadCalling::hybridization(std::span<seqan3::dna5> &seq1, std::span<seqan3::dna5> &seq2) {
+std::pair<double,std::string> SplitReadCalling::hybridization(std::span<seqan3::dna5> &seq1, std::span<seqan3::dna5> &seq2) {
     double hybScore = 1000.0;
-    if(seq1.empty() || seq2.empty()) { return 1000; }
+    if(seq1.empty() || seq2.empty()) { return {1000,""}; }
     std::string rna1str, rna2str = "";
     for(unsigned i=0;i<seq1.size();++i) { rna1str += seq1[i].to_char(); } // convert to string
     for(unsigned i=0;i<seq2.size();++i) { rna2str += seq2[i].to_char(); }
@@ -510,7 +556,7 @@ double SplitReadCalling::hybridization(std::span<seqan3::dna5> &seq1, std::span<
     FILE* pipe = popen(hyb.c_str(), "r");
     if (!pipe) {
         std::cerr << "Error opening pipe" << std::endl;
-        return 1;
+        return {1000,""};
     }
     char buffer[1024];
     std::string result;
@@ -518,7 +564,7 @@ double SplitReadCalling::hybridization(std::span<seqan3::dna5> &seq1, std::span<
         result += buffer;
     }
     pclose(pipe);
-    if(result.empty()) { return 1000; }
+    if(result.empty()) { return {1000,""}; }
 
     std::stringstream ss(result);
     std::vector<std::string> tokens;
@@ -531,7 +577,8 @@ double SplitReadCalling::hybridization(std::span<seqan3::dna5> &seq1, std::span<
     std::smatch matches;
     std::regex_search(tokens[1], matches, regexp);
     hybScore = stod(matches[0]);
-    return hybScore;
+
+    return std::make_pair(hybScore, dotbracket);
 }
 
 void SplitReadCalling::addComplementarityToSamRecord(SAMrecord &rec1, SAMrecord &rec2, TracebackResult &res) {
@@ -549,9 +596,11 @@ void SplitReadCalling::addComplementarityToSamRecord(SAMrecord &rec1, SAMrecord 
     rec2.tags().get<"XS"_tag>() = res.score;
 }
 
-void SplitReadCalling::addHybEnergyToSamRecord(SAMrecord &rec1, SAMrecord &rec2, double &hyb) {
-    rec1.tags().get<"XE"_tag>() = (float)hyb;
-    rec2.tags().get<"XE"_tag>() = (float)hyb;
+void SplitReadCalling::addHybEnergyToSamRecord(SAMrecord &rec1, SAMrecord &rec2, std::pair<double, std::string> &hyb) {
+    rec1.tags().get<"XE"_tag>() = (float)hyb.first;
+    rec2.tags().get<"XE"_tag>() = (float)hyb.first;
+    rec1.tags().get<"XD"_tag>() = hyb.second;
+    rec2.tags().get<"XD"_tag>() = hyb.second;
 }
 
 void SplitReadCalling::writeStats() {

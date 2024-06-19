@@ -57,5 +57,5 @@ RUN mv seqan3-3.3.0-Source seqan3
 WORKDIR /RNAnue/build
 RUN cmake .. -DCMAKE_BUILD_TYPE=Release
 RUN make
-RUN echo 'alias RNAnue="./RNAnue/build/RNAnue"' >> ~/.bashrc
-WORKDIR /
+# make RNAnue available in the PATH
+ENV PATH=$PATH:/RNAnue/build/
