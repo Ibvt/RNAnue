@@ -6,15 +6,15 @@
                 "samples": [
                     {
                         "input": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/ctrls\/cond1\/S1_cond1_R1.fastq",
-                            "reverse": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/ctrls\/cond1\/S1_cond1_R2.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/ctrls\/cond1\/S1_cond1_R1.fastq",
+                            "reverse": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/ctrls\/cond1\/S1_cond1_R2.fastq"
                         },
                         "output": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond1\/S1_cond1_preproc.fastq",
-                            "R1only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond1\/S1_cond1_R1only.fastq",
-                            "R2only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond1\/S1_cond1_R2only.fastq",
-                            "R1unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond1\/S1_cond1_R1unmerged.fastq",
-                            "R2unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond1\/S1_cond1_R2unmerged.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond1\/S1_cond1_preproc.fastq",
+                            "R1only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond1\/S1_cond1_R1only.fastq",
+                            "R2only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond1\/S1_cond1_R2only.fastq",
+                            "R1unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond1\/S1_cond1_R1unmerged.fastq",
+                            "R2unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond1\/S1_cond1_R2unmerged.fastq"
                         }
                     }
                 ]
@@ -24,15 +24,15 @@
                 "samples": [
                     {
                         "input": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/ctrls\/cond2\/S2_cond2_R1.fastq",
-                            "reverse": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/ctrls\/cond2\/S2_cond2_R2.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/ctrls\/cond2\/S2_cond2_R1.fastq",
+                            "reverse": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/ctrls\/cond2\/S2_cond2_R2.fastq"
                         },
                         "output": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond2\/S2_cond2_preproc.fastq",
-                            "R1only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond2\/S2_cond2_R1only.fastq",
-                            "R2only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond2\/S2_cond2_R2only.fastq",
-                            "R1unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond2\/S2_cond2_R1unmerged.fastq",
-                            "R2unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond2\/S2_cond2_R2unmerged.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond2\/S2_cond2_preproc.fastq",
+                            "R1only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond2\/S2_cond2_R1only.fastq",
+                            "R2only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond2\/S2_cond2_R2only.fastq",
+                            "R1unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond2\/S2_cond2_R1unmerged.fastq",
+                            "R2unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/ctrls\/cond2\/S2_cond2_R2unmerged.fastq"
                         }
                     }
                 ]
@@ -44,41 +44,41 @@
                 "samples": [
                     {
                         "input": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond1\/S3_cond1_R1.fastq",
-                            "reverse": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond1\/S3_cond1_R2.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond1\/S3_cond1_R1.fastq",
+                            "reverse": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond1\/S3_cond1_R2.fastq"
                         },
                         "output": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S3_cond1_preproc.fastq",
-                            "R1only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S3_cond1_R1only.fastq",
-                            "R2only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S3_cond1_R2only.fastq",
-                            "R1unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S3_cond1_R1unmerged.fastq",
-                            "R2unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S3_cond1_R2unmerged.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S3_cond1_preproc.fastq",
+                            "R1only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S3_cond1_R1only.fastq",
+                            "R2only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S3_cond1_R2only.fastq",
+                            "R1unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S3_cond1_R1unmerged.fastq",
+                            "R2unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S3_cond1_R2unmerged.fastq"
                         }
                     },
                     {
                         "input": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond1\/S4_cond1_R1.fastq",
-                            "reverse": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond1\/S4_cond1_R2.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond1\/S4_cond1_R1.fastq",
+                            "reverse": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond1\/S4_cond1_R2.fastq"
                         },
                         "output": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S4_cond1_preproc.fastq",
-                            "R1only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S4_cond1_R1only.fastq",
-                            "R2only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S4_cond1_R2only.fastq",
-                            "R1unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S4_cond1_R1unmerged.fastq",
-                            "R2unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S4_cond1_R2unmerged.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S4_cond1_preproc.fastq",
+                            "R1only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S4_cond1_R1only.fastq",
+                            "R2only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S4_cond1_R2only.fastq",
+                            "R1unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S4_cond1_R1unmerged.fastq",
+                            "R2unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S4_cond1_R2unmerged.fastq"
                         }
                     },
                     {
                         "input": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond1\/S5_cond1_R1.fastq",
-                            "reverse": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond1\/S5_cond1_R2.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond1\/S5_cond1_R1.fastq",
+                            "reverse": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond1\/S5_cond1_R2.fastq"
                         },
                         "output": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S5_cond1_preproc.fastq",
-                            "R1only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S5_cond1_R1only.fastq",
-                            "R2only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S5_cond1_R2only.fastq",
-                            "R1unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S5_cond1_R1unmerged.fastq",
-                            "R2unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S5_cond1_R2unmerged.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S5_cond1_preproc.fastq",
+                            "R1only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S5_cond1_R1only.fastq",
+                            "R2only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S5_cond1_R2only.fastq",
+                            "R1unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S5_cond1_R1unmerged.fastq",
+                            "R2unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond1\/S5_cond1_R2unmerged.fastq"
                         }
                     }
                 ]
@@ -88,41 +88,41 @@
                 "samples": [
                     {
                         "input": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond2\/S6_cond2_R1.fastq",
-                            "reverse": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond2\/S6_cond2_R2.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond2\/S6_cond2_R1.fastq",
+                            "reverse": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond2\/S6_cond2_R2.fastq"
                         },
                         "output": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S6_cond2_preproc.fastq",
-                            "R1only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S6_cond2_R1only.fastq",
-                            "R2only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S6_cond2_R2only.fastq",
-                            "R1unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S6_cond2_R1unmerged.fastq",
-                            "R2unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S6_cond2_R2unmerged.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S6_cond2_preproc.fastq",
+                            "R1only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S6_cond2_R1only.fastq",
+                            "R2only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S6_cond2_R2only.fastq",
+                            "R1unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S6_cond2_R1unmerged.fastq",
+                            "R2unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S6_cond2_R2unmerged.fastq"
                         }
                     },
                     {
                         "input": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond2\/S7_cond2_R1.fastq",
-                            "reverse": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond2\/S7_cond2_R2.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond2\/S7_cond2_R1.fastq",
+                            "reverse": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond2\/S7_cond2_R2.fastq"
                         },
                         "output": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S7_cond2_preproc.fastq",
-                            "R1only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S7_cond2_R1only.fastq",
-                            "R2only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S7_cond2_R2only.fastq",
-                            "R1unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S7_cond2_R1unmerged.fastq",
-                            "R2unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S7_cond2_R2unmerged.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S7_cond2_preproc.fastq",
+                            "R1only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S7_cond2_R1only.fastq",
+                            "R2only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S7_cond2_R2only.fastq",
+                            "R1unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S7_cond2_R1unmerged.fastq",
+                            "R2unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S7_cond2_R2unmerged.fastq"
                         }
                     },
                     {
                         "input": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond2\/S8_cond2_R1.fastq",
-                            "reverse": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond2\/S8_cond2_R2.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond2\/S8_cond2_R1.fastq",
+                            "reverse": "\/RNAnue\/test\/data\/datahandling\/rawreads_PE\/trtms\/cond2\/S8_cond2_R2.fastq"
                         },
                         "output": {
-                            "forward": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S8_cond2_preproc.fastq",
-                            "R1only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S8_cond2_R1only.fastq",
-                            "R2only": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S8_cond2_R2only.fastq",
-                            "R1unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S8_cond2_R1unmerged.fastq",
-                            "R2unmerged": "\/Users\/sej9799\/Documents\/projects\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S8_cond2_R2unmerged.fastq"
+                            "forward": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S8_cond2_preproc.fastq",
+                            "R1only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S8_cond2_R1only.fastq",
+                            "R2only": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S8_cond2_R2only.fastq",
+                            "R1unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S8_cond2_R1unmerged.fastq",
+                            "R2unmerged": "\/RNAnue\/test\/data\/datahandling\/results_PE\/preproc\/trtms\/cond2\/S8_cond2_R2unmerged.fastq"
                         }
                     }
                 ]
