@@ -5,7 +5,7 @@
 ############################################################
 
 # set the base image to debian
-FROM ubuntu:23.04
+FROM ubuntu:22.04
 # tag version (extract from Config.h)
 ARG VERSION=v0.2.0
 # file author
@@ -45,13 +45,12 @@ RUN make && make install
 
 # retrieve RNAnue
 WORKDIR /
-RUN git clone https://github.com/Ibvt/RNAnue.git
-WORKDIR /RNAnue
+COPY . /RNAnue
 
 # retrieve SeqAn3
 RUN curl -L https://github.com/seqan/seqan3/releases/download/3.3.0/seqan3-3.3.0-Source.tar.xz -o seqan3-3.3.0-Source.tar.xz
 RUN tar -xvf seqan3-3.3.0-Source.tar.xz && rm seqan3-3.3.0-Source.tar.xz
-RUN mv seqan3-3.3.0-Source seqan3
+RUN mv seqan3-3.3.0-Source /RNAnue/seqan3
 
 # install RNAnue
 WORKDIR /RNAnue/build
