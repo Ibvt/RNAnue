@@ -50,7 +50,7 @@ COPY . /RNAnue
 # retrieve SeqAn3
 RUN curl -L https://github.com/seqan/seqan3/releases/download/3.3.0/seqan3-3.3.0-Source.tar.xz -o seqan3-3.3.0-Source.tar.xz
 RUN tar -xvf seqan3-3.3.0-Source.tar.xz && rm seqan3-3.3.0-Source.tar.xz
-RUN mv seqan3-3.3.0-Source seqan3
+RUN mv seqan3-3.3.0-Source /RNAnue/seqan3
 
 # install RNAnue
 WORKDIR /RNAnue/build
