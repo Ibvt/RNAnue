@@ -29,11 +29,21 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: extract version
+      - name: Determine target repository and version
         id: extract_version
         run: | 
-          VERSION=${GITHUB_REF#refs/tags/}
-          echo "::set-output name=VERSION::$VERSION"
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            REPO="cobirna/rnanue" # production repo
+            TAGS="$REPO:$VERSION,$REPO:latest" # push both tags
+          else
+            REPO="cobirna/rnanue-dev" # development/test repo for PRs
+            TAGS="$REPO:latest" # only update 'latest' tag
+          fi 
+          echo "VERSION=$VERSION"
+          echo "REPO=$REPO"
+          echo "TAGS=$TAGS"
+          echo "::set-output name=TAGS::$TAGS"
 
       - name: build and push
         uses: docker/build-push-action@v4
