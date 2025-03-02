@@ -37,6 +37,7 @@ jobs:
             REPO="cobirna/rnanue" # production repo
             TAGS="$REPO:$VERSION,$REPO:latest" # push both tags
           else
+            VERSION="dev" # development/test tag
             REPO="cobirna/rnanue-dev" # development/test repo for PRs
             TAGS="$REPO:latest" # only update 'latest' tag
           fi 
