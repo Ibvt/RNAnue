@@ -25,6 +25,27 @@ void showVersion(std::ostream& _str) {
     _str << std::endl;
 }
 
+void makePathAbs(po::variables_map& params, std::string param, fs::path& configFileDir) {
+    if(params.count(param)) {
+        fs::path filePath = fs::path(params[param].as<std::string>());
+        if(filePath.empty()) { return; } // if file path is empty, do nothing
+        if(!filePath.is_absolute()) {
+            fs::path newPath = configFileDir / filePath;
+            params.erase(param); // remove param from variables_map
+            // add corrected path to variables_map
+            params.insert(std::make_pair(param, po::variable_value((configFileDir / filePath).string(), false)));
+        }
+    }
+}
+
+// correct the paths to absolute paths (if they are relative)
+void correctPaths(po::variables_map& params, fs::path& configFileDir) {
+    std::vector<std::string> paramsToCheck = {"ctrls", "trtms", "outdir", "adpt3", "adpt5", "dbref", "features"};
+    for(auto& param : paramsToCheck) {
+        makePathAbs(params, param, configFileDir);
+    }
+}
+
 int main(int argc, char* argv[]) {
     try {
         std::string readType;
@@ -155,7 +176,6 @@ int main(int argc, char* argv[]) {
                 .add(clustering)
                 .add(output);
 
-
         // translate all positional options into subcall options
         po::positional_options_description p;
         p.add("subcall", -1);
@@ -198,6 +218,11 @@ int main(int argc, char* argv[]) {
                 notify(params);
             }
         }
+
+        // correct the paths (if they are relative)
+        fs::path configFileDir = fs::path(configFile).parent_path();
+        correctPaths(params, configFileDir);
+
         Base base(params);
 
     } catch(po::error& e) {

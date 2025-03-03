@@ -1,6 +1,7 @@
 #include "Data.hpp"
 
 Data::Data(po::variables_map params) : params(params) {
+    std::cout << helper::getTime() << "Data object created\n";
     std::string subcall = params["subcall"].as<std::string>();
     fs::path outDir = fs::path(params["outdir"].as<std::string>());
 
@@ -67,7 +68,7 @@ void Data::detectDataPrep() {
 }
 
 void Data::clusteringDataPrep() {
-fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
+    fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
     fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "detect/trtms";
 
     GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);

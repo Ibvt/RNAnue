@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <chrono>
 #include <random>
+#include <filesystem>
 
 
 // Boost
@@ -18,6 +19,7 @@
 #include "DataTypes.hpp"
 
 namespace fs = boost::filesystem;
+namespace stdfs = std::filesystem;
 
 // filesystem manipulation
 namespace helper {

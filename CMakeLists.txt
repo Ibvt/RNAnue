@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22.1)
-project(RNAnue VERSION 0.2.3)
+project(RNAnue VERSION 0.2.4)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS -fopenmp)
@@ -11,7 +11,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/Config.hpp.in ${CMAKE_CURRENT
 
 ###### SeqAn #####
 list (APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/seqan3/build_system")
-find_package (seqan3 3.0 REQUIRED)
+find_package (seqan3 3.3.0 REQUIRED)
 find_package(OpenMP)
 
 ###### Boost ######
@@ -38,6 +38,9 @@ target_link_libraries(RNAnue PkgConfig::HTSLIB)
 cmake_print_properties(TARGETS RNAnue PROPERTIES TARGET_INCLUDE_DIRECTORIES)
 
 ###### Tests ######
+# make tests optional
+option(BUILD_TESTS "Building unit tests" OFF)
+
 file(GLOB TEST_SOURCES "test/*.cpp")
 file(GLOB SOURCES "src/*.cpp")
 list(REMOVE_ITEM SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
