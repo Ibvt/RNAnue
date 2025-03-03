@@ -1,0 +1,1 @@
+test/ref/GRCh38.primary_assembly.genome_20-22.fa filter=lfs diff=lfs merge=lfs -text
