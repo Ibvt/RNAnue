@@ -13,7 +13,7 @@ to detect the Boost libraries system-wide. However, Seqan3 is expected to be loc
 folder of RNAnue as specified in the CMakeLists.txt. Segemehl and the Vienna binaries need to be
 located in $PATH.
 
-* [Boost C++ Libraries](https://www.boost.org/) (v1.7.2)
+* [Boost C++ Libraries](https://www.boost.org/) (v1.72.x)
 * [SeqAn](https://github.com/seqan/seqan3) (v3.3.0)
 * [Segemehl](http://www.bioinf.uni-leipzig.de/Software/segemehl/) (v0.3.4)
 * [Vienna Package](https://www.tbi.univie.ac.at/RNA/#binary_packages) (>= v2.4.17)
