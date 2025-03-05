@@ -153,7 +153,7 @@ int main(int argc, char* argv[]) {
 
         po::options_description subcall("Subcall");
         subcall.add_options()
-                ("subcall", po::value<std::string>(), "preproc, detect, alignment, clustering, analysis")
+                ("subcall", po::value<std::string>(), "preproc, detect, alignment, clustering, analysis, complete")
                 ;
 
         po::options_description cmdlineOptions;
