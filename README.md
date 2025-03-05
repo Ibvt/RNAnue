@@ -194,6 +194,10 @@ singularity exec --bind /path/to/data:/data rnanue_latest.sif RNAnue <subcall> -
 ### Testing
 
 We provide a test dataset in the [test](./test/data/) folder that can be used to test the installation. 
+For that, `test/humanSE.cfg` can be used by specifying it in the `--config` parameter (needs to be absolute path).
+```
+RNAnue <subcall> --config /path/to/RNAnue/test/humanSE.cfg
+```
 
 # Troubleshooting
 contact cobi@ibvt.uni-stuttgart.de or create an issue
