@@ -109,7 +109,6 @@ void SplitReadCalling::start(pt::ptree sample, pt::ptree condition) {
     }
 
     producer(inBam); // start the producer (and add the recordsreads to the queue)
-
     for(auto& consumer : consumers) {
         consumer.join();
     }
@@ -144,6 +143,7 @@ void SplitReadCalling::producer(seqan3::sam_file_input<>& inputfile) {
 
 void SplitReadCalling::consumer(dtp::BAMOut& singleOut, dtp::BAMOut& splitsOut, dtp::BAMOut& multsplitsOut,
                                 std::mutex& singleOutMutex, std::mutex& splitsOutMutex, std::mutex& multsplitsOutMutex) {
+
     using recordType = typename seqan3::sam_file_input<>::record_type;
     std::vector<recordType> readrecords;
     while(true) {
@@ -164,6 +164,7 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut,
                                auto& splitsOut, auto& multsplitsOut,
                                auto& singleOutMutex, auto& splitsOutMutex,
                                auto& multsplitsOutMutex) {
+
 
     // define variables
     std::string qname = "";
@@ -195,6 +196,7 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut,
     std::map<int, std::vector<SAMrecord>> putative{};
 
     for(auto& rec : readrecords) {
+
         qname = rec.id();
         flag = rec.flag();
         ref_id = rec.reference_id();
@@ -227,6 +229,14 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut,
 
         cigarMatch = 0; // reset matches count in cigar
         // check the cigar string for splits
+//        std::cout << "cigar: ";
+//        for(auto& cig: cigar) { // iterate over all cigar elements
+//            cigarSize = get<uint32_t>(cig); // determine the size and operator of the cigar element
+//            cigarOp = get<seqan3::cigar::operation>(cig); // print cigarOP
+//            std::cout << cigarSize << cigarOp.to_char();
+//        }
+//        std::cout << std::endl;
+
         for(auto& cig: cigar) {
             // determine the size and operator of the cigar element
             cigarSize = get<uint32_t>(cig);
@@ -253,7 +263,9 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut,
                     cigarSplit.clear(); // new split - new CIGAR
                     ref_offset.value() += cigarSize + endPosRead + 1; // adjust left-most mapping position
                     splitId++; // increase split ID
-                } else { // matches the splice junction
+                } else { // matches the splice junctiona
+//                    endPosRead += cigarSize;
+//                    cigarSplit.push_back(cig);
                     xjtag--; // decrease the number of splits (basically merge the splits)
                 }
             } else {
@@ -277,6 +289,7 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut,
             }
         }
 
+
         auto subSeq = seq | seqan3::views::slice(startPosRead - 1, endPosRead);
         seqan3::sam_tag_dictionary newTags{};
         newTags.get<"XX"_tag>() = startPosSplit;
@@ -292,8 +305,10 @@ void SplitReadCalling::process(std::vector<T>& readrecords, auto& singleOut,
         curated.clear();
         segNum = 0;
         ++splitId;
+
     }
     decide(putative, splitsOut, multsplitsOut, splitsOutMutex, multsplitsOutMutex);
+
 }
 
 void SplitReadCalling::decide(std::map<int, std::vector<SAMrecord>>& putative, auto& splitsOut,
@@ -401,23 +416,28 @@ bool SplitReadCalling::filter(auto& sequence, uint32_t cigarmatch) {
     return true;
 }
 
+// checks if the detected splice junction is within the (annotated) splice site
 bool SplitReadCalling::matchSpliceSites(dtp::Interval& spliceSites, std::optional<uint32_t> refId) {
     if(params["splicing"].as<std::bitset<1>>() == std::bitset<1>("1")) {
         std::vector<std::pair<Node*,IntervalData*>> ovlps = features.search(this->refIds[refId.value()], spliceSites);
         for(int i=0;i<ovlps.size();++i) { // iterate over all overlapping intervals
             dtp::SpliceJunctions junctions = ovlps[i].second->getJunctions();
             for(auto& [name, junc] : junctions) {
-                for(int j=1;j<junc.size()-1;++j) {
-                    if(helper::withinRange(spliceSites.first, junc[j-1].second, 5) &&
-                    helper::withinRange(spliceSites.second, junc[j].first, 5)) {
-                        return true;
+                if(junc.size() > 1) {
+                    for(int j=1;j<junc.size()-1;++j) {
+                        if(helper::withinRange(spliceSites.first, junc[j-1].second, 5) &&
+                           helper::withinRange(spliceSites.second, junc[j].first, 5)) {
+                            return true;
+                        }
                     }
                 }
             }
         }
+        return false;
     } else {
         return false;
     }
+
 }
 
 void SplitReadCalling::storeSegments(auto& splitrecord, std::optional<int32_t> refPos, dtp::DNASpan& seq,

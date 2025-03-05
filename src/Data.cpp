@@ -1,6 +1,7 @@
 #include "Data.hpp"
 
 Data::Data(po::variables_map params) : params(params) {
+    std::cout << helper::getTime() << "Data object created\n";
     std::string subcall = params["subcall"].as<std::string>();
     fs::path outDir = fs::path(params["outdir"].as<std::string>());
 
@@ -31,7 +32,7 @@ Data::~Data() {
 
 void Data::preprocDataPrep() {
     // retrieve paths that contain the reads
-    fs::path ctrlsPath = fs::path(this->params["ctrls"].as<std::string>());
+    fs::path ctrlsPath = fs::path(params["ctrls"].as<std::string>());
     fs::path trtmsPath = fs::path(this->params["trtms"].as<std::string>());
 
     GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
@@ -45,7 +46,10 @@ void Data::alignDataPrep() {
     } else {
         // make sure that data has been preprocessed (or at least selected)
         if(params["preproc"].as<std::bitset<1>>() == std::bitset<1>("1")) {
-            fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "preproc/ctrls";
+            fs::path ctrlsPath = "";
+            if(params["ctrls"].as<std::string>() != "") {
+                fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "preproc/ctrls";
+            }
             fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "preproc/trtms";
 
             /*
@@ -59,7 +63,10 @@ void Data::alignDataPrep() {
 }
 
 void Data::detectDataPrep() {
-    fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "align/ctrls";
+    fs::path ctrlsPath = "";
+    if(params["ctrls"].as<std::string>() != "") {
+        fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "align/ctrls";
+    }
     fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "align/trtms";
 
     GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
@@ -67,7 +74,10 @@ void Data::detectDataPrep() {
 }
 
 void Data::clusteringDataPrep() {
-fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
+    fs::path ctrlsPath = "";
+    if(params["ctrls"].as<std::string>() != "") {
+        fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
+    }
     fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "detect/trtms";
 
     GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
@@ -75,7 +85,10 @@ fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrl
 }
 
 void Data::analysisDataPrep() {
-    fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
+    fs::path ctrlsPath = "";
+    if(params["ctrls"].as<std::string>() != "") {
+        fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
+    }
     fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "detect/trtms";
 
     GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
