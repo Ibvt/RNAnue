@@ -17,6 +17,8 @@ ParameterValidation::ParameterValidation(po::variables_map& params) : params(par
 
         } else if (subcall == "analysis") {
 
+        } else if (subcall == "complete") {
+
         } else {
             std::cout << helper::getTime() << "Invalid subcall: " << subcall << "\n";
             exit(EXIT_FAILURE);

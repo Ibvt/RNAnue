@@ -36,7 +36,7 @@ void Data::preprocDataPrep() {
     fs::path trtmsPath = fs::path(this->params["trtms"].as<std::string>());
 
     GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
-    getCondition(groups);
+    getCondition(groups, "preproc");
 }
 
 void Data::alignDataPrep() {
@@ -57,7 +57,7 @@ void Data::alignDataPrep() {
             * (ctrls -> "/Users/.../crtls")
             */
             GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
-            getCondition(groups);
+            getCondition(groups, "align");
         }
     }
 }
@@ -70,7 +70,7 @@ void Data::detectDataPrep() {
     fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "align/trtms";
 
     GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
-    getCondition(groups);
+    getCondition(groups, "detect");
 }
 
 void Data::clusteringDataPrep() {
@@ -81,7 +81,7 @@ void Data::clusteringDataPrep() {
     fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "detect/trtms";
 
     GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
-    getCondition(groups);
+    getCondition(groups, "clustering");
 }
 
 void Data::analysisDataPrep() {
@@ -92,7 +92,7 @@ void Data::analysisDataPrep() {
     fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "detect/trtms";
 
     GroupsPath groups = getGroupsPath(ctrlsPath, trtmsPath);
-    getCondition(groups);
+    getCondition(groups, "analysis");
 }
 
 GroupsPath Data::getGroupsPath(fs::path& ctrls, fs::path& trtms) {
@@ -115,7 +115,7 @@ GroupsPath Data::getGroupsPath(fs::path& ctrls, fs::path& trtms) {
 }
 
 //
-void Data::getCondition(GroupsPath& groups) {
+void Data::getCondition(GroupsPath& groups, std::string subcall) {
     // ptree object containing
     pt::ptree ptData, ptSubcall, ptPath, ptGroup, ptCondition;
 
@@ -134,7 +134,7 @@ void Data::getCondition(GroupsPath& groups) {
                         continue;
                     }
 
-                    ptCondition = getData(group.first, condition);
+                    ptCondition = getData(group.first, condition, subcall);
                     ptGroup.push_back(std::make_pair("", ptCondition));
 
                 }
@@ -152,7 +152,7 @@ void Data::getCondition(GroupsPath& groups) {
     }
 
     // write data structure to file
-    std::string subcall = params["subcall"].as<std::string>();
+//    std::string subcall = params["subcall"].as<std::string>();
     dataStructure.add_child(subcall, ptSubcall);
     fs::path dataStructurePath = fs::path(params["outdir"].as<std::string>()) / fs::path("data.json");
     jp::write_json(dataStructurePath.string(), dataStructure);
@@ -160,8 +160,8 @@ void Data::getCondition(GroupsPath& groups) {
 }
 
 //
-pt::ptree Data::getData(std::string group, fs::path& condition) {
-    std::string subcall = params["subcall"].as<std::string>();
+pt::ptree Data::getData(std::string group, fs::path& condition, std::string& subcall) {
+//    std::string subcall = params["subcall"].as<std::string>();
     std::string outdir = params["outdir"].as<std::string>();
 
     pt::ptree ptCondition, ptFiles, ptSamples, ptSample, ptOutput;
@@ -176,8 +176,8 @@ pt::ptree Data::getData(std::string group, fs::path& condition) {
     }*/
 
     // define helper variables
-    int numberElements = getNumberElements(dataFiles);
-    std::vector<std::string> sampleKeys = getSampleKeys();
+    int numberElements = getNumberElements(dataFiles, subcall);
+    std::vector<std::string> sampleKeys = getSampleKeys(subcall);
 
     fs::path conditionOutDir = fs::path(outdir);
     conditionOutDir /= fs::path(subcall);
@@ -190,7 +190,7 @@ pt::ptree Data::getData(std::string group, fs::path& condition) {
         if(elementCounter == numberElements-1) {
             ptSample.add_child("input", ptFiles);
             // determine output TODO
-            ptOutput = getOutputData(ptSample, conditionOutDir);
+            ptOutput = getOutputData(ptSample, conditionOutDir, subcall);
             ptSample.add_child("output", ptOutput);
 
             ptSamples.push_back(std::make_pair("", ptSample));
@@ -211,8 +211,8 @@ pt::ptree Data::getData(std::string group, fs::path& condition) {
 }
 
 
-int Data::getNumberElements(PathVector& vec) {
-    std::string subcall = params["subcall"].as<std::string>();
+int Data::getNumberElements(PathVector& vec, std::string& subcall) {
+//    std::string subcall = params["subcall"].as<std::string>();
     int numberElements;
 
     if(subcall == "preproc") { numberElements = (params["readtype"].as<std::string>() == "PE") ? 2 : 1; }
@@ -228,8 +228,8 @@ int Data::getNumberElements(PathVector& vec) {
     return numberElements;
 }
 
-std::vector<std::string> Data::getSampleKeys() {
-    std::string subcall = params["subcall"].as<std::string>();
+std::vector<std::string> Data::getSampleKeys(std::string& subcall) {
+//    std::string subcall = params["subcall"].as<std::string>();
     std::vector<std::string> sampleKeys;
     if(subcall == "preproc") { sampleKeys = {"forward", "reverse"}; }
 
@@ -249,8 +249,8 @@ std::vector<std::string> Data::getSampleKeys() {
     return sampleKeys;
 }
 
-pt::ptree Data::getOutputData(pt::ptree& input, fs::path& conditionOutDir) {
-    std::string subcall = params["subcall"].as<std::string>();
+pt::ptree Data::getOutputData(pt::ptree& input, fs::path& conditionOutDir, std::string& subcall) {
+//    std::string subcall = params["subcall"].as<std::string>();
 
     pt::ptree output;
     if(subcall == "preproc") { output = getPreprocOutputData(input, conditionOutDir); }
@@ -349,11 +349,11 @@ pt::ptree Data::getAnalysisOutputData(pt::ptree& input, fs::path& conditionOutDi
 }
 
 template <typename Callable>
-void Data::callInAndOut(Callable f) {
+void Data::callInAndOut(Callable f, std::string subcallStr) {
 
     // retrieve paths for parameters
     fs::path outDir = fs::path(params["outdir"].as<std::string>());
-    std::string subcallStr = params["subcall"].as<std::string>();
+//    std::string subcallStr = params["subcall"].as<std::string>();
     fs::path outSubcallDir = outDir / fs::path(subcallStr);
 
     pt::ptree subcall = dataStructure.get_child(subcallStr);
@@ -397,33 +397,33 @@ void Data::callInAndOut(Callable f) {
 void Data::preproc() {
     std::cout << helper::getTime() << "Start the Preprocessing\n";
     SeqRickshaw srs(params);
-    callInAndOut(std::bind(&SeqRickshaw::start, srs, std::placeholders::_1));
+    callInAndOut(std::bind(&SeqRickshaw::start, srs, std::placeholders::_1), "preproc");
 }
 
 void Data::align() {
     std::cout << helper::getTime() << "Start the Alignment\n";
     Align aln(params);
-    callInAndOut(std::bind(&Align::start, aln, std::placeholders::_1));
+    callInAndOut(std::bind(&Align::start, aln, std::placeholders::_1), "align");
 }
 
 void Data::detect() {
     std::cout << helper::getTime() << "Start the Split Read Calling\n";
     SplitReadCalling src(params);
-    callInAndOut(std::bind(&SplitReadCalling::start, &src, std::placeholders::_1, std::placeholders::_2));
+    callInAndOut(std::bind(&SplitReadCalling::start, &src, std::placeholders::_1, std::placeholders::_2), "detect");
     src.writeStats();
 }
 
 void Data::clustering() {
     std::cout << helper::getTime() << "Start the Clustering of the Split Reads\n";
     Clustering clu(params);
-    callInAndOut(std::bind(&Clustering::start, &clu, std::placeholders::_1));
+    callInAndOut(std::bind(&Clustering::start, &clu, std::placeholders::_1), "clustering");
     clu.sumup();
 }
 
 void Data::analysis() {
     std::cout << helper::getTime() << "Start the Analysis of the Split Reads\n";
     Analysis ana(params);
-    callInAndOut(std::bind(&Analysis::start, &ana, std::placeholders::_1, std::placeholders::_2));
+    callInAndOut(std::bind(&Analysis::start, &ana, std::placeholders::_1, std::placeholders::_2), "analysis");
     // write file output files
     ana.writeAllInts();
     ana.writeAllIntsCounts();

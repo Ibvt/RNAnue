@@ -223,7 +223,9 @@ int main(int argc, char* argv[]) {
         fs::path configFileDir = fs::path(configFile).parent_path();
         correctPaths(params, configFileDir);
 
+        // regular workflow
         Base base(params);
+
 
     } catch(po::error& e) {
         std::cerr << "ERROR: " << e.what() << "\n";

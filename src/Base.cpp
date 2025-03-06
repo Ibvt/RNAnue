@@ -30,16 +30,25 @@ Base::Base(po::variables_map params) : params(params), paramsVal(params), data(p
                         data.analysis();
                     } else {
                         if(subcall == "complete") {
+                            if(params["preproc"].as<std::bitset<1>>() != std::bitset<1>("1")) {
+                                std::cout << helper::getTime() << " 'preproc' has not been set correctly - check parameters" << std::endl;
+                                exit(EXIT_FAILURE);
+                            }
+                            data.preprocDataPrep();
                             data.preproc();
-                            data.detect();
+                            // align
+                            data.alignDataPrep();
                             data.align();
+                            // detect
+                            data.detectDataPrep();
+                            data.detect();
                             if(params["clust"].as<std::bitset<1>>() == std::bitset<1>("1")) {
+                                data.clusteringDataPrep();
                                 data.clustering();
                             }
+                            // analysis
+                            data.analysisDataPrep();
                             data.analysis();
-                        } else {
-                            std::cout << "subcall: " << params["subcall"].as<std::string>() << " invalid!" << std::endl;
-                            exit(EXIT_FAILURE);
                         }
                     }
                 }

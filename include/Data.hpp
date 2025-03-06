@@ -37,19 +37,19 @@ class Data{
 
         // get Data
         GroupsPath getGroupsPath(fs::path& ctrls, fs::path& trtms);
-        void getCondition(GroupsPath& groups);
-        pt::ptree getData(const std::string group, fs::path& condition);
+        void getCondition(GroupsPath& groups, std::string subcall);
+        pt::ptree getData(const std::string group, fs::path& condition, std::string& subcall);
 
         // get output data
-        pt::ptree getOutputData(pt::ptree& input, fs::path& conditionOutDir);
+        pt::ptree getOutputData(pt::ptree& input, fs::path& conditionOutDir, std::string& subcall);
         pt::ptree getPreprocOutputData(pt::ptree& input, fs::path& conditionOutDir);
         pt::ptree getAlignOutputData(pt::ptree& input, fs::path& conditionOutDir);
         pt::ptree getDetectOutputData(pt::ptree& input, fs::path& conditionOutDir);
         pt::ptree getAnalysisOutputData(pt::ptree& input, fs::path& conditionOutDir);
 
         //
-        int getNumberElements(PathVector& vec);
-        std::vector<std::string> getSampleKeys();
+        int getNumberElements(PathVector& vec, std::string& subcall);
+        std::vector<std::string> getSampleKeys(std::string& subcall);
 
         // prep functions
         void preprocDataPrep();
@@ -60,7 +60,7 @@ class Data{
 
         //
         template <typename Callable>
-        void callInAndOut(Callable f);
+        void callInAndOut(Callable f, std::string subcallStr);
 
         // callables
         void preproc();
