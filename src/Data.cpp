@@ -48,7 +48,7 @@ void Data::alignDataPrep() {
         if(params["preproc"].as<std::bitset<1>>() == std::bitset<1>("1")) {
             fs::path ctrlsPath = "";
             if(params["ctrls"].as<std::string>() != "") {
-                fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "preproc/ctrls";
+                ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "preproc/ctrls";
             }
             fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "preproc/trtms";
 
@@ -65,7 +65,7 @@ void Data::alignDataPrep() {
 void Data::detectDataPrep() {
     fs::path ctrlsPath = "";
     if(params["ctrls"].as<std::string>() != "") {
-        fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "align/ctrls";
+        ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "align/ctrls";
     }
     fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "align/trtms";
 
@@ -76,7 +76,7 @@ void Data::detectDataPrep() {
 void Data::clusteringDataPrep() {
     fs::path ctrlsPath = "";
     if(params["ctrls"].as<std::string>() != "") {
-        fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
+        ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
     }
     fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "detect/trtms";
 
@@ -87,7 +87,7 @@ void Data::clusteringDataPrep() {
 void Data::analysisDataPrep() {
     fs::path ctrlsPath = "";
     if(params["ctrls"].as<std::string>() != "") {
-        fs::path ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
+        ctrlsPath = fs::path(params["outdir"].as<std::string>()) / "detect/ctrls";
     }
     fs::path trtmsPath = fs::path(params["outdir"].as<std::string>()) / "detect/trtms";
 
