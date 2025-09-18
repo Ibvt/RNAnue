@@ -1,3 +1,8 @@
+> [!IMPORTANT]
+> This repository is deprecated and no longer maintained.
+> Development continues at [RNABioInfo/RNAnue](https://github.com/RNABioInfo/RNAnue).
+> Checkout the develop branch for the latest updates.
+
 [![docker-release](https://github.com/Ibvt/RNAnue/actions/workflows/docker.yml/badge.svg)](https://github.com/Ibvt/RNAnue/actions/workflows/docker.yml)
 
 # RNAnue - 0.2.5
